@@ -1,0 +1,28 @@
+﻿# 油浸式变压器 DGA 诊断系统依赖（2026-09-10 本机 venv 验证）
+# 安装：pip install -r requirements.txt
+
+# --- LLM / Agent 框架 ---
+langchain==1.4.0
+langchain-core==1.6.2
+langgraph==1.2.11
+
+# --- 向量库 ---
+chromadb==1.5.9
+
+# --- Embedding / 模型 ---
+huggingface-hub==1.30.0
+tokenizers==0.23.2
+# sentence-transformers  # 需 torch，体积大；做向量检索前再装
+# langchain-huggingface  # 如需在 LangChain 内用 HF embedding 再装
+
+# --- 大模型 API（DeepSeek 走 OpenAI 兼容接口）---
+openai==3.11.0
+
+# --- 文档解析 / OCR（处理规程 PDF）---
+pymupdf==1.28.2
+rapidocr-onnxruntime==1.2.3
+
+# --- 基础 ---
+numpy==2.5.3
+requests==2.34.2
+python-dotenv==1.2.3
