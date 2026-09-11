@@ -60,7 +60,8 @@ def expand_tokens(query: str) -> list:
     return sorted(set(tokens), key=len, reverse=True)
 
 def score_rule(rule, tokens) -> int:
-    text = " ".join(str(rule.get(k, "")) for k in ("trigger", "content", "title", "rule_id"))
+    acts = rule.get("actions") or []
+    text = " ".join([str(rule.get("trigger", "")), str(rule.get("title", "")), str(rule.get("rule_id", "")), " ".join(map(str, acts))])
     return sum(text.count(tok) for tok in tokens)
 
 def match(query, rules, top_n=3):

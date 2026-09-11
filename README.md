@@ -36,6 +36,8 @@ pip install -r requirements.txt
 > Windows 中文路径提示：命令行直接传中文路径可能乱码。建议先 `cd` 到项目根目录，再用相对路径执行（如 `.\venv\Scripts\python.exe scripts\env_check.py`）。
 
 ## 数据与版权说明
+
+> 详见 [NOTICE.md](NOTICE.md)：本仓库不收录标准原文与第三方原始数据文件。
 - `文献/`（标准/论文 PDF）与 `data/语料/*.txt`（标准正文转写）**含版权内容，已被 .gitignore 排除**，仅本地使用。
 - 仓库内保留自有产物：docs 文档、规则 JSON、代码。
 

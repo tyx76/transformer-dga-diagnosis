@@ -42,3 +42,7 @@
   1. alan456 来源**没有 CO / CO2** 两列（原始数据集只含 5 种气体）；
   2. sguys99 的标签是 **0/1**，含义待确认；
   3. sguys99 是 log10 还原值，量级可能偏大；与 alan456 合并使用前建议先做分布检查。
+## 七、版权与分发说明（2026-09-11）
+- 第三方原始文件（4 个 xlsx）已从版本库移除（仅本地保留），避免再分发。
+- 仓库仅保留整理后的数值表，使用时请注明来源：github.com/alan-456/transformer-fault-dataset、github.com/sguys99/datasets。
+- 重新生成数值表：把 xlsx 放回本目录，运行 scripts/build_sample_dataset.py 与 scripts/unify_sample_units.py。
