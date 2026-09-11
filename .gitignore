@@ -22,6 +22,7 @@ chroma_db/
 原始资料/
 社团考核题目.pdf
 data/语料/*.txt
+!data/语料/DLT-722-2014_判据表_结构化.txt
 
 # ---- IDE / 系统 ----
 .idea/
