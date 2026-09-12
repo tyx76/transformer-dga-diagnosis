@@ -15,7 +15,7 @@
 
 ## 目录内容
 ```text
-知识库_整改版_20260912/
+向量库/
 ├─ knowledge.db                           SQLite 向量数据库（已 checkpoint，无 -wal/-shm）
 ├─ cli.py                                 入库 / 查看 脚本
 ├─ README.md

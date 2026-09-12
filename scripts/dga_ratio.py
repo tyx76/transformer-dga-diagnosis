@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """DL/T 722-2014 改良三比值法计算器 + 规则基线评测。
 
 用法：
@@ -7,7 +7,7 @@
 评测口径（关键）：
   1) 三比值法只对“气体超注意值”的设备有效（DL/T 722-2014 10.2.4 a）；未触发的不纳入比值判据评测；
   2) 数据集标签与标准输出类别口径不同，比较时做归并（高能放电≈电弧放电；低温过热合并两档；低能放电含兼过热）。
-规则来源：data/知识库/rules_DLT722_dga_draft.json v0.3（表6/表7，成员2人工核对）
+规则来源：data/规则库/rules_DLT722_dga_draft.json v0.3（表6/表7，成员2人工核对）
 """
 import argparse, csv, json, sys
 from pathlib import Path

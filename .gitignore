@@ -36,8 +36,8 @@ data/样本/*.xlsx
 data/样本/*.xls
 
 # ---- 向量知识库（本地保留，不入库）----
-知识库/knowledge.db
-知识库/knowledge.db-*
-知识库/语料/DLT-572-2021_clauses.jsonl
-知识库/materials/*
-!知识库/materials/.gitkeep
+向量库/knowledge.db
+向量库/knowledge.db-*
+向量库/语料/DLT-572-2021_clauses.jsonl
+向量库/materials/*
+!向量库/materials/.gitkeep
