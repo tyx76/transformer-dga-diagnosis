@@ -34,3 +34,10 @@ data/语料/*.txt
 # ---- 第三方原始数据文件（不再分发，仅本地保留）----
 data/样本/*.xlsx
 data/样本/*.xls
+
+# ---- 向量知识库（本地保留，不入库）----
+知识库/knowledge.db
+知识库/knowledge.db-*
+知识库/语料/DLT-572-2021_clauses.jsonl
+知识库/materials/*
+!知识库/materials/.gitkeep
