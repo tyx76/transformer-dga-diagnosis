@@ -41,3 +41,6 @@ data/样本/*.xls
 向量库/语料/DLT-572-2021_clauses.jsonl
 向量库/materials/*
 !向量库/materials/.gitkeep
+
+# ---- 本地学习笔记/素材（不入库）----
+vibe coding学习笔记__/
