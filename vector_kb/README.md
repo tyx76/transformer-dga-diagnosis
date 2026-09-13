@@ -60,3 +60,22 @@ python cli.py info
 数据流：`data/rules/`（判据事实）→ `data/corpus/`（源语料与导出）→ 本目录 `语料/*.jsonl`（入库输入）→ `knowledge.db`（向量库）。
 
 > **以 `data/corpus/` 版本为准**；两处不一致时先改 data 版再重新导出。详见 `语料/README.md`。
+## 查询（语义检索）
+
+```powershell
+# 默认返回 Top-3
+python cli.py query "乙炔超标该怎么处理"
+
+# 自定义条数与相似度阈值
+python cli.py query "油温过高" --top-k 5 --min-score 0.4
+```
+
+输出每条均含：`doc_id / clause / title / page / text`（有 citation 时一并打印）。
+- 若检索结果为空或全部低于阈值（默认 0.35），输出：**未在知识库中检索到相关条文，无法提供建议**；
+- 若本机未启动 Ollama，会提示 `ollama pull bge-m3` 与启动服务；
+- ⚠️ **`page` 目前未记录**：入库语料未带页码，命令会显示「（元数据未记录）」；如需满足"输出页码"，需在切条/入库时补 `page` 字段。
+
+## 实现说明（与 AGENTS.md 技术栈的差异）
+- 本知识库为 **SQLite 向量库**（`chunks.vector` 存 float32），非 Chroma；
+- Embedding 走 **Ollama `bge-m3:latest`**（1024 维、L2 归一化），非 bge-small-zh / HuggingFace；
+- 若需严格对齐 AGENTS.md 的「Chroma + HuggingFace Embedding」，需单独改造 `cli.py` 的存储与嵌入层。

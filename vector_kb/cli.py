@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# [阶段交接] 接口保留：ingest()/info 为知识库构建接口；阶段二需补 query() 检索接口。详见 docs/05。
+# [阶段交接] 接口保留：ingest()/info 为知识库构建接口；query() 检索接口已实现。详见 docs/05。
 """知识库 CLI：从 JSONL 构建 / 查看 SQLite 向量库（Ollama bge-m3）。
 
 用法：
@@ -163,6 +163,71 @@ def info(args):
     print(f"  合计块数：{cur.execute('SELECT COUNT(*) FROM chunks').fetchone()[0]}；向量异常块：{bad}")
     con.close()
 
+
+def _cosine(a, b):
+    """余弦相似度（两个向量都已 L2 归一化时即为点积）。"""
+    if not a or not b or len(a) != len(b):
+        return 0.0
+    s = sum(x * y for x, y in zip(a, b))
+    na = sum(x * x for x in a) ** 0.5 or 1.0
+    nb = sum(y * y for y in b) ** 0.5 or 1.0
+    return s / (na * nb)
+
+def _load_vectors(con):
+    """读出所有块及其向量/元数据。"""
+    out = []
+    for r in con.execute("SELECT id, document_id, text, vector, dim, meta FROM chunks"):
+        try:
+            vec = array("f"); vec.frombytes(r[3]); vec = list(vec)
+        except Exception:
+            continue
+        try:
+            meta = json.loads(r[5]) if r[5] else {}
+        except Exception:
+            meta = {}
+        out.append({"id": r[0], "doc_id": r[1], "text": r[2], "vec": vec, "dim": r[4], "meta": meta})
+    return out
+
+def query(args):
+    """语义检索：embed(question) -> 余弦 Top-k -> 打印条文与元数据。"""
+    con = connect(args.db)
+    chunks = _load_vectors(con)
+    con.close()
+    if not chunks:
+        print("知识库为空：请先用 ingest 入库。")
+        return
+    try:
+        qvec = embed([args.question])[0]
+    except Exception as e:
+        print(f"无法调用本地 Embedding（Ollama {OLLAMA} / 模型 {MODEL}）：{e}")
+        print("请确认：1) ollama 服务已启动；2) 已执行 ollama pull bge-m3")
+        return
+
+    scored = [(_cosine(qvec, c["vec"]), c) for c in chunks]
+    scored.sort(key=lambda x: x[0], reverse=True)
+    hits = [(s, c) for s, c in scored[: args.top_k] if s >= args.min_score]
+    if not hits:
+        print("未在知识库中检索到相关条文，无法提供建议")
+        return
+
+    print(f"问题：{args.question}")
+    print(f"检索到 {len(hits)} 条相关条文（余弦相似度 ≥ {args.min_score}）：")
+    for i, (score, c) in enumerate(hits, 1):
+        m = c["meta"]
+        page = m.get("page")
+        print("-" * 64)
+        print(f"[{i}] 相似度 {score:.4f}")
+        print(f"    doc_id : {m.get('doc_id') or c['doc_id']}")
+        print(f"    clause : {m.get('clause') or '（未记录）'}")
+        print(f"    title  : {m.get('title') or '（未记录）'}")
+        print(f"    page   : {page if page not in (None, '') else '（元数据未记录）'}")
+        if m.get("citation"):
+            print(f"    citation: {m['citation']}")
+        print("    text   :")
+        for line in str(c["text"]).splitlines():
+            print("      " + line)
+    print("-" * 64)
+
 def main():
     ap = argparse.ArgumentParser(description="知识库 CLI（SQLite + Ollama bge-m3）")
     ap.add_argument("--db", default=str(DB_DEFAULT), help="数据库路径，默认 ./knowledge.db")
@@ -179,6 +244,11 @@ def main():
 
     q = sub.add_parser("info", help="查看库内文档与块统计")
     q.set_defaults(func=info)
+    r = sub.add_parser("query", help="语义检索条文（Top-k，输出 doc_id/clause/title/text/page）")
+    r.add_argument("question", help="查询文本，如：乙炔超标该怎么处理")
+    r.add_argument("--top-k", type=int, default=3, help="返回条数，默认 3")
+    r.add_argument("--min-score", type=float, default=0.35, help="余弦相似度阈值，默认 0.35")
+    r.set_defaults(func=query)
 
     args = ap.parse_args()
     args.func(args)
