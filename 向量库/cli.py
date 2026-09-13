@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# [阶段交接] 接口保留：ingest()/info 为知识库构建接口；阶段二需补 query() 检索接口。详见 docs/05。
 """知识库 CLI：从 JSONL 构建 / 查看 SQLite 向量库（Ollama bge-m3）。
 
 用法：

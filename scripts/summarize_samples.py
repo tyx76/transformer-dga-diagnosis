@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# [阶段交接] 过程产物：数据统计/调试脚本，阶段二可并入 tools/ 或 tests。详见 docs/05。
 """汇总 data/样本/ 下的数据集：行数、列、标签分布（支持 csv 与 xlsx）。"""
 import csv, sys
 from pathlib import Path
