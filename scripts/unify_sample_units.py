@@ -3,8 +3,8 @@
 """统一样本量纲：全部换算为 μL/L，并修正 sguys99 的键名解析。
 
 输出：
-  data/样本/dga_samples.csv            原始量纲（修正解析）
-  data/样本/dga_samples_uL_per_L.csv   统一量纲 μL/L
+  data/samples/dga_samples.csv            原始量纲（修正解析）
+  data/samples/dga_samples_uL_per_L.csv   统一量纲 μL/L
 规则：sguys99 的 log10 值 0 表示“该气体为 0/未测”，换算为 0；其余 10^x。
 """
 import csv, math, sys
@@ -18,7 +18,7 @@ except Exception:
     pass
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "data" / "样本"
+SRC = ROOT / "data" / "samples"
 RAW = SRC / "dga_samples.csv"
 UNI = SRC / "dga_samples_uL_per_L.csv"
 

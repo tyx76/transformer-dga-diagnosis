@@ -6,9 +6,9 @@
     "created": "2026-09-09",
     "basis": "已取得 DL/T 722-2014 真本（扫描版 PDF，26页，2026-09-09 核验封面/前言确认）；正文经 Word 转换+OCR 入库",
     "status": "表6/表7 已人工录入并核验（成员2，2026-09-11）；表2 仍为 HUMAN-VERIFY",
-    "source_file": "data/语料/DLT-722-2014_变压器油中溶解气体分析和判断导则_正文.txt",
+    "source_file": "data/corpus/DLT-722-2014_body.txt",
     "note": "IEC 60599:2022 已弃用(费用)；2014 前言明确'修改了低温过热(低于150℃)的编码'，故旧版(2000/文库)的编码映射不可直接使用，必须用 2014 表7",
-    "verified_source": "文献/05_标准_规范/副本DLT722-表6表7-三比值法.xlsx（成员2 人工核对）",
+    "verified_source": "literature/05_标准_规范/DLT722_tables6-7_three_ratio.xlsx（成员2 人工核对）",
     "updated": "2026-09-11",
     "copyright_note": "仅收录判据所需的事实性参数（阈值/编码/比值范围），不逐字收录标准原文与实例描述。"
   },

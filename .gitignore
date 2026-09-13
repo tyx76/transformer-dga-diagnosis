@@ -18,29 +18,29 @@ chroma_db/
 
 # ---- 版权/大体积资料（本地保留，不入库）----
 # 标准原文 PDF、参考论文、标准正文转写文本：含版权或体积过大
-文献/
-原始资料/
-社团考核题目.pdf
-data/语料/*.txt
-!data/语料/DLT-722-2014_判据表_结构化.txt
+literature/
+source_materials/
+club_assessment_problem.pdf
+data/corpus/*.txt
+!data/corpus/DLT-722-2014_criteria_tables.txt
 
 # ---- IDE / 系统 ----
 .idea/
 .vscode/
 .DS_Store
 # ---- 待审核的成员提交（大文件/第三方产物，不入库）----
-成员提交文件---待审核/
+submissions_pending_review/
 
 # ---- 第三方原始数据文件（不再分发，仅本地保留）----
-data/样本/*.xlsx
-data/样本/*.xls
+data/samples/*.xlsx
+data/samples/*.xls
 
 # ---- 向量知识库（本地保留，不入库）----
-向量库/knowledge.db
-向量库/knowledge.db-*
-向量库/语料/DLT-572-2021_clauses.jsonl
-向量库/materials/*
-!向量库/materials/.gitkeep
+vector_kb/knowledge.db
+vector_kb/knowledge.db-*
+vector_kb/corpus/DLT-572-2021_clauses.jsonl
+vector_kb/materials/*
+!vector_kb/materials/.gitkeep
 
 # ---- 本地学习笔记/素材（不入库）----
 vibe coding学习笔记__/

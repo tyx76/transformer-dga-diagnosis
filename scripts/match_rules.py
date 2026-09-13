@@ -2,7 +2,7 @@
 # [阶段交接] 接口保留：match()/CLI 为对外接口，阶段二迁入 tools/（后续换 jieba+BM25）时保持签名兼容。详见 docs/05。
 """规则匹配原型（任务二·排因骨架版，先用关键词，不依赖向量/LLM）。
 
-读取 data/规则库/rules_DLT572_ch7.json（字段：rule_id/source/trigger/content/actions/decision），
+读取 data/rules/rules_DLT572_ch7.json（字段：rule_id/source/trigger/content/actions/decision），
 把用户现象与规则文本做关键词打分，返回最相关的规则与处置动作。
 
 用法：
@@ -18,7 +18,7 @@ except Exception:
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-KB = ROOT / "data" / "规则库" / "rules_DLT572_ch7.json"
+KB = ROOT / "data" / "rules" / "rules_DLT572_ch7.json"
 
 # 同义词组：命中任一即扩展为整组，提高召回
 SYNONYMS = {

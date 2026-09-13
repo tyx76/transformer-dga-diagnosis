@@ -130,7 +130,7 @@ def ingest(args):
     now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
     raw = path.read_bytes()
     doc_meta = {"block_type": args.collection, "doc_id": doc_id,
-                "spec_source": "docs/07_切条与元数据规范.md"}
+                "spec_source": "docs/07_chunking_and_metadata_spec.md"}
     cur.execute("""INSERT INTO documents
         (id, source, filename, sha256, content_type, size_bytes, char_count,
          chunk_count, status, collection, created_at, updated_at, meta)

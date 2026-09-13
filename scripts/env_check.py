@@ -12,7 +12,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
 print("python:", sys.version.split()[0])
-p = root / "data" / "规则库" / "rules_DLT572_ch7.json"
+p = root / "data" / "rules" / "rules_DLT572_ch7.json"
 d = json.loads(p.read_text(encoding="utf-8-sig"))
 rules = d["rules"]
 print("rules loaded:", len(rules))

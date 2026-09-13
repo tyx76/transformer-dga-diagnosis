@@ -15,7 +15,7 @@
 
 ## 目录内容
 ```text
-向量库/
+vector_kb/
 ├─ knowledge.db                           SQLite 向量数据库（已 checkpoint，无 -wal/-shm）
 ├─ cli.py                                 入库 / 查看 脚本
 ├─ README.md
@@ -57,6 +57,6 @@ python cli.py info
 5. 572 表格结构化（表1 顶层油温限值、表2 检测周期等）——属阶段二语料待办。
 6. 附一次真实检索结果（问「乙炔超标该怎么处理」，给出 Top-k 与条号），需本机 Ollama 运行。
 ## 语料来源与维护顺序
-数据流：`data/规则库/`（判据事实）→ `data/语料/`（源语料与导出）→ 本目录 `语料/*.jsonl`（入库输入）→ `knowledge.db`（向量库）。
+数据流：`data/rules/`（判据事实）→ `data/corpus/`（源语料与导出）→ 本目录 `语料/*.jsonl`（入库输入）→ `knowledge.db`（向量库）。
 
-> **以 `data/语料/` 版本为准**；两处不一致时先改 data 版再重新导出。详见 `语料/README.md`。
+> **以 `data/corpus/` 版本为准**；两处不一致时先改 data 版再重新导出。详见 `语料/README.md`。

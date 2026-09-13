@@ -14,7 +14,7 @@
 - 编号：C1
 - 作者 / 年份：Lingzhe Zhang 等，2025
 - 来源：arXiv:2507.12472v1；J. ACM 投稿排版版，35 页
-- 本地文件：`文献/03_根因分析_Agent/C1_arXiv2507.12472_AIOps_LLM_Survey.pdf`
+- 本地文件：`literature/03_根因分析_Agent/C1_arXiv2507.12472_AIOps_LLM_Survey.pdf`
 - 一句话定位：系统梳理 LLM 如何重塑 AIOps 的数据、任务、方法和评测体系。
 
 ### 核心逻辑
@@ -81,7 +81,7 @@ C1 给出的是软件系统 AIOps 的通用框架，不能直接迁移为电力�
 - 编号：C3
 - 作者 / 年份：Devjeet Roy 等，2024
 - 来源：arXiv:2403.04123v1
-- 本地文件：`文献/03_根因分析_Agent/C3_arXiv2403.04123_LLM_Agents_RCA.pdf`
+- 本地文件：`literature/03_根因分析_Agent/C3_arXiv2403.04123_LLM_Agents_RCA.pdf`
 - 一句话定位：把现成 ReAct Agent 用于云事故 RCA，重点做实证评估和工程案例，不是新方法论文。
 
 ### 核心逻辑
@@ -119,7 +119,7 @@ C1 给出的是软件系统 AIOps 的通用框架，不能直接迁移为电力�
 
 - **分级：B 级·略读参引**（不进必读精读名单）。
 - **理由**：方法沿用 ReAct + LangChain + 固定工具集，属 empirical study / case study；核心贡献是**负结果与工程经验**，不构成新的算法或工作流对标。
-- **主题归属不变**：仍属 C 组（根因分析 / Agent），文件位置保持 `文献/03_根因分析_Agent/`。
+- **主题归属不变**：仍属 C 组（根因分析 / Agent），文件位置保持 `literature/03_根因分析_Agent/`。
 - **引用位置**：综述「根因分析现状」中“已有 LLM RCA 方法的局限”“专用诊断工具与实际交互环境的必要性”两处；用它的负结果（补充讨论文本不提升 RCA），**不用它做方法对标**（方法对标用 C2 RCAgent）。
 - **合并处理**：与 C4（Practical RCA by LLMs）同类，可合并叙述为“云 RCA 的实证与工程经验”。
 - **行动**：已同步标注 docs/01、docs/01；由成员1/成员3 各看结论即可。
@@ -131,7 +131,7 @@ C1 给出的是软件系统 AIOps 的通用框架，不能直接迁移为电力�
 - 编号：C4
 - 作者 / 年份：Yinfang Chen 等，2024
 - 来源：EuroSys '24；arXiv:2305.15778v4；DOI: 10.1145/3627703.3629553
-- 本地文件：`文献/03_根因分析_Agent/C4_arXiv2305.15778_Practical_RCA_LLM.pdf`
+- 本地文件：`literature/03_根因分析_Agent/C4_arXiv2305.15778_Practical_RCA_LLM.pdf`
 - 一句话定位：把 OCE 预设的故障处理流程、多源诊断数据采集和 LLM 推理组合成可上线的云事故 RCA 系统。
 
 ### 核心逻辑

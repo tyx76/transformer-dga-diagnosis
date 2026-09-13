@@ -1,7 +1,7 @@
 ﻿# 文献与标准（合并版）
 
 > 由《文献调研清单》《文献与标准获取行动清单》《任务一现状调研文献清单》《必读清单速查》四份合并。
-> 更新：2026-09-11 ｜ 文献文件在 文献/ 目录，编号见各表。
+> 更新：2026-09-11 ｜ 文献文件在 literature/ 目录，编号见各表。
 
 ## 一、文献总表（原《文献调研清单》）
 
@@ -14,7 +14,7 @@
 
 ### 状态速览（2026-09-09）
 - 对象口径：油浸式电力变压器（AGENTS.md）；**IEC 60599:2022 已弃用**（费用），判据只依 DL/T 722-2014。
-- **DL/T 722-2014 真本已取得并核验**，正文在 `data/语料/DLT-722-2014_..._正文.txt`；判据库 `data/规则库/rules_DLT722_dga_draft.json` v0.2（表6/7 编码待人工录入）。
+- **DL/T 722-2014 真本已取得并核验**，正文在 `data/corpus/DLT-722-2014_..._正文.txt`；判据库 `data/rules/rules_DLT722_dga_draft.json` v0.2（表6/7 编码待人工录入）。
 - 任务一（现状调研）专项文献清单见 **docs/01**；下载/编号/归档状态见 **docs/00** 与 docs/01。
 
 ### 0. 这份清单怎么用（映射到考纲）
@@ -188,18 +188,18 @@
 ## 二、标准与获取状态（原《文献与标准获取行动清单》）
 
 > 图例：✅已到手 ｜ 🟡浏览器可免费下(未下) ｜ 🔒需账号/付费/校园网/等导师 ｜ ⚠️待办
-> 文献文件已统一编号归档，详见 `文献/README.md` 与 docs/01。
+> 文献文件已统一编号归档，详见 `literature/README.md` 与 docs/01。
 
 ### 一、标准（最高优先）
 | 标准 | 状态 | 说明 |
 |---|---|---|
-| **DL/T 722-2014 变压器油中溶解气体分析和判断导则** | ✅ 真本已获取并核验 | `文献/05_标准_规范/DLT-722-2014_....pdf`；正文已入 `data/语料/DLT-722-2014_..._正文.txt` |
-| DL/T 572-2021 电力变压器运行规程 | ✅ | `文献/05_标准_规范/`；正文入 data/语料（§7.5/第8章已 OCR 补读） |
+| **DL/T 722-2014 变压器油中溶解气体分析和判断导则** | ✅ 真本已获取并核验 | `literature/05_标准_规范/DLT-722-2014_....pdf`；正文已入 `data/corpus/DLT-722-2014_..._正文.txt` |
+| DL/T 572-2021 电力变压器运行规程 | ✅ | `literature/05_标准_规范/`；正文入 data/corpus（§7.5/第8章已 OCR 补读） |
 | ~~IEC 60599:2022~~ | ❌ 弃用（费用） | 不再作为依据 |
 | GB 26860-2011 电力安全工作规程（摘录） | 🟡 | 国家标准全文公开系统 openstd.samr.gov.cn |
 | DL/T 573 检修导则 / DL/T 596 预防性试验 | 🔒（按需） | 572 第 8 章引用；需要再获取 |
 
-### 二、论文 PDF（文献/ 已编号）
+### 二、论文 PDF（literature/ 已编号）
 | 组 | 已到手 ✅ | 待浏览器 🟡 | 付费/受限 🔒 |
 |---|---|---|---|
 | A 全景 | A1、A4、A5 | A2(TechRxiv)、A3(PMC) | A6(IEEE)、A7(知网·中文) |
@@ -212,7 +212,7 @@
 ### 三、数据集（原型评测）
 | 数据 | 链接 | 状态 |
 |---|---|---|
-| IEC TC10 / DGA 样本 | ✅ 已下载：data/样本/（alan456 2910 条 + sguys99 556 条 = 3466 条；统一表 dga_samples.csv） | ✅ |
+| IEC TC10 / DGA 样本 | ✅ 已下载：data/samples/（alan456 2910 条 + sguys99 556 条 = 3466 条；统一表 dga_samples.csv） | ✅ |
 | IEEE DataPort DGA（Enwen Li 2019） | ieee-dataport.org（doi:10.21227/h8g0-8z59） | 🔒需注册 |
 | Mendeley Power transformer data | data.mendeley.com/datasets/98f4z3f8tx/2 | 🟡 |
 
@@ -228,7 +228,7 @@
 
 > 调研命题（考纲原文）：**调研并梳理大模型知识增强的故障诊断与根因分析技术现状，分析不同方案的特点。**
 > 版本 v1｜2026-09-09｜用途：综述"现状与技术路线对比"章节的阅读与引用来源。
-> 图例：✅已在 `文献/`｜🟡开放获取可下(未下)｜🔒付费/需学校或文献传递｜标注均按检索当日核实。
+> 图例：✅已在 `literature/`｜🟡开放获取可下(未下)｜🔒付费/需学校或文献传递｜标注均按检索当日核实。
 
 ---
 
@@ -258,7 +258,7 @@
 |---|---|---|---|---|
 | C1 | A Survey of AIOps in the Era of Large Language Models（Zhang 等, arXiv:2507.12472, 2025） | arxiv.org/abs/2507.12472 | 🟡 | 把 AIOps 分为故障感知/根因分析/辅助修复 + 5 类方法框架——**写 RCA 现状最省力的一篇** |
 | C2 | RCAgent: Cloud RCA by Autonomous Agents with Tool-Augmented LLMs（CIKM 2024） | arxiv.org/abs/2310.16340 | ✅ | 工业 RCA Agent 工程范式（工具/隐私/schema/自一致性），直接对标 |
-| C3 | Exploring LLM-based Agents for Root Cause Analysis（FSE Companion 2024） | arxiv.org/abs/2403.04123 | ✅ | **B级·略读参引**：ReAct 云 RCA 实证与负结果（工具>静态语料）；见 docs/笔记/略读卡_非必读论文.md |
+| C3 | Exploring LLM-based Agents for Root Cause Analysis（FSE Companion 2024） | arxiv.org/abs/2403.04123 | ✅ | **B级·略读参引**：ReAct 云 RCA 实证与负结果（工具>静态语料）；见 docs/notes/skimming_cards_non_essential_papers.md |
 | C4 | Empowering Practical RCA by LLMs for Cloud Incidents（2023） | arxiv.org/abs/2305.15778 | 🟡 | LLM 落地云 RCA 经验（事件上下文/检索） |
 | C5 | DiagAgent: Power Equipment Fault Diagnosis via RAG + MCP（IEEE, 2025/26） | ieeexplore.ieee.org/document/11413511 | 🔒待导师提供 | 电力设备诊断 × RAG × MCP 工具化，**最接近本方案** |
 | C6 | FaultSeer: Agentic RAG for Defect Analysis in Power Systems（2025） | Semantic Scholar: FaultSeer | 🔒 | 电力系统缺陷分析的 Agentic RAG |
@@ -277,8 +277,8 @@
 | # | 文献 | 链接/DOI | 状态 | 一句话用途 |
 |---|---|---|---|---|
 | E1 | Conventional methods of DGA ... A review（EPSR 216:109064, 2023） | doi:10.1016/j.epsr.2022.109064（NSTL 可文献传递） | 🔒 | DGA 传统判据综述：关键气体/三比值/Duval 优缺点 |
-| E2 | Conventional Dissolved Gases Analysis in Power Transformers: Review（Energies 16(21):7219, 2023） | mdpi.com/1996-1073/16/21/7219 | ✅文献/06 | DGA 全流程开放综述 |
-| E3 | Traditional fault diagnosis methods for mineral oil-immersed power transformer based on DGA（IET Nanodielectrics, 2024） | digital-library.theiet.org/doi/full/10.1049/nde2.12082 | ✅文献/06 | 油浸变压器 DGA 方法"过去-现在-未来"，含局限 |
+| E2 | Conventional Dissolved Gases Analysis in Power Transformers: Review（Energies 16(21):7219, 2023） | mdpi.com/1996-1073/16/21/7219 | ✅literature/06 | DGA 全流程开放综述 |
+| E3 | Traditional fault diagnosis methods for mineral oil-immersed power transformer based on DGA（IET Nanodielectrics, 2024） | digital-library.theiet.org/doi/full/10.1049/nde2.12082 | ✅literature/06 | 油浸变压器 DGA 方法"过去-现在-未来"，含局限 |
 
 ### F 组：幻觉抑制 / 可溯源 / 合规（"严谨结论难合规生成"的解法依据）
 | # | 文献 | 链接/DOI | 状态 | 一句话用途 |
@@ -307,18 +307,18 @@
 ### 下载日志与状态更新（2026-09-09，免费项批量下载）
 | 清单 | 状态 | 本地文件/处理 |
 |---|---|---|
-| A4 | ✅ | 文献/01_综述_全景/A4_arXiv2312.06261_FoundationModels_PHM_Survey.pdf（arXiv v2） |
-| A5 | ✅ | 文献/01_综述_全景/A5_arXiv2407.03374_PHM_LargeModel_Outline.pdf |
-| B2 | ✅ | 文献/02_知识增强路线/B2_arXiv2408.08921_GraphRAG_Survey.pdf |
-| B3 | ✅ | 文献/02_知识增强路线/B3_arXiv2306.08302_LLM_KG_Roadmap.pdf |
-| B4 | ✅ | 文献/02_知识增强路线/B4_arXiv2311.07914_KG_Hallucination_Survey.pdf |
-| C1 | ✅ | 文献/03_根因分析_Agent/C1_arXiv2507.12472_AIOps_LLM_Survey.pdf |
-| C3 | ✅ | 文献/03_根因分析_Agent/C3_arXiv2403.04123_LLM_Agents_RCA.pdf |
-| C4 | ✅ | 文献/03_根因分析_Agent/C4_arXiv2305.15778_Practical_RCA_LLM.pdf |
+| A4 | ✅ | literature/01_综述_全景/A4_arXiv2312.06261_FoundationModels_PHM_Survey.pdf（arXiv v2） |
+| A5 | ✅ | literature/01_综述_全景/A5_arXiv2407.03374_PHM_LargeModel_Outline.pdf |
+| B2 | ✅ | literature/02_知识增强路线/B2_arXiv2408.08921_GraphRAG_Survey.pdf |
+| B3 | ✅ | literature/02_知识增强路线/B3_arXiv2306.08302_LLM_KG_Roadmap.pdf |
+| B4 | ✅ | literature/02_知识增强路线/B4_arXiv2311.07914_KG_Hallucination_Survey.pdf |
+| C1 | ✅ | literature/03_根因分析_Agent/C1_arXiv2507.12472_AIOps_LLM_Survey.pdf |
+| C3 | ✅ | literature/03_根因分析_Agent/C3_arXiv2403.04123_LLM_Agents_RCA.pdf |
+| C4 | ✅ | literature/03_根因分析_Agent/C4_arXiv2305.15778_Practical_RCA_LLM.pdf |
 | A2 | 🟡待浏览器 | TechRxiv 拦截脚本：techrxiv.org/doi/full/10.36227/techrxiv.177281073.38924355/v1 |
 | A3 | 🟡待浏览器 | PMC 下载按钮：pmc.ncbi.nlm.nih.gov/articles/PMC12846000 |
 | D6 | 🟡待浏览器 | 核电 GRAG 中文论文：pgtjournal.com/article/2025/2096-4528/2096-4528-2025-46-3-454.shtml |
-| E2/E3 | ✅ | 已下载归档：文献/06_DGA领域方法/（2026-09-09，已核验） |
+| E2/E3 | ✅ | 已下载归档：literature/06_DGA领域方法/（2026-09-09，已核验） |
 | 命名 | ✅ | 文献文件名已统一加 docs/01 编号前缀（2026-09-09） |
 
 ### 付费/受限项 → 校园图书馆检索指引（🔒，用学校图书馆数据库）
@@ -340,9 +340,9 @@
 
 ## 四、必读与阅读状态（原《必读清单速查》）
 
-> 文件都在 `文献/` 下；每篇给：为什么读 → 重点章节 → 谁负责 → 状态。
+> 文件都在 `literature/` 下；每篇给：为什么读 → 重点章节 → 谁负责 → 状态。
 > 原则：**主干优先**——已读的 5 篇足够支撑编码，主干期不新增必读，其余按需翻或推迟。
-> 读法与填卡：见 docs/02 与 `docs/笔记/模板_论文精读卡.md`。
+> 读法与填卡：见 docs/02 与 `docs/notes/template_paper_reading_card.md`。
 
 ### 阅读分级（2026-09-10 定）
 - **A 级·必读精读**：第一梯队 + 各角色核心篇（逐节精读、填精读卡）
@@ -361,7 +361,7 @@
 
 ### 第一梯队（6 篇）与状态
 
-| # | 文件（文献/下） | 用途 | 重点章节 | 状态 |
+| # | 文件（literature/下） | 用途 | 重点章节 | 状态 |
 |---|---|---|---|---|
 | 1 | `03_根因分析_Agent/C2_arXiv2310.16340_RCAgent.pdf` | 方案对标主力：工具编排 + schema + 证据聚合 | §3 框架、§5 案例 | ✅ 已读（精读卡已有） |
 | 2 | `02_知识增强路线/B1_arXiv2312.10997_RAG_Survey.pdf` | RAG 三范式 → 主干流程骨架 | §2 三范式、§4 检索技术 | ✅ 已读 |
@@ -383,7 +383,7 @@
 - DL/T 722 表6/表7：**✅ 已完成人工录入**（规则库 v0.3，见 docs/04）
 
 **成员 3（检索/评测/文档）**
-- `02_知识增强路线/B0_arXiv2005.11401_RAG奠基_Lewis2020.pdf`：RAG 奠基（引言必引）→ **⏳ 泛读**
+- `02_知识增强路线/B0_arXiv2005.11401_RAG_Lewis2020.pdf`：RAG 奠基（引言必引）→ **⏳ 泛读**
 - `02_知识增强路线/B2a_...pdf` / `B3_...pdf` / `B4_...pdf`：图谱线 → **⏸ 推迟到阶段二**
 - `03_根因分析_Agent/C4_arXiv2305.15778_Practical_RCA_LLM.pdf`：LLM RCA 落地经验 → **✅ 已读**
 - 另：A1 + E2/E3 供任务一综述
@@ -410,7 +410,7 @@
 
 **沿用规则（勿踩坑）**
 - 表格一律**人工核对后结构化**，绝不从 OCR 正文里取（722 表3、572 表1 都吃过亏）；
-- 标准正文与摘录属版权内容，**本地使用、不入库**（`.gitignore` 已排除 `data/语料/*.txt`；只含事实参数的判据表已放行）；
-- 新增语料一律登记到 `data/语料/语料清单.md`。
+- 标准正文与摘录属版权内容，**本地使用、不入库**（`.gitignore` 已排除 `data/corpus/*.txt`；只含事实参数的判据表已放行）；
+- 新增语料一律登记到 `data/corpus/corpus_inventory.md`。
 
 **启动条件**：主干阶段验收通过（暂定 09-26）后启动。

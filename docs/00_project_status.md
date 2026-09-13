@@ -11,9 +11,9 @@
 | 03 | 技术路线调研 | 大模型知识增强的路线分类与优劣对比 |
 | 04 | 任务二方案与评测 | 非结构化文本处理 / 排因方案 + 规则基线评测 |
 | 05 | 开发日志与日程 | 开发日志、日程记录、主干阶段计划 |
-| 06 | 文献速览与笔记索引 | 7 篇核心论文速览 + 指向 docs/笔记/ |
+| 06 | 文献速览与笔记索引 | 7 篇核心论文速览 + 指向 docs/notes/ |
 | 07 | 切条与元数据规范 | 字段定义、条号书写规则、切分粒度、入库校验、踩坑清单 |
-| — | docs/笔记/ | 精读卡、略读卡、读论文笔记、模板 |
+| — | docs/notes/ | 精读卡、略读卡、读论文笔记、模板 |
 
 ## 1. 口径（见 AGENTS.md）
 - 考题八·**技术向**（交 GitHub 仓库，不答辩）；评比 2026-10-12~10-16，提交建议 10-11 前。
@@ -28,19 +28,19 @@
 ## 3. 资产清单
 | 类别 | 位置 | 状态 |
 |---|---|---|
-| 文档 | docs/00–07 + docs/笔记/ | ✅（已合并精简） |
-| 文献库 | 文献/（23 个 PDF：A/B/C/E/F 分组 + 05_标准_规范 + 06_DGA领域方法；重复件在 99_归档） | ✅ |
-| 故障样本 | data/样本/：4 个公开数据集 + dga_samples_uL_per_L.csv（**3466 条，统一 μL/L**） | ✅ |
-| 语料 | data/语料/：572 正文（全章可读）、722 正文、语料清单 | ✅ |
-| 规则知识库 | data/规则库/：rules_DLT572_ch7.json（25 条）、rules_DLT722_dga_draft.json **v0.3（表6/表7 VERIFIED）** | ✅ |
-| 向量知识库 | `向量库/`：knowledge.db（123 块 = normative 5 + reference 118，bge-m3 1024 维；本地不入库）+ cli.py + 语料/ | ✅ |
+| 文档 | docs/00–07 + docs/notes/ | ✅（已合并精简） |
+| 文献库 | literature/（23 个 PDF：A/B/C/E/F 分组 + 05_标准_规范 + 06_DGA领域方法；重复件在 99_归档） | ✅ |
+| 故障样本 | data/samples/：4 个公开数据集 + dga_samples_uL_per_L.csv（**3466 条，统一 μL/L**） | ✅ |
+| 语料 | data/corpus/：572 正文（全章可读）、722 正文、语料清单 | ✅ |
+| 规则知识库 | data/rules/：rules_DLT572_ch7.json（25 条）、rules_DLT722_dga_draft.json **v0.3（表6/表7 VERIFIED）** | ✅ |
+| 向量知识库 | `vector_kb/`：knowledge.db（123 块 = normative 5 + reference 118，bge-m3 1024 维；本地不入库）+ cli.py + 语料/ | ✅ |
 | 评测 | docs/04 附：规则基线 **61.8%**；脚本 scripts/dga_ratio.py | ✅ |
 | 环境 | venv(Python 3.14.7) + requirements.txt（sentence-transformers 待装） | ✅ |
-| 原始资料 | 原始资料/（考核题目；不入库） | ✅ |
+| source_materials | source_materials/（考核题目；不入库） | ✅ |
 | Git | github.com/tyx76/transformer-dga-diagnosis ｜ **本地领先 origin/main 5 个提交（暂不 push）** | ⏸ |
 
 ## 4. 关键核验记录（更新至 2026-09-11）
-- ✅ DL/T 722-2014 真本取得并核验；正文入 data/语料。
+- ✅ DL/T 722-2014 真本取得并核验；正文入 data/corpus。
 - ✅ 表6/表7 由成员2 人工核对并录入 → 规则库 v0.3（VERIFIED）；2014 版「低温过热（低于150℃）」编码为 000。
 - ✅ DL/T 572-2021 §7.5 + 第 8 章 OCR 补读恢复；rules_DLT572_ch7.json 25 条全部 ok。
 - ✅ 公开 DGA 样本 3466 条，统一量纲 μL/L；修正 sguys99 解析（原 556 条几乎全空）。
@@ -72,7 +72,7 @@
 | data: 新增公开 DGA 样本 3466 条并统一量纲 |
 | docs: 文档索引同步 |
 ## 7. 下一步（主干阶段）
-1. ~~09-12：定接口与切块规范~~ ✅ 已完成 → docs/07_切条与元数据规范.md
+1. ~~09-12：定接口与切块规范~~ ✅ 已完成 → docs/07_chunking_and_metadata_spec.md
 2. 09-13 ~ 09-15：722/572 清洗 + 按条切块 → clauses.jsonl（clause 为空报错）
 3. 09-16 ~ 09-18：Embedding + Chroma 入库 → 检索结果带条号
 4. 09-19 ~ 09-21：DeepSeek 生成 + 强制引用 + 未命中拒答

@@ -18,29 +18,29 @@
 - 环境：安装 Python 3.14.7 + pip（含 pymupdf、rapidocr-onnxruntime）。
 
 ### 2026-09-10
-- Git：初始化仓库并推送 GitHub（`github.com/tyx76/transformer-dga-diagnosis`）；`.gitignore` 排除 venv/文献/标准正文/密钥；修正提交作者为 tyx76。
+- Git：初始化仓库并推送 GitHub（`github.com/tyx76/transformer-dga-diagnosis`）；`.gitignore` 排除 venv/literature/标准正文/密钥；修正提交作者为 tyx76。
 - venv：`venv/`（Python 3.14.7）依赖就绪：langchain 1.4 / langgraph 1.2 / chromadb 1.5.9 / openai 3.11 / pymupdf / rapidocr 等；`pip check` 无冲突。
 - 依赖清单：新增 `requirements.txt` 并验证。
 - 脚本：修复规则匹配原型 `scripts/match_rules.py`（适配规则库 schema，中文关键词匹配，未命中即拒答）；`scripts/env_check.py` 保留为环境自检。
 - 文档：docs/00–06 状态同步；新增本开发日志。
 
-- 数据：下载公开 DGA 故障样本 4 个数据集 → data/样本/dga_samples.csv（3466 条，7 类故障标签）；脚本 scripts/build_sample_dataset.py；scripts/summarize_samples.py 用于统计。
+- 数据：下载公开 DGA 故障样本 4 个数据集 → data/samples/dga_samples.csv（3466 条，7 类故障标签）；脚本 scripts/build_sample_dataset.py；scripts/summarize_samples.py 用于统计。
 
-- 数据：统一样本量纲（全部 μL/L）→ `data/样本/dga_samples_uL_per_L.csv`（3466 条）；修正 sguys99 解析；脚本 `scripts/unify_sample_units.py`。`n`n- 规则：成员2 人工核对 DL/T 722-2014 表6/表7（Excel）→ 规则库 v0.3（VERIFIED）；新增 `scripts/dga_ratio.py`；规则基线评测 61.8%（docs/04）。
+- 数据：统一样本量纲（全部 μL/L）→ `data/samples/dga_samples_uL_per_L.csv`（3466 条）；修正 sguys99 解析；脚本 `scripts/unify_sample_units.py`。`n`n- 规则：成员2 人工核对 DL/T 722-2014 表6/表7（Excel）→ 规则库 v0.3（VERIFIED）；新增 `scripts/dga_ratio.py`；规则基线评测 61.8%（docs/04）。
 
 > 主干阶段（09-12 → 09-26）的详细日程、分工、检查点与日志模板见 `docs/05_主干阶段_日程与日志.md`。
 
-#- 数据：从规则库 v0.3 导出「DL/T 722 判据表语料」——表3 注意值、表4 产气速率、表6 编码、表7 故障类型、CO2/CO 判据；输出 `data/语料/DLT-722-2014_判据表_结构化.txt` 与 `..._blocks.jsonl`。
+#- 数据：从规则库 v0.3 导出「DL/T 722 判据表语料」——表3 注意值、表4 产气速率、表6 编码、表7 故障类型、CO2/CO 判据；输出 `data/corpus/DLT-722-2014_criteria_tables.txt` 与 `..._blocks.jsonl`。
 
-- 规范：切条与元数据规范初版完成 → `docs/07_切条与元数据规范.md`（字段定义 / 条号书写 / 切分粒度 / 入库校验 / 10 条踩坑规避 / 验收标准）。
+- 规范：切条与元数据规范初版完成 → `docs/07_chunking_and_metadata_spec.md`（字段定义 / 条号书写 / 切分粒度 / 入库校验 / 10 条踩坑规避 / 验收标准）。
 
-- 知识库：成员第三版审核通过（有条件），整改后并入 `向量库/`——normative（722 判据表）5 块 + reference（572 条款）118 块，bge-m3 1024 维；补 `cli.py` 与两份输入 JSONL；WAL 与绝对路径已清理；本地向量库与 572 派生文本按版权规则不入库。
+- 知识库：成员第三版审核通过（有条件），整改后并入 `vector_kb/`——normative（722 判据表）5 块 + reference（572 条款）118 块，bge-m3 1024 维；补 `cli.py` 与两份输入 JSONL；WAL 与绝对路径已清理；本地向量库与 572 派生文本按版权规则不入库。
 
 ## 二、日程记录（倒排）
 
 | 阶段 | 时间 | 目标 | 状态 |
 |---|---|---|---|
-| 文献/标准准备 | 09-09–09-15 | 文献编号归档、标准核验、必读清单 | ✅ 基本完成 |
+| literature/标准准备 | 09-09–09-15 | 文献编号归档、标准核验、必读清单 | ✅ 基本完成 |
 | 精读 + 任务一综述 | 09-16–09-22 | 读 6–8 篇必读 → 综述正文（现状+路线对比） | ⏳ |
 | 任务二知识库 | 09-23–09-30 | 722 表6/7 录入；语料清洗入库（Chroma）；Agent 工作流设计 | ⏳ |
 | 最小原型 | 10-01–10-10 | 跑通"异常输入→检索→根因报告"；评测（TC10/案例） | ⏳ |
@@ -105,7 +105,7 @@ git pull --rebase
 git push
 ```
 - push 认证用**各自的** Personal Access Token 或 SSH key，**绝不共用账号/令牌**；
-- 仓库**不含** `文献/`、`data/语料/*.txt`、`venv/`、`原始资料/`（版权/体积原因，已被 .gitignore 排除）：文献与标准正文另发（网盘/群文件），venv 各自用 `python -m venv venv` + `pip install -r requirements.txt` 重建；
+- 仓库**不含** `literature/`、`data/corpus/*.txt`、`venv/`、`source_materials/`（版权/体积原因，已被 .gitignore 排除）：文献与标准正文另发（网盘/群文件），venv 各自用 `python -m venv venv` + `pip install -r requirements.txt` 重建；
 - 约定：开工先 `git pull --rebase`，改完尽快提交，收工统一 push（详见第四节）。
 ### 阶段工作整理（2026-09-11）
 - 样本：3466 条 DGA 样本统一样本量纲为 μL/L，修正 sguys99 解析（原 556 条几乎全空）。
@@ -141,8 +141,8 @@ git push
 
 | 日期 | 里程碑 | 负责人 | 产出物 | 通过标准 |
 |---|---|---|---|---|
-| 09-12 | 定接口与切块规范 ✅ | 全队 | `docs/07_切条与元数据规范.md` | 字段/条号/粒度/校验规则已定 |
-| 09-13 ~ 09-15 | 语料清洗 + 按条切块 | 成员2（主） | `data/语料/clauses.jsonl` | 抽检 20 条，条号与正文对得上，错位≤1 条 |
+| 09-12 | 定接口与切块规范 ✅ | 全队 | `docs/07_chunking_and_metadata_spec.md` | 字段/条号/粒度/校验规则已定 |
+| 09-13 ~ 09-15 | 语料清洗 + 按条切块 | 成员2（主） | `data/corpus/clauses.jsonl` | 抽检 20 条，条号与正文对得上，错位≤1 条 |
 | 09-16 ~ 09-18 | Embedding + 入 Chroma | 成员1 | `scripts/build_vector_kb.py`、`chroma_db/` | 集合内块数=clauses 条数；能检索出条文并带条号 |
 | 09-19 ~ 09-21 | 接 DeepSeek 生成 + 引用 + 拒答 | 成员1 | `scripts/retrieve.py`、`scripts/generate.py` | 报告每段都有条号；无关问题触发拒答 |
 | 09-22 ~ 09-24 | 端到端联调 + 验收用例 | 全队 | `main.py`、`data/评测/验收用例.md` | 10 条用例中 ≥8 条通过（含"乙炔超标"必过） |
@@ -211,8 +211,8 @@ git push
 
 ### 七、阶段交付物清单
 
-- [x] `docs/07_切条与元数据规范.md`（字段定义、条号规则、切分粒度、校验规则、示例）
-- [ ] `data/语料/clauses.jsonl`（带条号的切块结果）
+- [x] `docs/07_chunking_and_metadata_spec.md`（字段定义、条号规则、切分粒度、校验规则、示例）
+- [ ] `data/corpus/clauses.jsonl`（带条号的切块结果）
 - [ ] `scripts/build_vector_kb.py`（可复现入库，写明 embedding 模型名与维度）
 - [ ] `chroma_db/`（本阶段产物，不入库，加 .gitignore）
 - [ ] `scripts/retrieve.py`（检索，输出条文+条号）
@@ -241,7 +241,7 @@ git push
 |---|---|---|---|
 | `scripts/dga_ratio.py` | `judge(gases)` / CLI（气体 → 编码 → 故障类型） | ✅ 可用 | 迁入 `tools/`，补单元测试 |
 | `scripts/match_rules.py` | `match(query, rules)` / CLI（现象 → 处置规则） | ✅ 可用 | 迁入 `tools/`，算法升级为 jieba + BM25 |
-| `向量库/cli.py` | `ingest(jsonl, collection)` / `info` | ✅ 可用 | 保留为知识库构建入口 |
+| `vector_kb/cli.py` | `ingest(jsonl, collection)` / `info` | ✅ 可用 | 保留为知识库构建入口 |
 | **（缺）检索接口** | `query(text, collection, top_k)` → 条文 + 条号 | ❌ **未实现** | **阶段二必须补**（主干验收也依赖它） |
 
 ### 三、过程产物（阶段二重构入工具库，不保留原脚本形态）
@@ -264,4 +264,4 @@ git push
 ### 五、防遗忘约定
 - 相关脚本顶部已加 `[阶段交接]` 注释，标明「接口保留」或「过程产物 → 重构入工具库」；
 - 修改接口时，需同步更新本节表格；
-- 数据以 `data/` 版本为准（详见 `向量库/语料/README.md`）。
+- 数据以 `data/` 版本为准（详见 `vector_kb/语料/README.md`）。

@@ -8,7 +8,7 @@
 评测口径（关键）：
   1) 三比值法只对“气体超注意值”的设备有效（DL/T 722-2014 10.2.4 a）；未触发的不纳入比值判据评测；
   2) 数据集标签与标准输出类别口径不同，比较时做归并（高能放电≈电弧放电；低温过热合并两档；低能放电含兼过热）。
-规则来源：data/规则库/rules_DLT722_dga_draft.json v0.3（表6/表7，成员2人工核对）
+规则来源：data/rules/rules_DLT722_dga_draft.json v0.3（表6/表7，成员2人工核对）
 """
 import argparse, csv, json, sys
 from pathlib import Path
@@ -17,8 +17,8 @@ try: sys.stdout.reconfigure(encoding="utf-8")
 except Exception: pass
 
 ROOT = Path(__file__).resolve().parent.parent
-KB = ROOT / "data" / "规则库" / "rules_DLT722_dga_draft.json"
-SAMPLES = ROOT / "data" / "样本" / "dga_samples_uL_per_L.csv"
+KB = ROOT / "data" / "rules" / "rules_DLT722_dga_draft.json"
+SAMPLES = ROOT / "data" / "samples" / "dga_samples_uL_per_L.csv"
 RATIOS = [("C2H2/C2H4", "c2h2", "c2h4"), ("CH4/H2", "ch4", "h2"), ("C2H4/C2H6", "c2h4", "c2h6")]
 
 # 注意值（表3 变压器和电抗器）：H2/总烃 150；乙炔 330kV及以上=1、220kV及以下=5
