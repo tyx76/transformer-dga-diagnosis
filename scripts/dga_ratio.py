@@ -1,5 +1,5 @@
-# [阶段交接] 接口保留：judge()/CLI 为对外接口，阶段二迁入 tools/ 时保持签名兼容。详见 docs/05《阶段交接与下一阶段补充》。
 ﻿# -*- coding: utf-8 -*-
+# [阶段交接] 接口保留：judge()/CLI 为对外接口，阶段二迁入 tools/ 时保持签名兼容。详见 docs/05《阶段交接与下一阶段补充》。
 """DL/T 722-2014 改良三比值法计算器 + 规则基线评测。
 
 用法：
@@ -17,7 +17,7 @@ try: sys.stdout.reconfigure(encoding="utf-8")
 except Exception: pass
 
 ROOT = Path(__file__).resolve().parent.parent
-KB = ROOT / "data" / "知识库" / "rules_DLT722_dga_draft.json"
+KB = ROOT / "data" / "规则库" / "rules_DLT722_dga_draft.json"
 SAMPLES = ROOT / "data" / "样本" / "dga_samples_uL_per_L.csv"
 RATIOS = [("C2H2/C2H4", "c2h2", "c2h4"), ("CH4/H2", "ch4", "h2"), ("C2H4/C2H6", "c2h4", "c2h6")]
 
