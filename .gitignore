@@ -42,5 +42,3 @@ vector_kb/corpus/DLT-572-2021_clauses.jsonl
 vector_kb/materials/*
 !vector_kb/materials/.gitkeep
 
-# ---- 本地学习笔记/素材（不入库）----
-vibe coding学习笔记__/
