@@ -106,7 +106,7 @@
 | RAG 概念 | LangChain 官方文档（有概念+教程）；知乎/B站搜"一文读懂 RAG" |
 | 向量/Embedding | HuggingFace 搜 BGE（bge-m3/bge-large-zh）模型卡；text2vec |
 | Agent | LangGraph 官方文档；搜"ReAct 中文解读" |
-| 领域判据 | 直接读 DL/T 722-2014 判据章节 + docs/01_文献调研清单.md 中 A1/A2 综述 |
+| 领域判据 | 直接读 DL/T 722-2014 判据章节 + docs/01_literature_and_standards.md 中 E1/E2 综述 |
 | Chroma | 官方文档 chroma 向量库入门 |
 
 ### 30 天路线（三人并行，别贪多；A=代码队长，B=领域数据，C=检索评测文档——分工详见文末 v2）

@@ -12,7 +12,7 @@
 - 标题：RCAgent: Cloud Root Cause Analysis by Autonomous Agents with Tool-Augmented Large Language Models
 - 作者 / 年份 / 会议：Zefan Wang, Zichuan Liu, Yingying Zhang, Aoxiao Zhong, Jihong Wang, Fengbin Yin, Lunting Fan, Lingfei Wu, Qingsong Wen；2024；CIKM '24（第 33 届 ACM CIKM），9 pages
 - arXiv / DOI：arXiv:2310.16340v3；DOI: 10.1145/3627673.3680016
-- 本地文件：`literature/03_根因分析_Agent/C2_arXiv2310.16340_RCAgent.pdf`
+- 本地文件：`literature/03_root_cause_agent/C2_arXiv2310.16340_RCAgent.pdf`
 - 研究对象：阿里云 Apache Flink 实时计算平台上的异常作业根因分析
 - 关键定位：面向真实工业云 RCA 的工具增强自主 Agent；使用本地部署模型而非 GPT API，强调隐私、长上下文、动作有效性和可落地产出
 
