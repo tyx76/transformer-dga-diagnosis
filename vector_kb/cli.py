@@ -13,7 +13,7 @@
 
 依赖：Python 3.10+（仅标准库）；Ollama 服务 + bge-m3:latest（真实入库时需要）
 """
-import argparse, datetime, hashlib, json, os, re, sqlite3, sys, urllib.request
+import argparse, datetime, hashlib, json, os, re, sqlite3, sys, urllib.error, urllib.request
 from array import array
 from pathlib import Path
 
@@ -338,6 +338,22 @@ def generate(question: str, chunks: list[dict]) -> str:
     try:
         with urllib.request.urlopen(req, timeout=120) as r:
             data = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        hint = {
+            400: "请求参数有误（检查模型名与消息格式）",
+            401: "API Key 无效或未设置，请检查 DEEPSEEK_API_KEY（注意不要用占位符 sk-...）",
+            402: "账户余额不足，请到 platform.deepseek.com 充值后重试",
+            403: "无权访问该模型或接口（检查账号权限）",
+            404: "接口地址不存在（检查 DEEPSEEK_API_BASE 是否指向 https://api.deepseek.com）",
+            422: "请求格式不被接受（检查 messages 结构）",
+            429: "调用频率或额度超限，请稍后重试",
+            500: "DeepSeek 服务端错误，请稍后重试",
+            502: "DeepSeek 网关错误，请稍后重试",
+            503: "DeepSeek 服务暂时不可用，请稍后重试",
+        }.get(e.code, "未知 HTTP 错误")
+        raise RuntimeError(f"DeepSeek API 调用失败（HTTP {e.code}）：{hint}") from e
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"无法连接 DeepSeek API（网络/代理问题）：{e.reason}") from e
     except Exception as e:
         raise RuntimeError(f"DeepSeek API 调用失败：{e}") from e
     try:
