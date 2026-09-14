@@ -1,7 +1,7 @@
-﻿# 文献与标准（合并版）
+# 文献与标准（合并版）
 
 > 由《文献调研清单》《文献与标准获取行动清单》《任务一现状调研文献清单》《必读清单速查》四份合并。
-> 更新：2026-09-11 ｜ 文献文件在 literature/ 目录，编号见各表。
+> 更新：2026-09-14 ｜ 文献文件在 literature/ 目录，编号见各表。
 
 ## 一、文献总表（原《文献调研清单》）
 
@@ -12,7 +12,7 @@
 ---
 
 
-### 状态速览（2026-09-09）
+### 状态速览（2026-09-14）
 - 对象口径：油浸式电力变压器（AGENTS.md）；**IEC 60599:2022 已弃用**（费用），判据只依 DL/T 722-2014。
 - **DL/T 722-2014 真本已取得并核验**，正文在 `data/corpus/DLT-722-2014_..._正文.txt`；判据库 `data/rules/rules_DLT722_dga_draft.json` v0.2（表6/7 编码待人工录入）。
 - 任务一（现状调研）专项文献清单见 **docs/01**；下载/编号/归档状态见 **docs/00** 与 docs/01。
@@ -193,20 +193,21 @@
 ### 一、标准（最高优先）
 | 标准 | 状态 | 说明 |
 |---|---|---|
-| **DL/T 722-2014 变压器油中溶解气体分析和判断导则** | ✅ 真本已获取并核验 | `literature/05_标准_规范/DLT-722-2014_....pdf`；正文已入 `data/corpus/DLT-722-2014_..._正文.txt` |
-| DL/T 572-2021 电力变压器运行规程 | ✅ | `literature/05_标准_规范/`；正文入 data/corpus（§7.5/第8章已 OCR 补读） |
+| **DL/T 722-2014 变压器油中溶解气体分析和判断导则** | ✅ 真本已获取并核验 | `literature/05_standards/DLT-722-2014_....pdf`；正文已入 `data/corpus/DLT-722-2014_..._正文.txt` |
+| DL/T 572-2021 电力变压器运行规程 | ✅ | `literature/05_standards/`；正文入 data/corpus（§7.5/第8章已 OCR 补读） |
 | ~~IEC 60599:2022~~ | ❌ 弃用（费用） | 不再作为依据 |
 | GB 26860-2011 电力安全工作规程（摘录） | 🟡 | 国家标准全文公开系统 openstd.samr.gov.cn |
 | DL/T 573 检修导则 / DL/T 596 预防性试验 | 🔒（按需） | 572 第 8 章引用；需要再获取 |
 
 ### 二、论文 PDF（literature/ 已编号）
+> 注意：本节 A/B/C/D/E/F 为 `literature/` 实际文件编号，与前半部分按主题划分的 A–H 清单不是同一套编号；查找 PDF 时以本节和 `literature/README.md` 为准。
 | 组 | 已到手 ✅ | 待浏览器 🟡 | 付费/受限 🔒 |
 |---|---|---|---|
-| A 全景 | A1、A4、A5 | A2(TechRxiv)、A3(PMC) | A6(IEEE)、A7(知网·中文) |
-| B 知识增强 | B0、B1、B2、B2a、B3、B4 | - | B5、B6(ScienceDirect) |
-| C 根因/Agent | C1、C2、C3、C4 | - | C5(等导师)、C6 |
-| D 电力/变压器 | - | D6(核电GRAG·中文) | D1、D2、D3、D4、D5 |
-| E DGA 领域 | E0(TC10)、E2(MDPI)、E3(IET) | - | E1(EPSR，可 NSTL 文献传递) |
+| A 全景 | A1、A2、A3、A4、A5、A6、A7 | - | - |
+| B 知识增强 | B0、B1、B2、B2a、B3、B4、B5、B6 | - | - |
+| C 根因/Agent | C1、C2、C3、C4、C5、C6 | - | - |
+| D 电力/变压器 | D1、D2、D4、D5、D6 | - | D3(Springer) |
+| E DGA 领域 | E0、E2、E3 | - | E1(EPSR，可 NSTL 文献传递) |
 | F 幻觉/合规 | F1、F2、F3、F4 | - | - |
 
 ### 三、数据集（原型评测）
@@ -277,8 +278,8 @@
 | # | 文献 | 链接/DOI | 状态 | 一句话用途 |
 |---|---|---|---|---|
 | E1 | Conventional methods of DGA ... A review（EPSR 216:109064, 2023） | doi:10.1016/j.epsr.2022.109064（NSTL 可文献传递） | 🔒 | DGA 传统判据综述：关键气体/三比值/Duval 优缺点 |
-| E2 | Conventional Dissolved Gases Analysis in Power Transformers: Review（Energies 16(21):7219, 2023） | mdpi.com/1996-1073/16/21/7219 | ✅literature/06 | DGA 全流程开放综述 |
-| E3 | Traditional fault diagnosis methods for mineral oil-immersed power transformer based on DGA（IET Nanodielectrics, 2024） | digital-library.theiet.org/doi/full/10.1049/nde2.12082 | ✅literature/06 | 油浸变压器 DGA 方法"过去-现在-未来"，含局限 |
+| E2 | Conventional Dissolved Gases Analysis in Power Transformers: Review（Energies 16(21):7219, 2023） | mdpi.com/1996-1073/16/21/7219 | ✅ literature/06_dga_methods/ | DGA 全流程开放综述 |
+| E3 | Traditional fault diagnosis methods for mineral oil-immersed power transformer based on DGA（IET Nanodielectrics, 2024） | digital-library.theiet.org/doi/full/10.1049/nde2.12082 | ✅ literature/06_dga_methods/ | 油浸变压器 DGA 方法"过去-现在-未来"，含局限 |
 
 ### F 组：幻觉抑制 / 可溯源 / 合规（"严谨结论难合规生成"的解法依据）
 | # | 文献 | 链接/DOI | 状态 | 一句话用途 |
@@ -307,36 +308,37 @@
 ### 下载日志与状态更新（2026-09-09，免费项批量下载）
 | 清单 | 状态 | 本地文件/处理 |
 |---|---|---|
-| A4 | ✅ | literature/01_综述_全景/A4_arXiv2312.06261_FoundationModels_PHM_Survey.pdf（arXiv v2） |
-| A5 | ✅ | literature/01_综述_全景/A5_arXiv2407.03374_PHM_LargeModel_Outline.pdf |
-| B2 | ✅ | literature/02_知识增强路线/B2_arXiv2408.08921_GraphRAG_Survey.pdf |
-| B3 | ✅ | literature/02_知识增强路线/B3_arXiv2306.08302_LLM_KG_Roadmap.pdf |
-| B4 | ✅ | literature/02_知识增强路线/B4_arXiv2311.07914_KG_Hallucination_Survey.pdf |
-| C1 | ✅ | literature/03_根因分析_Agent/C1_arXiv2507.12472_AIOps_LLM_Survey.pdf |
-| C3 | ✅ | literature/03_根因分析_Agent/C3_arXiv2403.04123_LLM_Agents_RCA.pdf |
-| C4 | ✅ | literature/03_根因分析_Agent/C4_arXiv2305.15778_Practical_RCA_LLM.pdf |
-| A2 | 🟡待浏览器 | TechRxiv 拦截脚本：techrxiv.org/doi/full/10.36227/techrxiv.177281073.38924355/v1 |
-| A3 | 🟡待浏览器 | PMC 下载按钮：pmc.ncbi.nlm.nih.gov/articles/PMC12846000 |
-| D6 | 🟡待浏览器 | 核电 GRAG 中文论文：pgtjournal.com/article/2025/2096-4528/2096-4528-2025-46-3-454.shtml |
-| E2/E3 | ✅ | 已下载归档：literature/06_DGA领域方法/（2026-09-09，已核验） |
+| A4 | ✅ | literature/01_surveys_overview/A4_arXiv2312.06261_FoundationModels_PHM_Survey.pdf（arXiv v2） |
+| A5 | ✅ | literature/01_surveys_overview/A5_arXiv2407.03374_PHM_LargeModel_Outline.pdf |
+| B2 | ✅ | literature/02_knowledge_enhancement/B2_arXiv2408.08921_GraphRAG_Survey.pdf |
+| B3 | ✅ | literature/02_knowledge_enhancement/B3_arXiv2306.08302_LLM_KG_Roadmap.pdf |
+| B4 | ✅ | literature/02_knowledge_enhancement/B4_arXiv2311.07914_KG_Hallucination_Survey.pdf |
+| C1 | ✅ | literature/03_root_cause_agent/C1_arXiv2507.12472_AIOps_LLM_Survey.pdf |
+| C3 | ✅ | literature/03_root_cause_agent/C3_arXiv2403.04123_LLM_Agents_RCA.pdf |
+| C4 | ✅ | literature/03_root_cause_agent/C4_arXiv2305.15778_Practical_RCA_LLM.pdf |
+| A2 | ✅ 新归档 | literature/01_surveys_overview/A2_TechRxiv2026_Can_LLMs_Diagnose_Machine_Faults.pdf |
+| A3 | ✅ 新归档 | literature/01_surveys_overview/A3_Sensors2026_Fault_Diagnosis_ML_to_LLM_Fusion.pdf |
+| D6 | ✅ 新归档 | literature/07_power_transformer_llm/D6_PowerGenerationTechnology2025_Nuclear_GRAG.pdf |
+| E2/E3 | ✅ | 已下载归档：literature/06_dga_methods/（2026-09-09，已核验） |
 | 命名 | ✅ | 文献文件名已统一加 docs/01 编号前缀（2026-09-09） |
 
+> 2026-09-14 新归档：A2、A3、A6、A7、B5、B6、C5、C6、D1、D2、D4、D5、D6；具体路径见 literature/README.md。
 ### 付费/受限项 → 校园图书馆检索指引（🔒，用学校图书馆数据库）
 > 建议入口：四川大学图书馆电子资源（ScienceDirect / IEEE Xplore / Springer / 知网 / 万方 / NSTL 文献传递）。
-| 清单 | 出处 | 检索词/DOI |
-|---|---|---|
-| A6 | IEEE Xplore | A Comprehensive Review on the Application of LLMs in Power Systems (2025) |
-| A7 | 知网/万方 | 《电力设备运维中人工智能大模型应用》中国工程科学 2025,27(1):180-192 |
-| B5 | ScienceDirect (Computer Science Review) | From vectors to knowledge graphs: a comprehensive analysis of modern RAG architectures |
-| B6 | ScienceDirect (Applied Soft Computing) | How can the integration of AI LLMs and knowledge graph enhance fault diagnosis? A systematic literature review |
-| C5 | IEEE Xplore | DiagAgent: Power Equipment Fault Diagnosis by Integrating RAG and MCP Tools |
-| C6 | IEEE/S2 | FaultSeer: An Agentic RAG Framework for Defect Analysis in Power Systems |
-| D1 | IEEE Xplore | A LLM-assisted Fault Diagnosis Framework for Power Equipment in New Power Systems |
-| D2 | IEEE Xplore | Oil-Immersed Transformer Diagnosis Based on On-Device LLM with Multimodal Sensing and RAG |
-| D3 | Springer | DGA-Based Power Transformer Fault Diagnosis via Knowledge Distillation of LLM（DOI 10.1007/978-981-95-2581-2_22） |
-| D4 | ScienceDirect (Adv. Eng. Informatics) | CausalKGPT: industrial causal knowledge-enhanced LLM for cause analysis |
-| D5 | ScienceDirect | Knowledge extraction and RAG for maintenance of wind power equipment based on graph attention networks |
-| E1 | Elsevier/NSTL | DOI 10.1016/j.epsr.2022.109064（EPSR 216:109064）；无 SD 权限可用 NSTL 文献传递 |
+| 清单 | 出处 | 检索词/DOI | 状态 |
+|---|---|---|---|
+| A6 | IEEE Xplore | A Comprehensive Review on the Application of LLMs in Power Systems (2025) | ✅ 已获取 |
+| A7 | 知网/万方 | 《电力设备运维中人工智能大模型应用》中国工程科学 2025,27(1):180-192 | ✅ 已获取 |
+| B5 | ScienceDirect (Computer Science Review) | From vectors to knowledge graphs: a comprehensive analysis of modern RAG architectures | ✅ 已获取 |
+| B6 | ScienceDirect (Applied Soft Computing) | How can the integration of AI LLMs and knowledge graph enhance fault diagnosis? A systematic literature review | ✅ 已获取 |
+| C5 | IEEE Xplore | DiagAgent: Power Equipment Fault Diagnosis by Integrating RAG and MCP Tools | ✅ 已获取 |
+| C6 | IEEE/S2 | FaultSeer: An Agentic RAG Framework for Defect Analysis in Power Systems | ✅ 已获取 |
+| D1 | IEEE Xplore | A LLM-assisted Fault Diagnosis Framework for Power Equipment in New Power Systems | ✅ 已获取 |
+| D2 | IEEE Xplore | Oil-Immersed Transformer Diagnosis Based on On-Device LLM with Multimodal Sensing and RAG | ✅ 已获取 |
+| D3 | Springer | DGA-Based Power Transformer Fault Diagnosis via Knowledge Distillation of LLM（DOI 10.1007/978-981-95-2581-2_22） | 🔒 待获取 |
+| D4 | ScienceDirect (Adv. Eng. Informatics) | CausalKGPT: industrial causal knowledge-enhanced LLM for cause analysis | ✅ 已获取 |
+| D5 | ScienceDirect | Knowledge extraction and RAG for maintenance of wind power equipment based on graph attention networks | ✅ 已获取 |
+| E1 | Elsevier/NSTL | DOI 10.1016/j.epsr.2022.109064（EPSR 216:109064）；无 SD 权限可用 NSTL 文献传递 | 🔒 待获取 |
 
 ## 四、必读与阅读状态（原《必读清单速查》）
 
