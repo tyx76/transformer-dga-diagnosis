@@ -1,5 +1,4 @@
-﻿#| `vector_kb/cli.py` | **`generate(question: str, chunks: list[dict]) -> str`**（DeepSeek `deepseek-chat`，temperature=0.1、max_tokens=800；chunks 为空不调 API） | ✅ **已实现（09-14）** | 与 `retrieve()` 组合成 `ask` 命令；需 `DEEPSEEK_API_KEY` |
- 开发日志与日程
+# 开发日志与日程
 
 > 由《开发日志与日程》《主干阶段日程与日志》合并。
 > 更新：2026-09-11 ｜ 主干阶段：09-12 → 09-26
@@ -37,7 +36,8 @@
 
 - 知识库：成员第三版审核通过（有条件），整改后并入 `vector_kb/`——normative（722 判据表）5 块 + reference（572 条款）118 块，bge-m3 1024 维；补 `cli.py` 与两份输入 JSONL；WAL 与绝对路径已清理；本地向量库与 572 派生文本按版权规则不入库。
 
-- 代码：ector_kb/cli.py 新增 `query` 子命令（语义检索 Top-k，输出 doc_id/clause/title/page/text；低于阈值拒答；Ollama 不可用有明确提示）。离线用合成向量库验证排序/拒答/字段输出；本机无 Ollama，真实查询需在装有 bge-m3 的机器上跑。
+- 代码：
+ector_kb/cli.py 新增 `query` 子命令（语义检索 Top-k，输出 doc_id/clause/title/page/text；低于阈值拒答；Ollama 不可用有明确提示）。离线用合成向量库验证排序/拒答/字段输出；本机无 Ollama，真实查询需在装有 bge-m3 的机器上跑。
 
 ## 二、日程记录（倒排）
 
@@ -246,6 +246,7 @@ git push
 | `scripts/match_rules.py` | `match(query, rules)` / CLI（现象 → 处置规则） | ✅ 可用 | 迁入 `tools/`，算法升级为 jieba + BM25 |
 | `vector_kb/cli.py` | `ingest(jsonl, collection)` / `info` | ✅ 可用 | 保留为知识库构建入口 |
 | `vector_kb/cli.py` | **`retrieve(question, top_k=3, min_score=0.35, db=DB_DEFAULT) -> list[dict]`**（含 doc_id/clause/title/text/page/score/citation） | ✅ **已实现（09-14，P0 修复）** | CLI 的 `query()` 仅负责打印；722 判据表已带页码，572 页码待补 |
+| `vector_kb/cli.py` | **`generate(question: str, chunks: list[dict]) -> str`**（DeepSeek `deepseek-chat`，temperature=0.1、max_tokens=800；chunks 为空不调 API） | ✅ **已实现（09-14）** | 与 `retrieve()` 组合成 `ask` 命令；需 `DEEPSEEK_API_KEY` |
 
 ### 三、过程产物（阶段二重构入工具库，不保留原脚本形态）
 | 脚本 | 性质 | 处置 |
