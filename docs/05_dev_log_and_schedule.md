@@ -1,7 +1,7 @@
 # 开发日志与日程
 
 > 由《开发日志与日程》《主干阶段日程与日志》合并。
-> 更新：2026-09-11 ｜ 主干阶段：09-12 → 09-26
+> 更新：2026-09-14 ｜ 主干阶段：09-12 → 09-26
 
 > 考核要求（技术向）：GitHub 仓库需含**开发日志与日程记录**。本文档每完成一个阶段就追加一条，格式：日期 ｜ 做了什么 ｜ 遇到什么问题 ｜ 下一步。
 > 仓库：https://github.com/tyx76/transformer-dga-diagnosis
@@ -24,20 +24,26 @@
 - 脚本：修复规则匹配原型 `scripts/match_rules.py`（适配规则库 schema，中文关键词匹配，未命中即拒答）；`scripts/env_check.py` 保留为环境自检。
 - 文档：docs/00–06 状态同步；新增本开发日志。
 
-- 数据：下载公开 DGA 故障样本 4 个数据集 → data/samples/dga_samples.csv（3466 条，7 类故障标签）；脚本 scripts/build_sample_dataset.py；scripts/summarize_samples.py 用于统计。
+### 2026-09-11
+- 数据：下载公开 DGA 故障样本 4 个数据集 → `data/samples/dga_samples.csv`（3466 条，7 类标签）；脚本 `scripts/build_sample_dataset.py`、`scripts/summarize_samples.py`。
+- 数据：统一样本量纲为 μL/L → `data/samples/dga_samples_uL_per_L.csv`；修正 sguys99 解析（原 556 条几乎全空）；脚本 `scripts/unify_sample_units.py`。
+- 规则：成员2 人工核对 DL/T 722-2014 表6/表7 → 规则库 v0.3（VERIFIED）；新增 `scripts/dga_ratio.py`；规则基线 61.8%（docs/04）。
+- 数据：从规则库 v0.3 导出判据表语料（表3/表4/表6/表7 + CO2/CO）→ `data/corpus/DLT-722-2014_criteria_tables.txt` 与 `..._blocks.jsonl`。
+- 规范：切条与元数据规范初版 → `docs/07_chunking_and_metadata_spec.md`。
+- 知识库：成员第三版知识库审核通过（有条件），整改后并入 `vector_kb/`（normative 5 + reference 118，bge-m3 1024 维）；补 `cli.py` 与输入 JSONL；清理 WAL 与绝对路径；本地向量库与 572 派生文本不入库。
+- 代码：`vector_kb/cli.py` 新增 `query` 子命令（Top-k、阈值拒答、字段输出）；离线验证；真实查询需装有 bge-m3 的机器。
 
-- 数据：统一样本量纲（全部 μL/L）→ `data/samples/dga_samples_uL_per_L.csv`（3466 条）；修正 sguys99 解析；脚本 `scripts/unify_sample_units.py`。`n`n- 规则：成员2 人工核对 DL/T 722-2014 表6/表7（Excel）→ 规则库 v0.3（VERIFIED）；新增 `scripts/dga_ratio.py`；规则基线评测 61.8%（docs/04）。
+### 2026-09-13
+- 工程：项目内部路径全部英文化（`data/{corpus,rules,samples}`、`vector_kb/`、`literature/`、docs 文件名与 `docs/notes/`）；同步更新引用与 `.gitignore`；清理空目录与残留缓存。
+- 规划：新增「阶段交接与下一阶段补充」——本阶段留给下一阶段的**代码资产只有接口**，其余脚本为过程产物、需重构入工具库；脚本顶部统一加 `[阶段交接]` 注释。
+- 修复：脚本内分段中文路径（`"data" / "规则库"`）改为英文；统一去除 BOM、规整注释顺序；全部脚本恢复可运行。
 
-> 主干阶段（09-12 → 09-26）的详细日程、分工、检查点与日志模板见 `docs/05_主干阶段_日程与日志.md`。
-
-#- 数据：从规则库 v0.3 导出「DL/T 722 判据表语料」——表3 注意值、表4 产气速率、表6 编码、表7 故障类型、CO2/CO 判据；输出 `data/corpus/DLT-722-2014_criteria_tables.txt` 与 `..._blocks.jsonl`。
-
-- 规范：切条与元数据规范初版完成 → `docs/07_chunking_and_metadata_spec.md`（字段定义 / 条号书写 / 切分粒度 / 入库校验 / 10 条踩坑规避 / 验收标准）。
-
-- 知识库：成员第三版审核通过（有条件），整改后并入 `vector_kb/`——normative（722 判据表）5 块 + reference（572 条款）118 块，bge-m3 1024 维；补 `cli.py` 与两份输入 JSONL；WAL 与绝对路径已清理；本地向量库与 572 派生文本按版权规则不入库。
-
-- 代码：
-ector_kb/cli.py 新增 `query` 子命令（语义检索 Top-k，输出 doc_id/clause/title/page/text；低于阈值拒答；Ollama 不可用有明确提示）。离线用合成向量库验证排序/拒答/字段输出；本机无 Ollama，真实查询需在装有 bge-m3 的机器上跑。
+### 2026-09-14
+- 代码（P0）：抽出可复用 `retrieve(question, top_k=3, min_score=0.35, db=DB_DEFAULT) -> list[dict]`（含 doc_id/clause/title/text/page/score/citation）；`query()` 仅负责打印；检索过滤 `clause` 为空的块；入库白名单加入 `page`。
+- 数据（P0）：722 判据表补**原文页码**（表3=8、表4=9、表6/表7=10、CO2-CO=11），同步 JSONL、txt 与现有向量库 meta（保留原向量，未重跑 Ollama）。
+- 代码（生成）：新增 `generate(question, chunks) -> str`（DeepSeek `deepseek-chat`、temperature=0.1、max_tokens=800；`chunks` 为空不调 API，返回「资料未覆盖，无法回答」）；新增 `ask` 子命令（检索 + 生成）。
+- 验收：P0 与生成接口均离线验收通过（桩 embed / 桩 HTTP）；`retrieve()` 未改动。
+- 待办：572 参考库页码待补；embedding 配置参数化（P2）；`main.py` 端到端与评测未开始；真实 DeepSeek 调用需本机 `DEEPSEEK_API_KEY`。
 
 ## 二、日程记录（倒排）
 
@@ -45,15 +51,18 @@ ector_kb/cli.py 新增 `query` 子命令（语义检索 Top-k，输出 doc_id/cl
 |---|---|---|---|
 | literature/标准准备 | 09-09–09-15 | 文献编号归档、标准核验、必读清单 | ✅ 基本完成 |
 | 精读 + 任务一综述 | 09-16–09-22 | 读 6–8 篇必读 → 综述正文（现状+路线对比） | ⏳ |
-| 任务二知识库 | 09-23–09-30 | 722 表6/7 录入；语料清洗入库（Chroma）；Agent 工作流设计 | ⏳ |
+| 任务二知识库 | 09-23–09-30 | 722 表6/7 录入；语料清洗入库（SQLite 向量库）；Agent 工作流设计 | ⏳ |
 | 最小原型 | 10-01–10-10 | 跑通"异常输入→检索→根因报告"；评测（TC10/案例） | ⏳ |
 | 提交 | 10-11 | GitHub 仓库整理：架构文档/原型/使用说明/日志/日程 | ⏳ |
 | 评比 | 10-12–10-16 | 集中评比（技术向不答辩） | ⏳ |
 
 ### 三、当前卡点
-1. 722 表6/表7 编码需人工按原 PDF 第 7–10 页录入（OCR 对小字数字不可靠）；
-2. C5 DiagAgent 等导师资源；付费文献走校园库；
-3. `sentence-transformers`（HF Embedding，含 torch）未安装，做向量检索前需安装。
+1. 572 参考库页码未记录（检索输出显示「（未记录）」），需按原 PDF 补页码映射；
+2. 本机无 Ollama / 无 DEEPSEEK_API_KEY：真实检索与生成需在有环境的机器上跑一次并存档；
+3. `main.py` 端到端与评测（检索命中率、引用正确率）尚未开始；
+4. embedding 配置仍为全局常量，待参数化（P2，便于换模型/测试）；
+5. 阶段二语料：572 表格结构化、GB 26860 摘录、中文故障案例。
+
 ### 四、Git 提交与推送约定（团队规范，2026-09-10 定）
 
 **总原则：本地小步提交，远程按段推送。** 提交是为了能回滚，推送是为了备份与协作——不必一点进度就 push。
@@ -117,11 +126,11 @@ git push
 - 审核：成员提交包 chroma_db.zip **未通过验收**（无条号元数据、分块差、不可复现、中文 FTS 失效），审核结论见待审核目录。
 - Git：本地领先 origin/main 4 个提交，**暂不 push**。
 
-## 附：主干阶段日程与日志（原 docs/05）
+## 附：主干阶段日程与日志（原《主干阶段日程与日志》）
 
 > 阶段定义：把系统最窄的一条闭环跑通——**按条切块（带条号）→ 向量入库 → 检索 → 生成带引用的报告**。
 > 验收标准（硬指标）：输入「乙炔超标该怎么处理」→ 能检索到 **DL/T 722-2014 第 9.3 节（注意值）与第 10.2 节（三比值法）** 相关条文，输出报告并**明确标注条号**；知识库未覆盖时**拒答**，不臆测。
-> 编写日期：2026-09-11 ｜ 关联：docs/00（总状态）、docs/04（方案）、docs/05（总日志）、docs/04（规则基线）
+> 编写日期：2026-09-11（09-14 更新）｜ 关联：docs/00（总状态）、docs/04（方案与评测）、docs/07（切条规范）
 
 ---
 
