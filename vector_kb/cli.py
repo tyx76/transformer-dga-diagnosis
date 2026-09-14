@@ -9,10 +9,11 @@
     python cli.py ingest 语料/clauses.jsonl --collection normative --dry-run   # 不调 Ollama，写零向量（自测）
     python cli.py info
     python cli.py query "乙炔超标该怎么处理"   # 语义检索 Top-3
+    python cli.py ask "乙炔超标该怎么处理"     # 检索 + DeepSeek 生成（需 DEEPSEEK_API_KEY）
 
 依赖：Python 3.10+（仅标准库）；Ollama 服务 + bge-m3:latest（真实入库时需要）
 """
-import argparse, datetime, hashlib, json, sqlite3, sys, urllib.request
+import argparse, datetime, hashlib, json, os, re, sqlite3, sys, urllib.request
 from array import array
 from pathlib import Path
 
@@ -26,6 +27,14 @@ DB_DEFAULT = ROOT / "knowledge.db"
 OLLAMA = "http://localhost:11434"
 MODEL = "bge-m3:latest"
 DIM = 1024
+DEEPSEEK_API_BASE = os.environ.get("DEEPSEEK_API_BASE", "https://api.deepseek.com")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+SYSTEM_PROMPT = (
+    "你是电力变压器故障诊断专家。请严格基于提供的规程条文回答。"
+    "每条结论必须标注依据，格式为【依据：doc_id 第clause条】。"
+    "如果条文无法回答问题，直接回复“资料未覆盖”，不要编造。"
+    "不要给出规程之外的处置建议。"
+)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS documents (
@@ -259,6 +268,101 @@ def query(args):
             print("      " + line)
     print("-" * 64)
 
+
+def _load_env():
+    """读取 DEEPSEEK_API_KEY：优先环境变量，其次项目根/.env（标准库解析，不引入依赖）。"""
+    key = os.environ.get("DEEPSEEK_API_KEY")
+    if key:
+        return key.strip()
+    for cand in (ROOT / ".env", ROOT.parent / ".env"):
+        if not cand.exists():
+            continue
+        try:
+            for line in cand.read_text(encoding="utf-8-sig").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                if k.strip() == "DEEPSEEK_API_KEY":
+                    return v.strip().strip('"').strip("'")
+        except Exception:
+            pass
+    return ""
+
+def _cite(doc_id, clause):
+    """依据标注（通用规则，非问题硬编码）：数字条号补“条”，含表号的条号保留原样。"""
+    doc = str(doc_id or "").strip()
+    c = str(clause or "").strip()
+    if not c:
+        return doc
+    if c[0].isdigit():
+        return f"{doc} 第{c}条" if re.fullmatch(r"[0-9.]+", c) else f"{doc} 第{c}"
+    return f"{doc} {c}"
+
+def build_context(chunks: list[dict]) -> str:
+    """把 retrieve() 结果拼成参考上下文（对任意问题/任意 chunks 通用）。"""
+    parts = []
+    for c in chunks or []:
+        doc = c.get("doc_id") or ""
+        clause = c.get("clause") or ""
+        text = str(c.get("text") or "").strip()
+        parts.append(f"【依据：{_cite(doc, clause)}】{text}")
+    return "\n\n".join(parts)
+
+def generate(question: str, chunks: list[dict]) -> str:
+    """基于检索条文调用 DeepSeek 生成回答。
+
+    - chunks 为空：不调用 API，直接返回“资料未覆盖，无法回答”；
+    - 无 API Key / 调用失败：抛 RuntimeError（由调用方提示）。
+    """
+    if not chunks:
+        return "资料未覆盖，无法回答"
+    context = build_context(chunks)
+    key = _load_env()
+    if not key:
+        raise RuntimeError("未找到 DEEPSEEK_API_KEY（请设置环境变量或写入项目根目录 .env）")
+    payload = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": f"参考条文：\n{context}\n\n问题：{question}"},
+        ],
+        "temperature": 0.1,
+        "max_tokens": 800,
+    }
+    req = urllib.request.Request(
+        f"{DEEPSEEK_API_BASE}/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        raise RuntimeError(f"DeepSeek API 调用失败：{e}") from e
+    try:
+        return data["choices"][0]["message"]["content"]
+    except Exception as e:
+        raise RuntimeError(f"DeepSeek 返回格式异常：{data}") from e
+
+def ask(args):
+    """CLI：检索 → 生成 → 打印（对任意问题通用）。"""
+    try:
+        hits = retrieve(args.question, args.top_k, args.min_score, args.db)
+    except RuntimeError as e:
+        print(f"检索失败：{e}")
+        return
+    if args.show_sources:
+        print(f"检索到 {len(hits)} 条条文：")
+        for h in hits:
+            print(f"  - {_cite(h.get('doc_id'), h.get('clause'))}  {h.get('title') or ''}")
+    try:
+        answer = generate(args.question, hits)
+    except RuntimeError as e:
+        print(f"生成失败：{e}")
+        return
+    print(answer)
+
 def main():
     ap = argparse.ArgumentParser(description="知识库 CLI（SQLite + Ollama bge-m3）")
     ap.add_argument("--db", default=str(DB_DEFAULT), help="数据库路径，默认 ./knowledge.db")
@@ -280,6 +384,12 @@ def main():
     r.add_argument("--top-k", type=int, default=3, help="返回条数，默认 3")
     r.add_argument("--min-score", type=float, default=0.35, help="余弦相似度阈值，默认 0.35")
     r.set_defaults(func=query)
+    s = sub.add_parser("ask", help="检索 + DeepSeek 生成回答（强制标注依据）")
+    s.add_argument("question", help="问题文本，如：乙炔超标该怎么处理")
+    s.add_argument("--top-k", type=int, default=3, help="检索条数，默认 3")
+    s.add_argument("--min-score", type=float, default=0.35, help="余弦相似度阈值，默认 0.35")
+    s.add_argument("--show-sources", action="store_true", help="先打印检索到的条文")
+    s.set_defaults(func=ask)
 
     args = ap.parse_args()
     args.func(args)

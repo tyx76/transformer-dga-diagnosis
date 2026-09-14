@@ -91,3 +91,24 @@ hits = retrieve("乙炔超标该怎么处理", top_k=3, min_score=0.35)   # -> l
 - 无命中或全部低于阈值 → 返回 `[]`；
 - Embedding/数据库不可用 → 抛 `RuntimeError`（由调用方提示）；
 - 检索自动过滤 `clause` 为空的块。
+## 生成接口（DeepSeek）
+
+```powershell
+# 检索 + 生成（需 DEEPSEEK_API_KEY）
+python cli.py ask "乙炔超标该怎么处理"
+
+# 打印检索到的条文后再给回答
+python cli.py ask "乙炔超标该怎么处理" --show-sources --top-k 3
+```
+
+作为库调用：
+```python
+from cli import retrieve, generate
+answer = generate("乙炔超标该怎么处理", retrieve("乙炔超标该怎么处理"))
+```
+
+- **chunks 为空时不调用 API**，直接返回「资料未覆盖，无法回答」；
+- 调用参数：`deepseek-chat`、`temperature=0.1`、`max_tokens=800`；
+- 参考上下文格式：`【依据：{doc_id} 第{clause}条】{text}`（表号类条号保留原样，如 `第9.3.2-表4`）；
+- 配置：`DEEPSEEK_API_KEY`（必填，可写入项目根目录 `.env`，标准库解析、不引入依赖）；可选 `DEEPSEEK_API_BASE`、`DEEPSEEK_MODEL`；
+- API Key 缺失或调用失败 → 抛 `RuntimeError`（CLI 会提示，不会静默失败）。

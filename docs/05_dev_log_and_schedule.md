@@ -1,4 +1,5 @@
-﻿# 开发日志与日程
+﻿#| `vector_kb/cli.py` | **`generate(question: str, chunks: list[dict]) -> str`**（DeepSeek `deepseek-chat`，temperature=0.1、max_tokens=800；chunks 为空不调 API） | ✅ **已实现（09-14）** | 与 `retrieve()` 组合成 `ask` 命令；需 `DEEPSEEK_API_KEY` |
+ 开发日志与日程
 
 > 由《开发日志与日程》《主干阶段日程与日志》合并。
 > 更新：2026-09-11 ｜ 主干阶段：09-12 → 09-26
