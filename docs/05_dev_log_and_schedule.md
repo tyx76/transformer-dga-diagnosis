@@ -44,6 +44,7 @@
 - 代码（生成）：新增 `generate(question, chunks) -> str`（DeepSeek `deepseek-chat`、temperature=0.1、max_tokens=800；`chunks` 为空不调 API，返回「资料未覆盖，无法回答」）；新增 `ask` 子命令（检索 + 生成）。
 - 验收：P0 与生成接口均离线验收通过（桩 embed / 桩 HTTP）；`retrieve()` 未改动。
 - 待办：572 参考库页码待补；embedding 配置参数化（P2）；`main.py` 端到端与评测未开始；真实 DeepSeek 调用需本机 `DEEPSEEK_API_KEY`。
+- 技术债：`vector_kb/cli.py` 当前将 embedding、SQLite、检索、生成和 CLI 混在同一文件中；原型阶段先保持不动，阶段二按模块拆分，避免在闭环刚跑通时重构。
 
 - 生成：HTTP 错误码友好化——401（API Key 无效/未设置）、402（余额不足）、403/404、429（限流）、5xx（服务端异常）、网络错误分别给出中文提示，便于现场定位。
 - 验收（实跑）：`python vector_kb\cli.py ask "乙炔超标该怎么处理" --show-sources` 跑通——命中 722 表3/表4 等 3 条，模型因条文未含处置措施而正确拒答；原始输出存档于 `docs/08_acceptance_record.md`。
@@ -275,6 +276,7 @@ git push
 5. **加分模块**：混合检索（关键词+向量）、重排、路由（规则/向量）、自省纠错、引用校验；
 6. **评测**：检索命中率、引用正确率，并与规则基线 61.8%（docs/04）对比；
 7. **端到端**：`main.py` + 使用说明 + 演示材料。
+8. **技术债：拆分 `vector_kb/cli.py`**：将 embedding、存储、检索、生成和 CLI 分层为 `embeddings.py`、`store.py`、`retrieval.py`、`generation.py`、`cli.py`，保留现有接口兼容；安排在主干闭环稳定后执行。
 
 ### 五、防遗忘约定
 - 相关脚本顶部已加 `[阶段交接]` 注释，标明「接口保留」或「过程产物 → 重构入工具库」；
