@@ -73,9 +73,21 @@ python cli.py query "油温过高" --top-k 5 --min-score 0.4
 输出每条均含：`doc_id / clause / title / page / text`（有 citation 时一并打印）。
 - 若检索结果为空或全部低于阈值（默认 0.35），输出：**未在知识库中检索到相关条文，无法提供建议**；
 - 若本机未启动 Ollama，会提示 `ollama pull bge-m3` 与启动服务；
-- ⚠️ **`page` 目前未记录**：入库语料未带页码，命令会显示「（元数据未记录）」；如需满足"输出页码"，需在切条/入库时补 `page` 字段。
+- **`page` 状态**：722 判据表已带**原文页码**（表3=8、表4=9、表6/表7=10、CO2/CO=11）；572 参考库暂未记录页码（显示「（未记录）」），待补。
 
 ## 实现说明（与 AGENTS.md 技术栈的差异）
 - 本知识库为 **SQLite 向量库**（`chunks.vector` 存 float32），非 Chroma；
 - Embedding 走 **Ollama `bge-m3:latest`**（1024 维、L2 归一化），非 bge-small-zh / HuggingFace；
 - 若需严格对齐 AGENTS.md 的「Chroma + HuggingFace Embedding」，需单独改造 `cli.py` 的存储与嵌入层。
+## 作为库函数调用（供 Agent / 报告层复用）
+```python
+import sys
+sys.path.insert(0, "vector_kb")
+from cli import retrieve
+
+hits = retrieve("乙炔超标该怎么处理", top_k=3, min_score=0.35)   # -> list[dict]
+# 每项字段：doc_id / clause / title / text / page / score / citation
+```
+- 无命中或全部低于阈值 → 返回 `[]`；
+- Embedding/数据库不可用 → 抛 `RuntimeError`（由调用方提示）；
+- 检索自动过滤 `clause` 为空的块。

@@ -244,7 +244,7 @@ git push
 | `scripts/dga_ratio.py` | `judge(gases)` / CLI（气体 → 编码 → 故障类型） | ✅ 可用 | 迁入 `tools/`，补单元测试 |
 | `scripts/match_rules.py` | `match(query, rules)` / CLI（现象 → 处置规则） | ✅ 可用 | 迁入 `tools/`，算法升级为 jieba + BM25 |
 | `vector_kb/cli.py` | `ingest(jsonl, collection)` / `info` | ✅ 可用 | 保留为知识库构建入口 |
-| `vector_kb/cli.py` | `query(question, top_k, min_score)` → 条文 + 条号 | ✅ **已实现（09-13）** | 供 Agent/报告层调用；`page` 待补 |
+| `vector_kb/cli.py` | **`retrieve(question, top_k=3, min_score=0.35, db=DB_DEFAULT) -> list[dict]`**（含 doc_id/clause/title/text/page/score/citation） | ✅ **已实现（09-14，P0 修复）** | CLI 的 `query()` 仅负责打印；722 判据表已带页码，572 页码待补 |
 
 ### 三、过程产物（阶段二重构入工具库，不保留原脚本形态）
 | 脚本 | 性质 | 处置 |

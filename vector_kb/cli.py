@@ -8,6 +8,7 @@
     python cli.py ingest 语料/DLT-572-2021_clauses.jsonl --collection reference --force
     python cli.py ingest 语料/clauses.jsonl --collection normative --dry-run   # 不调 Ollama，写零向量（自测）
     python cli.py info
+    python cli.py query "乙炔超标该怎么处理"   # 语义检索 Top-3
 
 依赖：Python 3.10+（仅标准库）；Ollama 服务 + bge-m3:latest（真实入库时需要）
 """
@@ -141,7 +142,7 @@ def ingest(args):
 
     for idx, (it, text, vec) in enumerate(zip(items, texts, vectors)):
         meta = {k: it.get(k) for k in ("block_type", "doc_id", "clause", "title",
-                                       "chunk_id", "citation", "section") if it.get(k)}
+                                       "chunk_id", "citation", "section", "page") if it.get(k)}
         meta.setdefault("doc_id", doc_id)
         cur.execute("""INSERT INTO chunks
             (document_id, chunk_index, text, char_start, char_end, vector, dim, meta)
@@ -174,57 +175,87 @@ def _cosine(a, b):
     return s / (na * nb)
 
 def _load_vectors(con):
-    """读出所有块及其向量/元数据。"""
+    """读出所有块及其向量/元数据；过滤 clause 为空的块（规范要求检索结果必带条号）。"""
     out = []
     for r in con.execute("SELECT id, document_id, text, vector, dim, meta FROM chunks"):
-        try:
-            vec = array("f"); vec.frombytes(r[3]); vec = list(vec)
-        except Exception:
-            continue
         try:
             meta = json.loads(r[5]) if r[5] else {}
         except Exception:
             meta = {}
-        out.append({"id": r[0], "doc_id": r[1], "text": r[2], "vec": vec, "dim": r[4], "meta": meta})
+        if not meta.get("clause"):
+            continue
+        try:
+            vec = array("f"); vec.frombytes(r[3]); vec = list(vec)
+        except Exception:
+            continue
+        out.append({"id": r[0], "doc_id": meta.get("doc_id") or r[1], "text": r[2],
+                    "vec": vec, "dim": r[4], "meta": meta})
     return out
 
-def query(args):
-    """语义检索：embed(question) -> 余弦 Top-k -> 打印条文与元数据。"""
-    con = connect(args.db)
-    chunks = _load_vectors(con)
-    con.close()
-    if not chunks:
-        print("知识库为空：请先用 ingest 入库。")
-        return
+def retrieve(question: str, top_k: int = 3, min_score: float = 0.35, db: str = DB_DEFAULT) -> list[dict]:
+    """语义检索（可复用接口）。
+
+    返回 list[dict]，每项含：doc_id / clause / title / text / page / score / citation。
+    - 自动过滤 clause 为空的块；
+    - 无命中或全部低于 min_score 时返回空列表 []；
+    - Embedding 或数据库不可用时抛 RuntimeError（由调用方决定提示方式）。
+    """
+    top_k = max(1, int(top_k))
     try:
-        qvec = embed([args.question])[0]
+        con = connect(db)
+        chunks = _load_vectors(con)
+        con.close()
     except Exception as e:
-        print(f"无法调用本地 Embedding（Ollama {OLLAMA} / 模型 {MODEL}）：{e}")
-        print("请确认：1) ollama 服务已启动；2) 已执行 ollama pull bge-m3")
-        return
+        raise RuntimeError(f"数据库不可用（{db}）：{e}") from e
+    if not chunks:
+        return []
+    try:
+        qvec = embed([question])[0]
+    except Exception as e:
+        raise RuntimeError(f"embedding unavailable: {e}") from e
 
     scored = [(_cosine(qvec, c["vec"]), c) for c in chunks]
     scored.sort(key=lambda x: x[0], reverse=True)
-    hits = [(s, c) for s, c in scored[: args.top_k] if s >= args.min_score]
+    hits = []
+    for score, c in scored[:top_k]:
+        if score < min_score:
+            continue
+        m = c["meta"]
+        hits.append({
+            "doc_id": m.get("doc_id") or c["doc_id"],
+            "clause": m.get("clause"),
+            "title": m.get("title") or "",
+            "text": c["text"],
+            "page": m.get("page"),
+            "score": score,
+            "citation": m.get("citation") or "",
+        })
+    return hits
+
+def query(args):
+    """CLI 层：调用 retrieve()，只负责格式化打印。"""
+    try:
+        hits = retrieve(args.question, args.top_k, args.min_score, args.db)
+    except RuntimeError as e:
+        print(f"无法调用本地 Embedding/数据库（Ollama {OLLAMA} / 模型 {MODEL}）：{e}")
+        print("请确认：1) ollama 服务已启动；2) 已执行 ollama pull bge-m3；3) 数据库路径正确")
+        return
     if not hits:
         print("未在知识库中检索到相关条文，无法提供建议")
         return
-
     print(f"问题：{args.question}")
     print(f"检索到 {len(hits)} 条相关条文（余弦相似度 ≥ {args.min_score}）：")
-    for i, (score, c) in enumerate(hits, 1):
-        m = c["meta"]
-        page = m.get("page")
+    for i, h in enumerate(hits, 1):
         print("-" * 64)
-        print(f"[{i}] 相似度 {score:.4f}")
-        print(f"    doc_id : {m.get('doc_id') or c['doc_id']}")
-        print(f"    clause : {m.get('clause') or '（未记录）'}")
-        print(f"    title  : {m.get('title') or '（未记录）'}")
-        print(f"    page   : {page if page not in (None, '') else '（元数据未记录）'}")
-        if m.get("citation"):
-            print(f"    citation: {m['citation']}")
+        print(f"[{i}] 相似度 {h['score']:.4f}")
+        print(f"    doc_id : {h['doc_id']}")
+        print(f"    clause : {h['clause'] or '（未记录）'}")
+        print(f"    title  : {h['title'] or '（未记录）'}")
+        print(f"    page   : {h['page'] if h['page'] not in (None, '') else '（未记录）'}")
+        if h["citation"]:
+            print(f"    citation: {h['citation']}")
         print("    text   :")
-        for line in str(c["text"]).splitlines():
+        for line in str(h["text"]).splitlines():
             print("      " + line)
     print("-" * 64)
 
