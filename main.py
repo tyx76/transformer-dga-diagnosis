@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""项目端到端统一入口：检索（retrieve）+ 生成（generate）。
+"""项目端到端统一入口：混合检索（hybrid_retrieve）+ 生成（generate）。
 
 用法：
     python main.py "乙炔超标该怎么处理"     # 单次问答
     python main.py                          # 交互模式（输入 exit 退出）
 
-说明：检索与生成直接复用 vector_kb/cli.py 中的 retrieve() / generate()，不重复实现。
+说明：检索复用 vector_kb/hybrid_retriever.py 中的 hybrid_retrieve()，生成复用 vector_kb/generation.py 中的 generate()，不重复实现。
 """
 import sys
 
-from vector_kb.cli import retrieve, generate
+from vector_kb.hybrid_retriever import hybrid_retrieve
+from vector_kb.generation import generate
 
 
 def ask(question: str) -> str:
@@ -19,7 +20,7 @@ def ask(question: str) -> str:
     - 不读写全局状态；
     - chunks 为空时不调用生成 API。
     """
-    chunks = retrieve(question)
+    chunks = hybrid_retrieve(question, top_k=5)
     if not chunks:
         return "资料未覆盖，无法回答"
     return generate(question, chunks)

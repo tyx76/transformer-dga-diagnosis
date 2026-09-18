@@ -26,3 +26,7 @@ rapidocr-onnxruntime==1.2.3
 numpy==2.5.3
 requests==2.34.2
 python-dotenv==1.2.3
+
+# --- 关键词检索 ---
+jieba==0.42.1
+rank-bm25==0.2.2

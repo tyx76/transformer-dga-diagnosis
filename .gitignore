@@ -41,4 +41,4 @@ vector_kb/knowledge.db-*
 vector_kb/corpus/DLT-572-2021_clauses.jsonl
 vector_kb/materials/*
 !vector_kb/materials/.gitkeep
-
+vector_kb/bm25_index.pkl
