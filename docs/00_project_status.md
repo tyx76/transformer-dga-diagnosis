@@ -1,4 +1,4 @@
-# 项目状态与进度总览（单点真相）
+﻿# 项目状态与进度总览（单点真相）
 
 > 更新：2026-09-18 ｜ 维护：全队每周对表时同步 ｜ 文档编号为 00–10（旧编号对照见文末）
 
@@ -71,6 +71,7 @@ python main.py
 | 统一语料 | `data/corpus/clauses.jsonl`，123 条（722 判据 5 + 572 条款 118） | ✅ 本地生成，不入库 |
 | 统一脚本 | `scripts/build_unified_corpus.py` | ✅ |
 | 向量库 | `vector_kb/knowledge.db`，123 块，bge-m3 1024 维 | ✅ 本地资产 |
+| 纯知识库候选 | `pure_kb/`，198 条、六领域、纯 domains/filters API | ✅ 已落位，未接入 main |
 | 向量检索 | `vector_kb/retrieval.py` | ✅ |
 | BM25 | `vector_kb/bm25_retriever.py` + `bm25_index.pkl` | ✅ v2，源文件变化自动重建 |
 | RRF | `vector_kb/rrf_fusion.py` | ✅ |
@@ -118,6 +119,7 @@ python main.py
 | P1 | 补 722 `9.3.3 / 10.2.4 / 10.3` 正文原则条款 | ⏳ |
 | P1 | 补充 572 页码映射 | ⏳ |
 | P1 | 真实 DeepSeek + Ollama 全链路验收归档到 `docs/08` | ⏳ |
+| P0 | 编写 `knowledge_base_adapter` 并影子接入 `pure_kb` | ⏳ 下一步 |
 | P2 | 引入 C6 FaultSeer 的 Agentic 意图判断与路由 | 暂缓 |
 | P2 | embedding 配置参数化 | 暂缓 |
 | — | KNOWN-002 桩测试误判已撤销：真实 API 验证无问题，不修复 | 已关闭 |

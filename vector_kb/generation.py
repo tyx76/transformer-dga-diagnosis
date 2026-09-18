@@ -22,7 +22,7 @@ SYSTEM_PROMPT = (
 
 def _load_env():
     """读取 DEEPSEEK_API_KEY：优先环境变量，其次项目根目录/.env。"""
-    key = os.environ.get("DEEPSEEK_API_KEY")
+    key = os.getenv("DEEPSEEK_API_KEY")
     if key:
         return key.strip()
     for cand in (ROOT / ".env", ROOT.parent / ".env"):
