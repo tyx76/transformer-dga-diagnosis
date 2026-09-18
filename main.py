@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
 from vector_kb.citation_verifier import (
@@ -18,7 +19,8 @@ from vector_kb.citation_verifier import (
     remove_invalid_citation_sentences,
     verify_citations,
 )
-from vector_kb.retrieval_policy import retrieve_for_main
+from vector_kb.hybrid_retriever import hybrid_retrieve
+from vector_kb.retrieval_router import route_and_retrieve
 from vector_kb.generation import generate
 
 
@@ -82,7 +84,19 @@ def ask(question: str, debug: bool = False) -> str:
     """端到端问答：检索 → 生成 → 引用校验 → 必要时重写。"""
     _trace(debug, "用户问题", _shorten(question))
     _trace(debug, "查询改写结果", "无改写，使用原问题")
-    chunks = retrieve_for_main(question, top_k=5, trace=_retrieval_trace(debug))
+    use_router = os.getenv("USE_ROUTER", "true").strip().lower() == "true"
+    if use_router:
+        chunks = route_and_retrieve(
+            question,
+            top_k=5,
+            trace=_retrieval_trace(debug),
+        )["chunks"]
+    else:
+        chunks = hybrid_retrieve(
+            question,
+            top_k=5,
+            trace=_retrieval_trace(debug),
+        )
     if not chunks:
         final = "资料未覆盖，无法回答"
         _trace(debug, "最终输出", _format_output_summary(final))

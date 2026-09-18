@@ -1,4 +1,4 @@
-# 油浸式电力变压器 DGA 故障根因分析智能体
+﻿# 油浸式电力变压器 DGA 故障根因分析智能体
 
 基于 RAG（检索增强生成）的工业设备故障诊断原型：用户输入故障现象（如“变压器油中乙炔含量超标”），系统从规程知识库中检索依据，由大模型生成**可溯源**的根因分析与处置建议。
 
@@ -13,6 +13,7 @@
 | 能力 | 现状 |
 |---|---|
 | 知识库 | `vector_kb/knowledge.db`，123 块 = normative 5 + reference 118；bge-m3 1024 维 |
+| 检索路由 | `USE_ROUTER=true` 默认启用意图路由 + hybrid + pure_kb；设为 `false` 可直接回退纯 hybrid |
 | 统一语料 | `data/corpus/clauses.jsonl`，本地生成 123 条；由 `scripts/build_unified_corpus.py` 合并 722 判据与 572 运维条款 |
 | 向量检索 | `retrieve(question, top_k=3, min_score=0.45, ...) -> list[dict]`，返回 `doc_id / clause / title / text / page / score / citation` |
 | BM25 检索 | `bm25_retrieve(question, top_k=10)`；jieba 分词、领域词典、化学式下标归一化、索引缓存 |

@@ -69,7 +69,7 @@
 - 纯知识库落位：成员纯知识库迁入项目根目录 `pure_kb/`，198 条、六领域、坏向量 0；数据库本地保留并加入 `.gitignore`。
 - 检索适配器：新增 `vector_kb/knowledge_base_adapter.py`，完成字段归一化、dp 过滤、doc_id+clause 去重和 hybrid + pure_kb RRF 融合。
 - 影子对比（真实 DeepSeek）：7 条关键用例中，A 路 Top-5 命中率 50.00%，B 路 83.33%，提升 33.33 个百分点；两路引用正确率 100%，拒答率 100%，B 路 LLM 兜底 1 次。
-- 灰度策略：主链路接入 `retrieve_for_main()`，默认 `RETRIEVAL_MODE=shadow`，A 路正常返回、B 路后台记录；`gray` 模式按问题哈希放量，异常自动回退 hybrid。
+- 路由开关：主链路使用 `USE_ROUTER` 直接切换；默认 `true` 调用 `route_and_retrieve()`，设置为 `false` 时回退纯 `hybrid_retrieve()`，不做灰度分流。
 
 ## 二、日程记录（倒排）
 
