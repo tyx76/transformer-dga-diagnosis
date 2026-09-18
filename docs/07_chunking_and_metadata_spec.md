@@ -1,4 +1,4 @@
-﻿# 切条与元数据规范（初版 v0.1）
+# 切条与元数据规范（初版 v0.1）
 
 > 日期：2026-09-12 ｜ 适用：DL/T 722-2014、DL/T 572-2021 等规程类语料的切块与入库（主干阶段）
 > 关联：docs/04（任务二方案 P3/P5）、docs/05（主干阶段日程）、`data/corpus/DLT-722-2014_criteria_blocks.jsonl`
@@ -60,9 +60,10 @@
 ```
 
 ## 7. 输出与命名
-- 统一输出：`data/corpus/clauses.jsonl`（每行一个块，UTF-8）
+- 统一输出：`data/corpus/clauses.jsonl`（每行一个块，UTF-8）。当前本地版本共 123 条：722 判据 5 条 + 572 条款 118 条；由 `scripts/build_unified_corpus.py` 合并生成，包含标准正文，按版权约定不入库。
 - 判据表导出：`data/corpus/DLT-722-2014_criteria_blocks.jsonl`（已按本规范生成）
 - 入库后块数必须与 JSONL 行数一致
+- BM25 优先读取统一语料；统一文件缺失时兼容合并 `vector_kb/corpus/clauses.jsonl` 与 `vector_kb/corpus/DLT-572-2021_clauses.jsonl`
 
 ## 8. 已踩过的坑（务必避开）
 | # | 坑 | 后果 | 规避 |

@@ -1,9 +1,7 @@
-﻿# 文献速览与笔记索引
+# 文献速览与笔记索引
 
 > 阅读卡与原始笔记在 docs/notes/：C2_RCAgent_close_reading.md、skimming_cards_non_essential_papers.md、paper_reading_notes.md、template_paper_reading_card.md。
-> 更新：2026-09-11
-
-> 更新：2026-09-11
+> 更新：2026-09-11；2026-09-18 同步文档状态
 
 > 用途：喂给综述"知识增强技术现状"与"Agent 工作流设计依据"。
 > 说明：笔记为**引导性摘要**（据首页+摘要+领域共识整理），细读时以 PDF 原文为准；每篇标注在 docs/01 清单中的用途分组。

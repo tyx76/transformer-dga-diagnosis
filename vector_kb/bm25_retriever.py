@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """BM25 关键词检索层。
 
-该模块独立于现有向量检索主干：读取条文 JSONL，使用 jieba 分词并构建
-BM25 索引，再为 ``bm25_retrieve`` 提供 Top-K 条文结果。
+优先读取统一语料 ``data/corpus/clauses.jsonl``；统一文件尚未生成时，
+兼容合并 722 判据和 572 运行维护两份 JSONL，避免两路检索语料不一致。
 """
 
 from __future__ import annotations
@@ -20,11 +20,12 @@ from rank_bm25 import BM25Okapi
 ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT.parent
 INDEX_DEFAULT = ROOT / "bm25_index.pkl"
+INDEX_VERSION = 2
 
-# 任务指定路径可能尚未落盘；保留项目当前实际语料路径作为兼容回退。
-CORPUS_CANDIDATES = (
-    PROJECT_ROOT / "data" / "corpus" / "clauses.jsonl",
+UNIFIED_CORPUS = PROJECT_ROOT / "data" / "corpus" / "clauses.jsonl"
+FALLBACK_CORPUS_PATHS = (
     ROOT / "corpus" / "clauses.jsonl",
+    ROOT / "corpus" / "DLT-572-2021_clauses.jsonl",
 )
 
 DOMAIN_TERMS = (
@@ -52,7 +53,7 @@ DOMAIN_TERMS = (
 
 _SUBSCRIPT_DIGITS = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
 _DICTIONARY_READY = False
-_INDEX_CACHE: tuple[Path, list[dict[str, Any]], BM25Okapi] | None = None
+_INDEX_CACHE: tuple[Path, tuple[tuple[str, int, int], ...], list[dict[str, Any]], BM25Okapi | None] | None = None
 
 
 def _normalize_text(text: Any) -> str:
@@ -85,50 +86,77 @@ def _tokenize(text: Any) -> list[str]:
     return tokens
 
 
-def _resolve_corpus_path() -> Path:
-    """选择实际存在的条文文件，优先使用任务约定的 data/corpus 路径。"""
-    for path in CORPUS_CANDIDATES:
-        if path.is_file():
-            return path
-    candidates = "，".join(str(path) for path in CORPUS_CANDIDATES)
-    raise FileNotFoundError(f"未找到 BM25 条文数据：{candidates}")
+def _resolve_corpus_paths() -> tuple[Path, ...]:
+    """优先返回统一语料；缺失时返回现有的所有兼容语料。"""
+    if UNIFIED_CORPUS.is_file():
+        return (UNIFIED_CORPUS.resolve(),)
+
+    paths = tuple(path.resolve() for path in FALLBACK_CORPUS_PATHS if path.is_file())
+    if paths:
+        return paths
+
+    candidates = [UNIFIED_CORPUS, *FALLBACK_CORPUS_PATHS]
+    raise FileNotFoundError(f"未找到 BM25 条文数据：{ '，'.join(str(path) for path in candidates) }")
 
 
-def _load_corpus(corpus_path: Path) -> list[dict[str, Any]]:
-    """读取 JSONL，保留条文元数据并忽略空 text。"""
+def _source_signature(corpus_paths: tuple[Path, ...]) -> tuple[tuple[str, int, int], ...]:
+    """记录语料路径、大小和修改时间，用于判断索引是否需要重建。"""
+    return tuple(
+        (str(path), path.stat().st_size, path.stat().st_mtime_ns)
+        for path in corpus_paths
+    )
+
+
+def _load_corpus(corpus_paths: tuple[Path, ...]) -> list[dict[str, Any]]:
+    """合并读取 JSONL，按 chunk_id 或文档/条号去重并保留标准字段。"""
     documents: list[dict[str, Any]] = []
-    with corpus_path.open("r", encoding="utf-8") as stream:
-        for line_number, line in enumerate(stream, start=1):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                item = json.loads(line)
-            except Exception as exc:
-                raise ValueError(f"{corpus_path}:{line_number} 不是有效 JSON") from exc
+    seen: set[Any] = set()
 
-            text = str(item.get("text") or "").strip()
-            if not text:
-                continue
-            documents.append({
-                "doc_id": item.get("doc_id"),
-                "clause": item.get("clause"),
-                "title": item.get("title") or "",
-                "text": text,
-                "page": item.get("page"),
-            })
+    for corpus_path in corpus_paths:
+        with corpus_path.open("r", encoding="utf-8-sig") as stream:
+            for line_number, line in enumerate(stream, start=1):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    item = json.loads(line)
+                except Exception as exc:
+                    raise ValueError(f"{corpus_path}:{line_number} 不是有效 JSON") from exc
+
+                text = str(item.get("text") or "").strip()
+                if not text:
+                    continue
+
+                key = item.get("chunk_id")
+                if not key:
+                    key = (item.get("doc_id"), item.get("clause"), item.get("part"))
+                if key in seen:
+                    continue
+                seen.add(key)
+
+                documents.append({
+                    "doc_id": item.get("doc_id"),
+                    "clause": item.get("clause"),
+                    "title": item.get("title") or "",
+                    "text": text,
+                    "page": item.get("page"),
+                })
     return documents
 
 
-def _build_index(corpus_path: Path, index_path: Path) -> tuple[list[dict[str, Any]], BM25Okapi | None]:
+def _build_index(
+    corpus_paths: tuple[Path, ...],
+    index_path: Path,
+) -> tuple[list[dict[str, Any]], BM25Okapi | None]:
     """构建并原子写入 BM25 索引。"""
-    documents = _load_corpus(corpus_path)
+    documents = _load_corpus(corpus_paths)
     tokenized_corpus = [_tokenize(document["text"]) for document in documents]
     bm25 = BM25Okapi(tokenized_corpus) if tokenized_corpus else None
 
     payload = {
-        "version": 1,
-        "source": str(corpus_path),
+        "version": INDEX_VERSION,
+        "source_paths": [str(path) for path in corpus_paths],
+        "source_signature": _source_signature(corpus_paths),
         "documents": documents,
         "tokenized_corpus": tokenized_corpus,
         "bm25": bm25,
@@ -141,12 +169,18 @@ def _build_index(corpus_path: Path, index_path: Path) -> tuple[list[dict[str, An
     return documents, bm25
 
 
-def _load_or_build_index(index_path: Path = INDEX_DEFAULT) -> tuple[list[dict[str, Any]], BM25Okapi | None]:
-    """加载已有索引；索引不存在或不可读时重新构建。"""
+def _load_or_build_index(
+    index_path: Path = INDEX_DEFAULT,
+) -> tuple[list[dict[str, Any]], BM25Okapi | None]:
+    """加载未失效索引；索引缺失、损坏或源语料变化时自动重建。"""
     global _INDEX_CACHE
+
     index_path = Path(index_path).resolve()
-    if _INDEX_CACHE is not None and _INDEX_CACHE[0] == index_path:
-        return _INDEX_CACHE[1], _INDEX_CACHE[2]
+    corpus_paths = _resolve_corpus_paths()
+    signature = _source_signature(corpus_paths)
+
+    if _INDEX_CACHE is not None and _INDEX_CACHE[:2] == (index_path, signature):
+        return _INDEX_CACHE[2], _INDEX_CACHE[3]
 
     documents: list[dict[str, Any]]
     bm25: BM25Okapi | None
@@ -154,14 +188,20 @@ def _load_or_build_index(index_path: Path = INDEX_DEFAULT) -> tuple[list[dict[st
         try:
             with index_path.open("rb") as stream:
                 payload = pickle.load(stream)
-            documents = payload["documents"]
-            bm25 = payload["bm25"]
+            if (
+                payload.get("version") == INDEX_VERSION
+                and tuple(payload.get("source_signature") or ()) == signature
+            ):
+                documents = payload["documents"]
+                bm25 = payload["bm25"]
+            else:
+                documents, bm25 = _build_index(corpus_paths, index_path)
         except Exception:
-            documents, bm25 = _build_index(_resolve_corpus_path(), index_path)
+            documents, bm25 = _build_index(corpus_paths, index_path)
     else:
-        documents, bm25 = _build_index(_resolve_corpus_path(), index_path)
+        documents, bm25 = _build_index(corpus_paths, index_path)
 
-    _INDEX_CACHE = (index_path, documents, bm25)
+    _INDEX_CACHE = (index_path, signature, documents, bm25)
     return documents, bm25
 
 

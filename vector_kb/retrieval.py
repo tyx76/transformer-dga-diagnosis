@@ -46,7 +46,7 @@ def _load_vectors(con):
     return out
 
 
-def retrieve(question: str, top_k: int = 3, min_score: float = 0.35, db: str = DB_DEFAULT) -> list[dict]:
+def retrieve(question: str, top_k: int = 3, min_score: float = 0.45, db: str = DB_DEFAULT) -> list[dict]:
     """检索条文，返回 list[dict]。
 
     每项包含 doc_id / clause / title / text / page / score / citation。

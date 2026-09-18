@@ -1,114 +1,156 @@
-﻿# bge-m3 向量知识库（整改版）
+# 检索、融合与生成模块说明
 
-## 基本信息
-- 原始生成：2026-09-12 ｜ 整改：2026-09-12
-- 向量模型：Ollama `bge-m3:latest`（1024 维，float32，L2 归一化，余弦相似度）
-- 数据库文件：`knowledge.db`（SQLite，WAL 模式）
-- 入库脚本：`cli.py`（仅标准库；真实入库需本机 Ollama）
+> 更新：2026-09-18 ｜ 当前主入口：项目根目录 `main.py`
 
-## 数据统计
-| 集合 | 文档 | 向量块 | 说明 |
-|---|---:|---:|---|
-| `normative` | 1 | 5 | DL/T 722-2014 判据表（表3/表4/表6/表7 + CO2/CO） |
-| `reference` | 1 | 118 | DL/T 572-2021 条款化参考库（带 clause / citation） |
-| 合计 | 2 | 123 | 全部 1024 维 |
+## 1. 当前数据资产
 
-## 目录内容
+| 项目 | 内容 |
+|---|---|
+| 向量库 | `knowledge.db`，SQLite，123 块 = normative 5 + reference 118 |
+| Embedding | Ollama `bge-m3:latest`，1024 维，L2 归一化 |
+| 722 判据 | `corpus/clauses.jsonl`，5 条 |
+| 572 运维条款 | `corpus/DLT-572-2021_clauses.jsonl`，118 条，本地不入库 |
+| 统一语料 | `../data/corpus/clauses.jsonl`，本地生成 123 条 |
+| BM25 索引 | `bm25_index.pkl`，v2，本地生成不入库 |
+
+统一语料生成：
+
+```powershell
+python scripts\build_unified_corpus.py
+```
+
+## 2. 当前模块
+
+| 文件 | 职责 |
+|---|---|
+| `embeddings.py` | Ollama embedding 调用 |
+| `store.py` | SQLite 连接和表结构 |
+| `retrieval.py` | 向量加载、余弦相似度和 `retrieve()`；默认阈值 `0.45` |
+| `bm25_retriever.py` | jieba 分词、领域词典、BM25、索引缓存和自动重建 |
+| `rrf_fusion.py` | 倒数排序融合，按条号去重和累加 |
+| `hybrid_retriever.py` | 领域过滤 + 向量 + BM25 + RRF |
+| `domain_guard.py` | 规则版领域与明显无关意图过滤 |
+| `generation.py` | 上下文拼接、引用格式和 DeepSeek `generate()` |
+| `citation_verifier.py` | 引用存在性校验、重写提示和删除无效句 |
+| `cli.py` | 保留的 `ingest / info / query / ask` 工具，当前仍为纯向量链路 |
+
+## 3. 目录内容
+
 ```text
 vector_kb/
-├─ knowledge.db                           SQLite 向量数据库（已 checkpoint，无 -wal/-shm）
-├─ cli.py                                 入库 / 查看 脚本
-├─ README.md
-├─ materials/                             上传素材副本目录（预留）
-└─ 语料/
-   ├─ clauses.jsonl                       DL/T 722-2014 规范库输入（5 行）
-   └─ DLT-572-2021_clauses.jsonl          DL/T 572-2021 参考库输入（118 行）
+├─ knowledge.db                         SQLite 向量库（本地资产，不入库）
+├─ bm25_index.pkl                       BM25 缓存（本地生成，不入库）
+├─ main.py                              不在本目录；主入口位于项目根目录
+├─ embeddings.py
+├─ store.py
+├─ retrieval.py
+├─ bm25_retriever.py
+├─ rrf_fusion.py
+├─ hybrid_retriever.py
+├─ domain_guard.py
+├─ generation.py
+├─ citation_verifier.py
+├─ cli.py
+├─ corpus/
+│  ├─ clauses.jsonl                     DL/T 722 判据（5 条）
+│  ├─ DLT-572-2021_clauses.jsonl        DL/T 572 条款（118 条，本地）
+│  └─ README.md
+└─ materials/
 ```
 
-## 环境要求
-- Python 3.10+（脚本仅用标准库）
-- Ollama 服务，模型：`ollama pull bge-m3`（默认地址 `http://localhost:11434`）
+## 4. 当前主链路
 
-## 重建命令
-```powershell
-# 722 规范库
-python cli.py ingest 语料/clauses.jsonl --collection normative --force --source 语料/clauses.jsonl
-
-# 572 参考库
-python cli.py ingest 语料/DLT-572-2021_clauses.jsonl --collection reference --force --source 语料/DLT-572-2021_clauses.jsonl
-
-# 查看统计（文档数 / 块数 / 向量异常检查）
-python cli.py info
+```text
+main.py
+  → domain_guard.is_in_domain()
+  → retrieval.retrieve(top_k=10, min_score=0.45)
+  → bm25_retriever.bm25_retrieve(top_k=10)
+  → rrf_fusion.rrf_fusion(top_k=5)
+  → generation.generate()
+  → citation_verifier.verify_citations()
+  → 最多重写 2 次，仍失败则删除无依据句
 ```
-> 无 Ollama 时可用 `--dry-run` 做结构自测（写零向量，仅供校验，不可用于检索）。
 
-## 打包 / 备份注意
-- 本库使用 WAL 模式：**复制前先关闭程序**，或执行 `PRAGMA wal_checkpoint(TRUNCATE);`，避免 `-wal` / `-shm` 残留或数据不完整。
-- 本整改包已做 checkpoint + VACUUM，**不含 `-wal` / `-shm`**。
-- `documents.source` 统一记为**相对路径**（`语料/...`），不写入个人机器绝对路径。
+`hybrid_retrieve()` 默认 `top_k=3`，但当前 `main.py` 显式请求 `top_k=5`。
 
-## 本次整改记录（对应审核意见 1/2/3）
-1. **补齐包内容**：加入两份输入 JSONL（5 + 118 行，从库中导出、与库内容一一对应）与入库脚本 `cli.py`；README 的重建命令与之对齐。
-2. **清理 WAL/SHM**：执行 `wal_checkpoint(TRUNCATE)` + `VACUUM`，重新打包不含 `-wal` / `-shm`。
-3. **去掉本机路径**：`documents.source` 由 `D:\project\项目八\...` 改为 `语料/...`。
+## 5. 常用命令
 
-## 仍待处理（审核意见 4/5/6，由提交人完成）
-4. 补 722 正文条款块（如 9.3.3 注意值应用原则、10.2.4 比值法应用原则、10.3 判断故障的步骤）。
-5. 572 表格结构化（表1 顶层油温限值、表2 检测周期等）——属阶段二语料待办。
-6. 附一次真实检索结果（问「乙炔超标该怎么处理」，给出 Top-k 与条号），需本机 Ollama 运行。
-## 语料来源与维护顺序
-数据流：`data/rules/`（判据事实）→ `data/corpus/`（源语料与导出）→ 本目录 `语料/*.jsonl`（入库输入）→ `knowledge.db`（向量库）。
-
-> **以 `data/corpus/` 版本为准**；两处不一致时先改 data 版再重新导出。详见 `语料/README.md`。
-## 查询（语义检索）
+### 当前主链路
 
 ```powershell
-# 默认返回 Top-3
-python cli.py query "乙炔超标该怎么处理"
+# 混合检索 + 生成 + 引用校验
+python main.py "变压器油温过高怎么处理"
 
-# 自定义条数与相似度阈值
-python cli.py query "油温过高" --top-k 5 --min-score 0.4
+# 输出各阶段条号和分数摘要
+python main.py --debug "变压器油温过高怎么处理"
+
+# 交互模式
+python main.py
 ```
 
-输出每条均含：`doc_id / clause / title / page / text`（有 citation 时一并打印）。
-- 若检索结果为空或全部低于阈值（默认 0.35），输出：**未在知识库中检索到相关条文，无法提供建议**；
-- 若本机未启动 Ollama，会提示 `ollama pull bge-m3` 与启动服务；
-- **`page` 状态**：722 判据表已带**原文页码**（表3=8、表4=9、表6/表7=10、CO2/CO=11）；572 参考库暂未记录页码（显示「（未记录）」），待补。
+### 纯向量调试工具
 
-## 实现说明（与 AGENTS.md 技术栈的差异）
-- 本知识库为 **SQLite 向量库**（`chunks.vector` 存 float32），非 Chroma；
-- Embedding 走 **Ollama `bge-m3:latest`**（1024 维、L2 归一化），非 bge-small-zh / HuggingFace；
-- 若需严格对齐 AGENTS.md 的「Chroma + HuggingFace Embedding」，需单独改造 `cli.py` 的存储与嵌入层。
-## 作为库函数调用（供 Agent / 报告层复用）
+```powershell
+# 查看知识库统计
+python vector_kb\cli.py info
+
+# 纯向量检索 Top-3
+python vector_kb\cli.py query "乙炔超标该怎么处理"
+
+# 纯向量检索 + 生成
+python vector_kb\cli.py ask "乙炔超标该怎么处理" --show-sources
+```
+
+注意：`cli.py ask` 仍然只调用 `retrieve()`，不调用 `hybrid_retrieve()` 和 `verify_citations()`；当前正式主链路是根目录 `main.py`。
+
+### 库函数调用
+
 ```python
-import sys
-sys.path.insert(0, "vector_kb")
-from cli import retrieve
-
-hits = retrieve("乙炔超标该怎么处理", top_k=3, min_score=0.35)   # -> list[dict]
-# 每项字段：doc_id / clause / title / text / page / score / citation
-```
-- 无命中或全部低于阈值 → 返回 `[]`；
-- Embedding/数据库不可用 → 抛 `RuntimeError`（由调用方提示）；
-- 检索自动过滤 `clause` 为空的块。
-## 生成接口（DeepSeek）
-
-```powershell
-# 检索 + 生成（需 DEEPSEEK_API_KEY）
-python cli.py ask "乙炔超标该怎么处理"
-
-# 打印检索到的条文后再给回答
-python cli.py ask "乙炔超标该怎么处理" --show-sources --top-k 3
+from vector_kb.retrieval import retrieve
+from vector_kb.bm25_retriever import bm25_retrieve
+from vector_kb.rrf_fusion import rrf_fusion
+from vector_kb.hybrid_retriever import hybrid_retrieve
+from vector_kb.generation import generate
+from vector_kb.citation_verifier import verify_citations
 ```
 
-作为库调用：
-```python
-from cli import retrieve, generate
-answer = generate("乙炔超标该怎么处理", retrieve("乙炔超标该怎么处理"))
+## 6. 返回字段
+
+纯向量与 BM25 结果：
+
+```text
+doc_id / clause / title / text / page / score
 ```
 
-- **chunks 为空时不调用 API**，直接返回「资料未覆盖，无法回答」；
-- 调用参数：`deepseek-chat`、`temperature=0.1`、`max_tokens=800`；
-- 参考上下文格式：`【依据：{doc_id} 第{clause}条】{text}`（表号类条号保留原样，如 `第9.3.2-表4`）；
-- 配置：`DEEPSEEK_API_KEY`（必填，可写入项目根目录 `.env`，标准库解析、不引入依赖）；可选 `DEEPSEEK_API_BASE`、`DEEPSEEK_MODEL`；
-- API Key 缺失或调用失败 → 抛 `RuntimeError`（CLI 会提示，不会静默失败）。
+RRF 融合结果：
+
+```text
+doc_id / clause / title / text / page / rrf_score
+```
+
+纯向量 `retrieve()` 额外带 `citation` 字段。
+
+## 7. 数据与索引维护
+
+- BM25 优先读取 `data/corpus/clauses.jsonl`。
+- 若统一文件不存在，自动合并：
+  - `vector_kb/corpus/clauses.jsonl`
+  - `vector_kb/corpus/DLT-572-2021_clauses.jsonl`
+- BM25 索引记录语料路径、大小和修改时间；源语料变化后自动重建。
+- 索引版本当前为 `2`。
+- 向量库仍使用原 123 块 SQLite 数据，统一语料与原库内容一致。
+
+## 8. 已知问题
+
+- 统一语料后，DGA 查询可能混入 DL/T 572 运维条款，BM25 存在跨文档域干扰。
+- 当前 RRF 两路等权，尚未根据问题意图动态调整。
+- 当前领域判断为规则方案，后续计划引入 C6 FaultSeer 的 Agentic 意图判断。
+- 油温问题已经能召回 `7.1.5/7.1.6/7.1.8`，但生成器仍可能因处置流程不完整而拒答，提示词待优化。
+- 572 页码暂未记录；722 `9.3.3 / 10.2.4 / 10.3` 正文条款待补。
+- `cli.py query/ask` 未同步混合检索和引用校验，保留用于纯向量对比。
+
+## 9. 环境与版权
+
+- Python 3.10+；本机实测 3.14.7。
+- 依赖：`jieba`、`rank-bm25`、Ollama、DeepSeek API Key。
+- `knowledge.db`、`bm25_index.pkl`、统一语料和 572 原条款文件均为本地生成/本地资产，不提交 Git。

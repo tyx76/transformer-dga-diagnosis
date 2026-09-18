@@ -21,6 +21,7 @@ chroma_db/
 literature/
 source_materials/
 club_assessment_problem.pdf
+data/corpus/clauses.jsonl
 data/corpus/*.txt
 !data/corpus/DLT-722-2014_criteria_tables.txt
 
