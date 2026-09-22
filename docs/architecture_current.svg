@@ -1,220 +1,242 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1440" viewBox="0 0 1900 1440" role="img" aria-labelledby="title desc">
-  <title id="title">油浸式电力变压器 DGA 故障根因分析智能体当前架构图</title>
-  <desc id="desc">展示离线知识构建、在线混合检索生成链路、引用校验、拒答边界和尚未接入主链的实验资产。</desc>
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="2100" height="1580" viewBox="0 0 2100 1580" role="img" aria-labelledby="title desc">
+  <title id="title">油浸式电力变压器 DGA 故障根因分析智能体最新架构图</title>
+  <desc id="desc">依据当前工作区代码绘制，包含离线知识构建、意图识别与路由、hybrid 与 pure_kb 双后端检索、RRF 合并、DeepSeek 生成、引用校验以及拒答重试路径。</desc>
   <defs>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#0F172A" flood-opacity="0.10"/>
     </filter>
-    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L10,5 L0,10 z" fill="#2563EB"/>
-    </marker>
-    <marker id="arrow-green" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L10,5 L0,10 z" fill="#16A34A"/>
-    </marker>
-    <marker id="arrow-red" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L10,5 L0,10 z" fill="#E11D48"/>
-    </marker>
-    <marker id="arrow-purple" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L10,5 L0,10 z" fill="#7C3AED"/>
-    </marker>
-    <marker id="arrow-gray" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L10,5 L0,10 z" fill="#64748B"/>
-    </marker>
+    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#2563EB"/></marker>
+    <marker id="arrow-green" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#16A34A"/></marker>
+    <marker id="arrow-purple" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#7C3AED"/></marker>
+    <marker id="arrow-red" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#E11D48"/></marker>
+    <marker id="arrow-gray" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#64748B"/></marker>
     <style>
-      .title { font: 700 34px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .title { font: 700 35px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
       .subtitle { font: 400 17px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #475569; }
-      .section { font: 700 23px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
-      .box-title { font: 700 19px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
-      .box-small { font: 400 15px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #334155; }
-      .box-mono { font: 600 15px "Consolas", "Cascadia Mono", monospace; fill: #1E293B; }
-      .tag { font: 700 14px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; letter-spacing: .2px; }
-      .arrow-label { font: 600 13px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #475569; }
-      .note { font: 400 14px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #475569; }
+      .section { font: 700 24px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .box-title { font: 700 18px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .box-subtitle { font: 700 15px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #334155; }
+      .small { font: 400 14px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #475569; }
+      .tiny { font: 400 12.5px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #64748B; }
+      .mono { font: 600 14px "Consolas", "Cascadia Mono", monospace; fill: #1E293B; }
+      .mono-small { font: 500 12.5px "Consolas", "Cascadia Mono", monospace; fill: #475569; }
+      .tag { font: 700 13px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; letter-spacing: .2px; }
+      .arrow { font: 600 12.5px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #64748B; }
     </style>
   </defs>
 
-  <rect width="1900" height="1440" rx="28" fill="#F6F8FB"/>
-  <rect x="0" y="0" width="1900" height="112" rx="28" fill="#0F172A"/>
-  <rect x="0" y="84" width="1900" height="28" fill="#0F172A"/>
-  <rect x="68" y="34" width="7" height="48" rx="3.5" fill="#22D3EE"/>
-  <text x="92" y="58" class="title" fill="#FFFFFF">油浸式电力变压器 DGA 故障根因分析智能体</text>
-  <text x="92" y="87" class="subtitle" fill="#CBD5E1">当前仓库架构 · 领域过滤 → 向量 + BM25 → RRF → DeepSeek 生成 → 引用校验</text>
-  <rect x="1560" y="35" width="270" height="42" rx="21" fill="#1E293B" stroke="#334155"/>
-  <text x="1695" y="62" text-anchor="middle" class="tag" fill="#A5F3FC">v0.1 · 2026-09-18</text>
+  <rect width="2100" height="1580" rx="28" fill="#F6F8FB"/>
+  <rect x="0" y="0" width="2100" height="112" rx="28" fill="#0F172A"/>
+  <rect x="0" y="84" width="2100" height="28" fill="#0F172A"/>
+  <rect x="66" y="32" width="8" height="52" rx="4" fill="#22D3EE"/>
+  <text x="92" y="59" class="title" fill="#FFFFFF">油浸式电力变压器 DGA 故障根因分析智能体</text>
+  <text x="92" y="88" class="subtitle" fill="#CBD5E1">当前工作区架构 · 意图路由 → hybrid + pure_kb → RRF → DeepSeek → 引用校验</text>
+  <rect x="1690" y="34" width="330" height="44" rx="22" fill="#1E293B" stroke="#334155"/>
+  <text x="1855" y="62" text-anchor="middle" class="tag" fill="#A5F3FC">CURRENT CODE · 2026-09-18</text>
 
-  <!-- offline -->
-  <rect x="50" y="138" width="1800" height="332" rx="22" fill="#FFFFFF" stroke="#DBEAFE" stroke-width="2" filter="url(#shadow)"/>
-  <rect x="50" y="138" width="12" height="332" rx="6" fill="#2563EB"/>
-  <text x="86" y="178" class="section">离线知识准备与索引构建</text>
-  <text x="86" y="204" class="note">标准正文按 doc_id / clause / text 统一切块；向量库与 BM25 索引分别构建。</text>
-  <rect x="1550" y="158" width="240" height="34" rx="17" fill="#EFF6FF" stroke="#BFDBFE"/>
-  <text x="1670" y="180" text-anchor="middle" class="tag" fill="#1D4ED8">当前仓库已有资产</text>
+  <!-- offline layer -->
+  <rect x="45" y="140" width="2010" height="370" rx="22" fill="#FFFFFF" stroke="#DBEAFE" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="45" y="140" width="12" height="370" rx="6" fill="#2563EB"/>
+  <text x="80" y="181" class="section">离线知识构建与索引层</text>
+  <text x="80" y="207" class="small">两条知识后端并存：旧 hybrid 后端负责向量 + BM25；pure_kb 后端负责六领域显式过滤检索。</text>
 
-  <rect x="86" y="238" width="350" height="188" rx="16" fill="#FFF7ED" stroke="#FDBA74" stroke-width="2"/>
-  <text x="110" y="271" class="box-title">规程与结构化语料</text>
-  <text x="110" y="305" class="box-mono">DL/T 722-2014</text>
-  <text x="282" y="305" class="box-small">5 块判据/表格</text>
-  <text x="110" y="337" class="box-mono">DL/T 572-2021</text>
-  <text x="282" y="337" class="box-small">118 条运维条款</text>
-  <text x="110" y="369" class="box-mono">criteria_blocks.jsonl</text>
-  <text x="110" y="397" class="box-small">规则 JSON 仅作实验旁路</text>
+  <!-- legacy backend -->
+  <rect x="80" y="226" width="875" height="250" rx="18" fill="#F8FAFC" stroke="#BFDBFE" stroke-width="2"/>
+  <rect x="102" y="242" width="255" height="30" rx="15" fill="#DBEAFE"/>
+  <text x="229" y="263" text-anchor="middle" class="tag" fill="#1D4ED8">A. 旧 hybrid 后端</text>
 
-  <path d="M436 332 H492" stroke="#F59E0B" stroke-width="3" marker-end="url(#arrow-gray)"/>
-  <rect x="500" y="252" width="260" height="160" rx="16" fill="#EFF6FF" stroke="#60A5FA" stroke-width="2"/>
-  <text x="525" y="286" class="box-title">统一语料构建</text>
-  <text x="525" y="320" class="box-mono">scripts/build_unified_corpus.py</text>
-  <text x="525" y="350" class="box-small">合并 · 去重 · 字段校验</text>
-  <text x="525" y="378" class="box-small">统一 JSONL 结构</text>
-  <text x="525" y="401" class="box-small">禁止空 clause 入库</text>
+  <rect x="106" y="286" width="230" height="160" rx="14" fill="#FFF7ED" stroke="#FDBA74" stroke-width="2"/>
+  <text x="128" y="317" class="box-title">规程原始资产</text>
+  <text x="128" y="347" class="mono-small">DL/T 722-2014</text>
+  <text x="128" y="373" class="small">5 块判据 / 表格</text>
+  <text x="128" y="401" class="mono-small">DL/T 572-2021</text>
+  <text x="128" y="427" class="small">118 条运行维护条款</text>
 
-  <path d="M760 332 H804" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-blue)"/>
-  <rect x="812" y="238" width="300" height="188" rx="16" fill="#ECFDF5" stroke="#4ADE80" stroke-width="2"/>
-  <text x="838" y="272" class="box-title">统一条文语料</text>
-  <text x="838" y="307" class="box-mono">data/corpus/clauses.jsonl</text>
-  <text x="838" y="341" class="box-small">共 123 块</text>
-  <text x="838" y="370" class="box-small">DL/T 722 = 5</text>
-  <text x="1000" y="370" class="box-small">DL/T 572 = 118</text>
-  <text x="838" y="399" class="box-small">正文受版权约束，本地生成</text>
+  <path d="M336 366 H378" stroke="#F59E0B" stroke-width="3" marker-end="url(#arrow-gray)"/>
+  <rect x="386" y="286" width="220" height="160" rx="14" fill="#EFF6FF" stroke="#60A5FA" stroke-width="2"/>
+  <text x="407" y="317" class="box-title">统一语料</text>
+  <text x="407" y="347" class="mono-small">build_unified_corpus.py</text>
+  <text x="407" y="374" class="small">合并、去重、字段校验</text>
+  <text x="407" y="402" class="mono-small">clauses.jsonl</text>
+  <text x="407" y="427" class="small">123 块 · 本地生成</text>
 
-  <path d="M1112 295 C1155 295 1160 252 1205 252" fill="none" stroke="#16A34A" stroke-width="3" marker-end="url(#arrow-green)"/>
-  <text x="1124" y="274" class="arrow-label">文本语料</text>
-  <rect x="1214" y="202" width="292" height="108" rx="16" fill="#F0FDF4" stroke="#22C55E" stroke-width="2"/>
-  <text x="1239" y="235" class="box-title">BM25 检索索引</text>
-  <text x="1239" y="267" class="box-mono">vector_kb/bm25_index.pkl</text>
-  <text x="1239" y="294" class="box-small">jieba + BM25Okapi · 自动重建</text>
+  <path d="M606 338 C630 338 628 315 650 315" fill="none" stroke="#16A34A" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <path d="M606 396 C630 396 628 430 650 430" fill="none" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <rect x="656" y="270" width="270" height="90" rx="14" fill="#F0FDF4" stroke="#4ADE80" stroke-width="2"/>
+  <text x="677" y="300" class="box-title">BM25 索引</text>
+  <text x="677" y="328" class="mono-small">bm25_index.pkl</text>
+  <text x="677" y="348" class="small">jieba + BM25Okapi · 自动重建</text>
 
-  <path d="M1112 369 C1155 369 1160 394 1205 394" fill="none" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-blue)"/>
-  <text x="1117" y="392" class="arrow-label">ingest 入库</text>
-  <rect x="1214" y="340" width="292" height="110" rx="16" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2"/>
-  <text x="1239" y="373" class="box-title">SQLite 向量库</text>
-  <text x="1239" y="405" class="box-mono">vector_kb/knowledge.db</text>
-  <text x="1239" y="432" class="box-small">123 块 · 1024 维 float 向量</text>
+  <rect x="656" y="390" width="270" height="90" rx="14" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2"/>
+  <text x="677" y="420" class="box-title">SQLite 向量库</text>
+  <text x="677" y="448" class="mono-small">vector_kb/knowledge.db</text>
+  <text x="677" y="468" class="small">123 块 · bge-m3 · 1024 维</text>
 
-  <path d="M1506 395 H1560" stroke="#DB2777" stroke-width="3" marker-end="url(#arrow-gray)"/>
-  <rect x="1568" y="340" width="222" height="110" rx="16" fill="#FDF2F8" stroke="#F472B6" stroke-width="2"/>
-  <text x="1592" y="373" class="box-title">Embedding 服务</text>
-  <text x="1592" y="406" class="box-mono">Ollama bge-m3:latest</text>
-  <text x="1592" y="432" class="box-small">1024 维 · L2 归一化</text>
+  <!-- pure backend -->
+  <rect x="985" y="226" width="1035" height="250" rx="18" fill="#F8FAFC" stroke="#C4B5FD" stroke-width="2"/>
+  <rect x="1008" y="242" width="265" height="30" rx="15" fill="#EDE9FE"/>
+  <text x="1140" y="263" text-anchor="middle" class="tag" fill="#6D28D9">B. pure_kb 新后端</text>
 
-  <!-- online -->
-  <rect x="50" y="500" width="1800" height="520" rx="22" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="2" filter="url(#shadow)"/>
-  <rect x="50" y="500" width="12" height="520" rx="6" fill="#7C3AED"/>
-  <text x="86" y="541" class="section">在线问答主链路</text>
-  <text x="86" y="568" class="note">正式入口：根目录 main.py。无效领域直接拒答；检索为空不调用大模型。</text>
-  <rect x="1548" y="520" width="242" height="34" rx="17" fill="#F5F3FF" stroke="#DDD6FE"/>
-  <text x="1669" y="542" text-anchor="middle" class="tag" fill="#6D28D9">main.py · top_k=5</text>
+  <rect x="1012" y="286" width="292" height="160" rx="14" fill="#F5F3FF" stroke="#A78BFA" stroke-width="2"/>
+  <text x="1034" y="317" class="box-title">六领域知识 JSONL</text>
+  <text x="1034" y="344" class="mono-small">pure_kb/data/knowledge.jsonl</text>
+  <text x="1034" y="371" class="small">dga 41 · oil_temp 61 · safety 26</text>
+  <text x="1034" y="397" class="small">equipment 10 · dp 39 · cases 21</text>
+  <text x="1034" y="425" class="box-subtitle">合计 198 条</text>
 
-  <rect x="86" y="622" width="226" height="118" rx="16" fill="#F8FAFC" stroke="#94A3B8" stroke-width="2"/>
-  <text x="111" y="656" class="box-title">用户输入</text>
-  <text x="111" y="688" class="box-small">命令行 / 交互模式</text>
-  <text x="111" y="716" class="box-mono">--debug 可观测</text>
+  <path d="M1304 366 H1332" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-purple)"/>
+  <rect x="1340" y="286" width="230" height="160" rx="14" fill="#F5F3FF" stroke="#8B5CF6" stroke-width="2"/>
+  <text x="1361" y="317" class="box-title">构建纯知识库</text>
+  <text x="1361" y="347" class="mono-small">pure_kb/build_db.py</text>
+  <text x="1361" y="375" class="small">逐域入库 + 向量化</text>
+  <text x="1361" y="403" class="mono-small">Ollama bge-m3:latest</text>
+  <text x="1361" y="429" class="small">1024 维 · L2 归一化</text>
 
-  <path d="M312 681 H344" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-blue)"/>
-  <rect x="352" y="622" width="242" height="118" rx="16" fill="#FFF1F2" stroke="#FB7185" stroke-width="2"/>
-  <text x="377" y="656" class="box-title">领域守卫</text>
-  <text x="377" y="688" class="box-mono">domain_guard.is_in_domain()</text>
-  <text x="377" y="716" class="box-small">规则白名单/黑名单过滤</text>
+  <path d="M1570 366 H1608" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-purple)"/>
+  <rect x="1616" y="286" width="278" height="160" rx="14" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+  <text x="1638" y="317" class="box-title">SQLite 纯知识库</text>
+  <text x="1638" y="347" class="mono-small">pure_kb/knowledge.db</text>
+  <text x="1638" y="375" class="small">domain + doc_id + clause</text>
+  <text x="1638" y="403" class="small">显式 domains / filters 检索</text>
+  <text x="1638" y="429" class="small">dp 域仅存储，不进入生成链</text>
 
-  <rect x="646" y="590" width="568" height="260" rx="18" fill="#F8FAFC" stroke="#C4B5FD" stroke-width="2"/>
-  <text x="672" y="622" class="box-title">混合检索 hybrid_retriever.py</text>
-  <text x="672" y="646" class="box-small">候选 Top-10 × 两路并行召回，RRF 融合后返回 Top-5</text>
+  <rect x="1920" y="286" width="72" height="160" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-dasharray="6 5"/>
+  <text x="1956" y="326" text-anchor="middle" class="box-subtitle" writing-mode="vertical-rl">未提交本地数据库</text>
 
-  <rect x="678" y="665" width="244" height="72" rx="13" fill="#EFF6FF" stroke="#60A5FA" stroke-width="2"/>
-  <text x="698" y="691" class="box-title">向量召回</text>
-  <text x="698" y="716" class="box-small">retrieve() · cosine ≥ 0.45</text>
+  <!-- online layer -->
+  <rect x="45" y="535" width="2010" height="750" rx="22" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="45" y="535" width="12" height="750" rx="6" fill="#7C3AED"/>
+  <text x="80" y="577" class="section">在线问答主链路</text>
+  <text x="80" y="603" class="small">默认 USE_ROUTER=true：意图识别与路由后，hybrid 与 pure_kb 依次召回，再合并为最终 Top-5。</text>
+  <rect x="1660" y="556" width="350" height="34" rx="17" fill="#F5F3FF" stroke="#DDD6FE"/>
+  <text x="1835" y="578" text-anchor="middle" class="tag" fill="#6D28D9">main.py ask() · 当前正式入口</text>
 
-  <rect x="678" y="754" width="244" height="72" rx="13" fill="#F0FDF4" stroke="#4ADE80" stroke-width="2"/>
-  <text x="698" y="780" class="box-title">BM25 召回</text>
-  <text x="698" y="805" class="box-small">jieba 分词 · 领域词典</text>
+  <!-- row 1 -->
+  <rect x="80" y="650" width="210" height="115" rx="16" fill="#F8FAFC" stroke="#94A3B8" stroke-width="2"/>
+  <text x="104" y="684" class="box-title">用户问题</text>
+  <text x="104" y="714" class="small">单次问答 / 交互模式</text>
+  <text x="104" y="742" class="mono-small">main.py --debug</text>
 
-  <path d="M594 660 C630 660 646 701 674 701" fill="none" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-blue)"/>
-  <path d="M594 735 C630 735 646 790 674 790" fill="none" stroke="#16A34A" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <path d="M290 708 H316" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <rect x="324" y="650" width="220" height="115" rx="16" fill="#EFF6FF" stroke="#60A5FA" stroke-width="2"/>
+  <text x="348" y="684" class="box-title">检索入口选择</text>
+  <text x="348" y="714" class="mono-small">USE_ROUTER=true</text>
+  <text x="348" y="742" class="small">false 时回退纯 hybrid</text>
 
-  <rect x="958" y="704" width="220" height="82" rx="14" fill="#F5F3FF" stroke="#8B5CF6" stroke-width="2"/>
-  <text x="982" y="731" class="box-title">RRF 融合</text>
-  <text x="982" y="758" class="box-small">1/(60+rank) · 等权 · clause 去重</text>
-  <path d="M922 701 C936 701 938 731 954 735" fill="none" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-purple)"/>
-  <path d="M922 790 C936 790 938 759 954 755" fill="none" stroke="#16A34A" stroke-width="3" marker-end="url(#arrow-purple)"/>
+  <path d="M544 708 H572" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-purple)"/>
+  <rect x="580" y="620" width="330" height="175" rx="18" fill="#F5F3FF" stroke="#A78BFA" stroke-width="2"/>
+  <text x="606" y="652" class="box-title">意图识别与路由</text>
+  <rect x="604" y="668" width="132" height="100" rx="12" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <text x="620" y="694" class="box-subtitle">classify_intent()</text>
+  <text x="620" y="718" class="small">规则优先</text>
+  <text x="620" y="741" class="small">DeepSeek 兜底</text>
+  <text x="620" y="760" class="small">支持 multi</text>
+  <rect x="752" y="668" width="132" height="100" rx="12" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <text x="768" y="694" class="box-subtitle">route_intent()</text>
+  <text x="768" y="718" class="small">domains</text>
+  <text x="768" y="741" class="small">filters</text>
+  <text x="768" y="760" class="small">search / exact / refuse</text>
+  <text x="606" y="788" class="tiny">规则文件：data/rules/intent_rules.json</text>
 
-  <path d="M1214 744 H1258" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-purple)"/>
-  <text x="1219" y="733" class="arrow-label">Top-5 条文</text>
+  <path d="M910 685 H968" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-purple)"/>
+  <path d="M910 735 C928 735 930 805 968 805" fill="none" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-purple)"/>
 
-  <rect x="1266" y="632" width="246" height="146" rx="16" fill="#F5F3FF" stroke="#A78BFA" stroke-width="2"/>
-  <text x="1290" y="666" class="box-title">上下文与生成</text>
-  <text x="1290" y="697" class="box-mono">generation.generate()</text>
-  <text x="1290" y="726" class="box-small">build_context() 拼接条文</text>
-  <text x="1290" y="752" class="box-small">DeepSeek deepseek-chat</text>
-  <text x="1290" y="775" class="box-small">temperature=0.1 · max_tokens=800</text>
+  <!-- retrieval -->
+  <rect x="945" y="605" width="575" height="280" rx="18" fill="#F8FAFC" stroke="#C4B5FD" stroke-width="2"/>
+  <text x="970" y="635" class="box-title">retrieval_router.route_and_retrieve()</text>
+  <text x="970" y="657" class="tiny">hybrid → pure_kb 依次候选 Top-20，最终仅保留 Top-5</text>
 
-  <path d="M1512 704 H1554" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-purple)"/>
-  <rect x="1562" y="622" width="244" height="146" rx="16" fill="#FFF1F2" stroke="#FB7185" stroke-width="2"/>
-  <text x="1586" y="656" class="box-title">引用校验</text>
-  <text x="1586" y="688" class="box-mono">citation_verifier.py</text>
-  <text x="1586" y="718" class="box-small">校验 doc_id + clause</text>
-  <text x="1586" y="746" class="box-small">必须来自本次 Top-5 结果</text>
+  <rect x="972" y="672" width="246" height="84" rx="13" fill="#EFF6FF" stroke="#60A5FA" stroke-width="2"/>
+  <text x="993" y="700" class="box-subtitle">hybrid_retrieve()</text>
+  <text x="993" y="725" class="small">向量 + BM25 → RRF</text>
+  <text x="993" y="746" class="tiny">Ollama bge-m3 · cosine ≥ 0.45</text>
 
-  <path d="M1806 704 C1840 704 1840 860 1840 881" fill="none" stroke="#16A34A" stroke-width="3" marker-end="url(#arrow-green)"/>
-  <text x="1812" y="786" class="arrow-label" transform="rotate(90 1812 786)">有效</text>
-  <rect x="1554" y="874" width="260" height="104" rx="16" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
-  <text x="1578" y="907" class="box-title">最终输出</text>
-  <text x="1578" y="938" class="box-small">带【依据：doc_id 第clause条】的</text>
-  <text x="1578" y="962" class="box-small">根因分析与处置建议</text>
+  <rect x="972" y="780" width="246" height="84" rx="13" fill="#F5F3FF" stroke="#8B5CF6" stroke-width="2"/>
+  <text x="993" y="808" class="box-subtitle">search_knowledge_base()</text>
+  <text x="993" y="833" class="small">pure_kb.search(domains, filters)</text>
+  <text x="993" y="854" class="tiny">适配器过滤 dp · 归一化 · 去重</text>
 
-  <path d="M1684 768 V832 H1448 V782" fill="none" stroke="#E11D48" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#arrow-red)"/>
-  <text x="1670" y="807" class="arrow-label">无效引用</text>
-  <rect x="1338" y="850" width="226" height="106" rx="16" fill="#FFF1F2" stroke="#FB7185" stroke-width="2"/>
-  <text x="1362" y="881" class="box-title">纠错重写</text>
-  <text x="1362" y="910" class="box-small">build_retry_prompt()</text>
-  <text x="1362" y="936" class="box-small">最多重写 2 次</text>
+  <path d="M1218 714 C1238 714 1240 742 1258 748" fill="none" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-purple)"/>
+  <path d="M1218 822 C1238 822 1240 775 1258 770" fill="none" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-purple)"/>
+  <rect x="1266" y="705" width="226" height="108" rx="14" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+  <text x="1288" y="735" class="box-title">RRF 合并</text>
+  <text x="1288" y="762" class="small">merge_with_hybrid()</text>
+  <text x="1288" y="787" class="small">k=60 · doc_id + clause 去重</text>
+  <text x="1288" y="808" class="tiny">任一路为空则取非空 Top-5</text>
 
-  <path d="M1338 908 C1288 908 1288 758 1262 744" fill="none" stroke="#E11D48" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrow-red)"/>
-  <text x="1270" y="872" class="arrow-label">重新生成</text>
+  <path d="M434 765 V820 H930 V714 H968" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrow-gray)"/>
+  <text x="608" y="806" class="arrow">USE_ROUTER=false 回退</text>
 
-  <path d="M400 740 V848" stroke="#E11D48" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#arrow-red)"/>
-  <text x="412" y="790" class="arrow-label">领域外</text>
-  <rect x="352" y="854" width="242" height="104" rx="16" fill="#FFF1F2" stroke="#E11D48" stroke-width="2"/>
-  <text x="377" y="887" class="box-title">直接拒答</text>
-  <text x="377" y="918" class="box-small">“资料未覆盖，无法回答”</text>
-  <text x="377" y="943" class="box-small">不调用 Embedding / LLM</text>
+  <path d="M1379 741 H1480 V707 H1548" fill="none" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-purple)"/>
 
-  <path d="M976 786 C976 834 754 818 622 854" fill="none" stroke="#E11D48" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrow-red)"/>
-  <text x="818" y="830" class="arrow-label">无候选结果</text>
+  <!-- intent refusal -->
+  <path d="M745 795 V892" stroke="#E11D48" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#arrow-red)"/>
+  <text x="757" y="850" class="arrow">irrelevant / refuse / domains 为空</text>
+  <rect x="580" y="900" width="330" height="104" rx="16" fill="#FFF1F2" stroke="#E11D48" stroke-width="2"/>
+  <text x="606" y="933" class="box-title">直接拒答</text>
+  <text x="606" y="962" class="small">“资料未覆盖，无法回答”</text>
+  <text x="606" y="987" class="small">意图无关时不检索；无候选时生成前停止</text>
 
-  <path d="M1806 881 C1490 1054 1050 1068 914 899" fill="none" stroke="#E11D48" stroke-width="2.5" stroke-dasharray="7 8" marker-end="url(#arrow-red)" opacity="0.75"/>
-  <text x="1455" y="1032" class="arrow-label">3 次仍无效：remove_invalid_citation_sentences()；若为空则拒答</text>
+  <!-- generation -->
+  <rect x="1556" y="650" width="205" height="115" rx="16" fill="#F5F3FF" stroke="#8B5CF6" stroke-width="2"/>
+  <text x="1577" y="683" class="box-title">生成答案</text>
+  <text x="1577" y="711" class="mono-small">generation.generate()</text>
+  <text x="1577" y="736" class="small">DeepSeek deepseek-chat</text>
+  <text x="1577" y="758" class="small">T=0.1 · max_tokens=800</text>
 
-  <rect x="646" y="882" width="568" height="82" rx="14" fill="#F8FAFC" stroke="#CBD5E1"/>
-  <text x="672" y="912" class="box-title">检索结果统一字段</text>
-  <text x="672" y="941" class="box-mono">doc_id / clause / title / text / page / score | rrf_score</text>
+  <path d="M1761 708 H1788" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-purple)"/>
+  <rect x="1796" y="635" width="220" height="146" rx="16" fill="#FFF1F2" stroke="#FB7185" stroke-width="2"/>
+  <text x="1818" y="669" class="box-title">引用校验</text>
+  <text x="1818" y="698" class="mono-small">verify_citations()</text>
+  <text x="1818" y="726" class="small">引用必须来自本次 Top-5</text>
+  <text x="1818" y="751" class="small">校验 doc_id + clause</text>
+  <text x="1818" y="773" class="small">失败进入重写</text>
 
-  <!-- bottom -->
-  <rect x="50" y="1052" width="1800" height="338" rx="22" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2" filter="url(#shadow)"/>
-  <rect x="50" y="1052" width="12" height="338" rx="6" fill="#F59E0B"/>
+  <path d="M1906 781 V892" stroke="#16A34A" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <text x="1918" y="845" class="arrow">引用有效</text>
+  <rect x="1796" y="900" width="220" height="100" rx="16" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+  <text x="1818" y="932" class="box-title">最终输出</text>
+  <text x="1818" y="961" class="small">带【依据：doc_id 第clause条】</text>
+  <text x="1818" y="985" class="small">根因分析与处置建议</text>
 
-  <rect x="86" y="1088" width="812" height="266" rx="18" fill="#FFFBEB" stroke="#FCD34D" stroke-width="2"/>
-  <text x="116" y="1127" class="section">实验旁路：当前未接入 main.py</text>
-  <text x="116" y="1156" class="note">这些资产用于样本分析、规则基线和回归验证，不参与正式问答生成。</text>
-  <rect x="116" y="1182" width="350" height="142" rx="14" fill="#FFFFFF" stroke="#FDE68A"/>
-  <text x="140" y="1214" class="box-title">规则诊断基线</text>
-  <text x="140" y="1247" class="box-mono">scripts/dga_ratio.py</text>
-  <text x="140" y="1277" class="box-small">改良三比值法 · 样本准确率 61.8%</text>
-  <text x="140" y="1303" class="box-small">data/rules/*.json</text>
+  <path d="M1796 746 H1770 V925 H1765" fill="none" stroke="#E11D48" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#arrow-red)"/>
+  <text x="1704" y="824" class="arrow">引用无效</text>
+  <rect x="1546" y="882" width="220" height="118" rx="16" fill="#FFF1F2" stroke="#FB7185" stroke-width="2"/>
+  <text x="1568" y="914" class="box-title">纠错重写</text>
+  <text x="1568" y="943" class="small">build_retry_prompt()</text>
+  <text x="1568" y="968" class="small">初次 + 最多重写 2 次</text>
+  <text x="1568" y="991" class="tiny">仍无效：删除无依据句，空则拒答</text>
+  <path d="M1656 882 V770" stroke="#E11D48" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrow-red)"/>
+  <text x="1668" y="833" class="arrow">重新生成</text>
 
-  <rect x="490" y="1182" width="378" height="142" rx="14" fill="#FFFFFF" stroke="#FDE68A"/>
-  <text x="514" y="1214" class="box-title">样本与评测</text>
-  <text x="514" y="1247" class="box-mono">dga_samples_uL_per_L.csv · 3466 条</text>
-  <text x="514" y="1277" class="box-small">scripts/run_regression.py</text>
-  <text x="514" y="1303" class="box-small">模型测例、回归报告、验收材料</text>
+  <path d="M1379 807 V862 H745 V892" fill="none" stroke="#E11D48" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrow-red)"/>
+  <text x="1202" y="850" class="arrow">无候选结果</text>
 
-  <rect x="930" y="1088" width="888" height="266" rx="18" fill="#F0F9FF" stroke="#7DD3FC" stroke-width="2"/>
-  <text x="960" y="1127" class="section">判定边界与工程约束</text>
-  <text x="960" y="1164" class="box-title">知识边界</text>
-  <text x="960" y="1193" class="box-small">仅面向油浸式主变与 DGA 主线；判据以 DL/T 722-2014 为准，DL/T 572-2021 辅助。</text>
-  <text x="960" y="1228" class="box-title">答案边界</text>
-  <text x="960" y="1257" class="box-small">结论必须引用本次检索到的具体条文；知识库未命中时拒答，不臆测。</text>
-  <text x="960" y="1292" class="box-title">安全边界</text>
-  <text x="960" y="1321" class="box-small">处置建议保留人工复核关口；危险性操作应符合 GB 26860-2011 的安全动作边界。</text>
+  <!-- bottom layer -->
+  <rect x="45" y="1310" width="2010" height="230" rx="22" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="45" y="1310" width="12" height="230" rx="6" fill="#F59E0B"/>
 
-  <text x="92" y="1420" class="note">依据当前代码：main.py、vector_kb/*、scripts/build_unified_corpus.py、data/corpus/clauses.jsonl</text>
-  <text x="1810" y="1420" text-anchor="end" class="note">实线 = 正式主链路；虚线 = 异常/重试路径；黄色 = 实验旁路</text>
+  <rect x="78" y="1342" width="900" height="165" rx="18" fill="#F0F9FF" stroke="#7DD3FC" stroke-width="2"/>
+  <text x="104" y="1375" class="box-title">可观测性与评测</text>
+  <rect x="104" y="1395" width="268" height="88" rx="12" fill="#FFFFFF" stroke="#BAE6FD"/>
+  <text x="124" y="1422" class="box-subtitle">--debug 轨迹</text>
+  <text x="124" y="1448" class="tiny">意图识别 → 路由 → 向量/BM25</text>
+  <text x="124" y="1468" class="tiny">hybrid/KB Top-K → RRF → 引用校验</text>
+  <rect x="392" y="1395" width="272" height="88" rx="12" fill="#FFFFFF" stroke="#BAE6FD"/>
+  <text x="412" y="1422" class="box-subtitle">验收用例集</text>
+  <text x="412" y="1448" class="mono-small">acceptance_cases.jsonl</text>
+  <text x="412" y="1470" class="small">50 条 · 检索 / 引用 / 拒答评测</text>
+  <rect x="684" y="1395" width="270" height="88" rx="12" fill="#FFFFFF" stroke="#BAE6FD"/>
+  <text x="704" y="1422" class="box-subtitle">A/B 与回归</text>
+  <text x="704" y="1448" class="mono-small">shadow_ab_test.py</text>
+  <text x="704" y="1470" class="small">run_regression.py · 影子对比报告</text>
+
+  <rect x="1002" y="1342" width="1020" height="165" rx="18" fill="#FFF7ED" stroke="#FDBA74" stroke-width="2"/>
+  <text x="1028" y="1375" class="box-title">判定边界、失败路径与未接入主链资产</text>
+  <text x="1028" y="1406" class="small">证据边界：只允许引用本次实际检索结果；无候选在生成前拒答。</text>
+  <text x="1028" y="1432" class="small">领域边界：pure_kb 的 dp 域由 adapter 丢弃；六领域中仅业务域进入生成。</text>
+  <text x="1028" y="1458" class="small">安全边界：处置建议保留人工复核；危险性操作须落在 GB 26860-2011 边界内。</text>
+  <text x="1028" y="1487" class="small">旁路资产：vector_kb/cli.py 纯向量链路、scripts/dga_ratio.py 规则基线，不替代 main.py。</text>
+
+  <text x="78" y="1568" class="small">依据当前代码：main.py · retrieval_router.py · intent_classifier.py · intent_router.py · knowledge_base_adapter.py · pure_kb/* · generation.py · citation_verifier.py</text>
 </svg>

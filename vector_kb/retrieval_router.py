@@ -18,6 +18,11 @@ from vector_kb.knowledge_base_adapter import merge_with_hybrid, search_knowledge
 LOGGER = logging.getLogger(__name__)
 
 
+def _emit(trace, step: str, payload) -> None:
+    if trace is not None:
+        trace(step, payload)
+
+
 def _empty_result(intent_result: dict, source: str = "irrelevant") -> dict:
     return {
         "chunks": [],
@@ -31,16 +36,13 @@ def _empty_result(intent_result: dict, source: str = "irrelevant") -> dict:
 
 
 def route_and_retrieve(question: str, top_k: int = 5, shadow: bool = True, trace=None) -> dict:
-    """Route a query and combine pure_kb with the existing hybrid retriever.
-
-    ``shadow=True`` still executes the complete comparison path. The caller is
-    responsible for using ``chunks`` only when running in non-shadow mode.
-    """
+    """Route a query and combine pure_kb with the existing hybrid retriever."""
     question = str(question or "").strip()
     if not question or top_k <= 0:
         return _empty_result({}, "empty")
 
     intent_result = classify_intent(question)
+    _emit(trace, "意图识别", intent_result)
     if not isinstance(intent_result, dict):
         return _empty_result({}, "irrelevant")
 
@@ -48,11 +50,15 @@ def route_and_retrieve(question: str, top_k: int = 5, shadow: bool = True, trace
         return _empty_result(intent_result)
 
     route = route_intent(question, classification=intent_result)
+    _emit(trace, "意图路由", route)
     if route.get("mode") == "refuse" or not route.get("domains"):
         return _empty_result(intent_result)
 
     hybrid_results = hybrid_retrieve(question, top_k=20, trace=trace)
+    _emit(trace, "混合检索Top-K", hybrid_results[:5])
+
     kb_results = search_knowledge_base(question, route=route, top_k=20)
+    _emit(trace, "知识库检索Top-K", kb_results[:5])
 
     if not kb_results:
         merged = hybrid_results[:top_k]
@@ -64,6 +70,7 @@ def route_and_retrieve(question: str, top_k: int = 5, shadow: bool = True, trace
         merged = merge_with_hybrid(hybrid_results, kb_results, top_k=top_k)
         source = "hybrid+kb"
 
+    _emit(trace, "最终检索Top-K", merged)
     result = {
         "chunks": merged,
         "source": source,

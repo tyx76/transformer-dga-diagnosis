@@ -1,0 +1,50 @@
+{"id": "DGA-001", "question": "乙炔超标怎么处理", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["9.3.1-表3", "9.3.2-表4"], "category": "dga_analysis"}
+{"id": "DGA-002", "question": "氢气含量偏高是什么原因", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["9.3.1-表3"], "category": "dga_analysis"}
+{"id": "DGA-003", "question": "总烃超标怎么办", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["9.3.1-表3", "9.3.2-表4"], "category": "dga_analysis"}
+{"id": "DGA-004", "question": "三比值法怎么判断故障类型", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["10.2.1-表6", "10.2.1-表7"], "category": "dga_analysis"}
+{"id": "DGA-005", "question": "C₂H₂注意值是多少", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["9.3.1-表3"], "category": "dga_analysis"}
+{"id": "DGA-006", "question": "甲烷和乙烯同时升高说明什么", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["9.3.1-表3", "10.2.1-表6"], "category": "dga_analysis"}
+{"id": "DGA-007", "question": "油中溶解气体分析结果异常，应该怎么处理", "expected_docs": ["DL/T 722-2014", "DL/T 572-2021"], "expected_clauses": ["9.3.1-表3", "5.5.2"], "category": "dga_analysis"}
+{"id": "DGA-008", "question": "局部放电的特征气体有哪些", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["10.2.1-表6", "10.2.1-表7"], "category": "dga_analysis"}
+{"id": "DGA-009", "question": "电弧放电和火花放电怎么区分", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["10.2.1-表6", "10.2.1-表7"], "category": "dga_analysis"}
+{"id": "DGA-010", "question": "CO和CO₂比值能说明什么", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["10.2.3.1"], "category": "dga_analysis"}
+{"id": "OIL-001", "question": "变压器油温过高怎么处理", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.5", "7.1.6", "7.1.8"], "category": "oil_temp"}
+{"id": "OIL-002", "question": "顶层油温超过多少度需要降低负载", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.8"], "category": "oil_temp"}
+{"id": "OIL-003", "question": "冷却系统故障导致温度升高怎么办", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.6"], "category": "oil_temp"}
+{"id": "OIL-004", "question": "油位异常升高是什么原因", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.10", "7.1.11"], "category": "oil_temp"}
+{"id": "OIL-005", "question": "变压器温升过高如何处理", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.5", "7.1.6"], "category": "oil_temp"}
+{"id": "OIL-006", "question": "油浸式变压器顶层油温一般不应超过多少", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["5.1.3"], "category": "oil_temp"}
+{"id": "OIL-007", "question": "油温异常时值班人员应该检查哪些项目", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.5"], "category": "oil_temp"}
+{"id": "OIL-008", "question": "负载过高导致油温升高怎么处理", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.8", "5.5.2"], "category": "oil_temp"}
+{"id": "SAFE-001", "question": "要不要立即停电", "expected_docs": ["DL/T 572-2021", "GB 26860-2011"], "expected_clauses": ["7.1.4", "7.1.2", "7.1.3"], "category": "safety_check"}
+{"id": "SAFE-002", "question": "乙炔超标需要停运吗", "expected_docs": ["DL/T 572-2021", "DL/T 722-2014"], "expected_clauses": ["7.1.4", "9.3.1-表3"], "category": "safety_check"}
+{"id": "SAFE-003", "question": "变压器出现异常时紧急处置流程是什么", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.1", "7.1.2", "7.1.3"], "category": "safety_check"}
+{"id": "SAFE-004", "question": "什么情况下必须立即停运变压器", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.4", "7.1.2"], "category": "safety_check"}
+{"id": "SAFE-005", "question": "轻瓦斯动作后需要停电吗", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.3", "7.2.1"], "category": "safety_check"}
+{"id": "SAFE-006", "question": "重瓦斯动作如何处理", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.3", "7.2.1"], "category": "safety_check"}
+{"id": "EQ-001", "question": "220kV变压器顶层油温限值是多少", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["5.1.3"], "category": "equipment_spec"}
+{"id": "EQ-002", "question": "330kV变压器乙炔注意值是多少", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["9.3.1-表3"], "category": "equipment_spec"}
+{"id": "EQ-003", "question": "变压器额定容量怎么查", "expected_docs": ["DL/T 572-2021"], "expected_clauses": [], "category": "equipment_spec"}
+{"id": "EQ-004", "question": "自然循环冷却变压器顶层油温不宜超过多少", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["5.1.3"], "category": "equipment_spec"}
+{"id": "EQ-005", "question": "220kV变压器氢气注意值是多少", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["9.3.1-表3"], "category": "equipment_spec"}
+{"id": "EQ-006", "question": "变压器油中溶解气体检测周期是多久", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["9.2"], "category": "equipment_spec"}
+{"id": "MULTI-001", "question": "乙炔和油温同时异常", "expected_docs": ["DL/T 722-2014", "DL/T 572-2021"], "expected_clauses": ["9.3.1-表3", "7.1.5", "7.1.6"], "category": "multi"}
+{"id": "MULTI-002", "question": "油温过高，同时乙炔也超标，需要停电吗", "expected_docs": ["DL/T 722-2014", "DL/T 572-2021"], "expected_clauses": ["9.3.1-表3", "7.1.5", "7.1.4"], "category": "multi"}
+{"id": "MULTI-003", "question": "氢气升高和总烃超标，怎么处理", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["9.3.1-表3", "9.3.2-表4"], "category": "multi"}
+{"id": "MULTI-004", "question": "220kV变压器乙炔超标，顶层油温也高，怎么办", "expected_docs": ["DL/T 722-2014", "DL/T 572-2021"], "expected_clauses": ["9.3.1-表3", "7.1.5", "5.1.3"], "category": "multi"}
+{"id": "MULTI-005", "question": "设备参数在哪里查，同时乙炔超标怎么处理", "expected_docs": ["DL/T 722-2014", "DL/T 572-2021"], "expected_clauses": ["9.3.1-表3"], "category": "multi"}
+{"id": "MULTI-006", "question": "冷却系统故障导致油温高，同时氢气也升高了", "expected_docs": ["DL/T 572-2021", "DL/T 722-2014"], "expected_clauses": ["7.1.6", "9.3.1-表3"], "category": "multi"}
+{"id": "IRR-001", "question": "今天晚饭吃什么", "expected_docs": [], "expected_clauses": [], "category": "irrelevant"}
+{"id": "IRR-002", "question": "变压器怎么炒菜", "expected_docs": [], "expected_clauses": [], "category": "irrelevant"}
+{"id": "IRR-003", "question": "周末去看电影吗", "expected_docs": [], "expected_clauses": [], "category": "irrelevant"}
+{"id": "IRR-004", "question": "明天天气怎么样", "expected_docs": [], "expected_clauses": [], "category": "irrelevant"}
+{"id": "IRR-005", "question": "推荐一款游戏", "expected_docs": [], "expected_clauses": [], "category": "irrelevant"}
+{"id": "IRR-006", "question": "帮我写一首诗", "expected_docs": [], "expected_clauses": [], "category": "irrelevant"}
+{"id": "BOUND-001", "question": "", "expected_docs": [], "expected_clauses": [], "category": "boundary"}
+{"id": "BOUND-002", "question": "乙炔不超标需要处理吗", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["9.3.1-表3"], "category": "boundary"}
+{"id": "BOUND-003", "question": "是不是不用停电", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.4"], "category": "boundary"}
+{"id": "BOUND-004", "question": "这个设备的操作流程是什么", "expected_docs": [], "expected_clauses": [], "category": "boundary"}
+{"id": "BOUND-005", "question": "帮我分析一下这个情况", "expected_docs": [], "expected_clauses": [], "category": "boundary"}
+{"id": "BOUND-006", "question": "变压器油温过高怎么处理？请详细说明，包括检查步骤、处理措施、是否需要停电，以及相关规程依据。", "expected_docs": ["DL/T 572-2021"], "expected_clauses": ["7.1.5", "7.1.6", "7.1.4"], "category": "boundary"}
+{"id": "BOUND-007", "question": "What is the acetylene limit for a 220kV transformer?", "expected_docs": ["DL/T 722-2014"], "expected_clauses": ["9.3.1-表3"], "category": "boundary"}
+{"id": "BOUND-008", "question": "12345", "expected_docs": [], "expected_clauses": [], "category": "boundary"}

@@ -133,7 +133,7 @@ def search_knowledge_base(question: str, route: dict, top_k: int = 20) -> list[d
     return _dedupe_standard_chunks(chunks, keep=max(1, int(top_k)))
 
 
-def _rrf_merge(hybrid_results: list[dict], kb_results: list[dict], top_k: int, k: int = 60) -> list[dict]:
+def _rrf_merge(hybrid_results: list[dict], kb_results: list[dict], top_k: int, k: int = 60, w_hybrid: float = 1.0, w_kb: float = 1.0) -> list[dict]:
     hybrid = _dedupe_standard_chunks([c for c in hybrid_results if isinstance(c, dict)])
     kb = _dedupe_standard_chunks([c for c in kb_results if isinstance(c, dict)])
 
@@ -142,12 +142,12 @@ def _rrf_merge(hybrid_results: list[dict], kb_results: list[dict], top_k: int, k
 
     for index, item in enumerate(hybrid, start=1):
         key = _result_key(item)
-        scores[key] = scores.get(key, 0.0) + 1.0 / (k + index)
+        scores[key] = scores.get(key, 0.0) + float(w_hybrid) / (k + index)
         documents[key] = dict(item)
 
     for index, item in enumerate(kb, start=1):
         key = _result_key(item)
-        scores[key] = scores.get(key, 0.0) + 1.0 / (k + index)
+        scores[key] = scores.get(key, 0.0) + float(w_kb) / (k + index)
         if key not in documents:
             documents[key] = dict(item)
         else:
@@ -164,11 +164,11 @@ def _rrf_merge(hybrid_results: list[dict], kb_results: list[dict], top_k: int, k
     return merged
 
 
-def merge_with_hybrid(hybrid_results: list[dict], kb_results: list[dict], top_k: int = 5) -> list[dict]:
+def merge_with_hybrid(hybrid_results: list[dict], kb_results: list[dict], top_k: int = 5, w_hybrid: float = 1.0, w_kb: float = 1.0) -> list[dict]:
     """Deduplicate and RRF-merge hybrid retrieval with pure_kb results."""
     if top_k <= 0:
         return []
-    return _rrf_merge(hybrid_results or [], kb_results or [], int(top_k), k=60)
+    return _rrf_merge(hybrid_results or [], kb_results or [], int(top_k), k=60, w_hybrid=w_hybrid, w_kb=w_kb)
 
 
 __all__ = ["adapt_chunk", "search_knowledge_base", "merge_with_hybrid"]

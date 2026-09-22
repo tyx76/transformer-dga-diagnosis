@@ -2,7 +2,7 @@
 
 > 用途：对应技术向「任务1 调研现状、分析不同方案特点」与综述「知识增强技术现状」一节。
 > 版本 v0.2｜2026-09-14｜与 docs/01_literature_and_standards.md 对照引用。
-> 实现状态（2026-09-18）：向量 RAG、jieba + BM25、RRF 和引用校验已落地；GraphRAG、重排、Agentic RAG 和查询意图路由仍属后续路线。当前实现清单见 `docs/00`。
+> 实现状态（2026-09-18）：向量 RAG、jieba + BM25、RRF、引用校验、规则 + LLM 兜底意图分类、意图路由和 pure_kb 融合已落地；GraphRAG、重排和完整 Agentic RAG 仍属后续路线。当前实现清单见 `docs/00`。
 
 ---
 

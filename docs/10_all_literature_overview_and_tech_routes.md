@@ -5,7 +5,7 @@
 > 阅读范围：`literature/` 下 35 份非重复 PDF，排除 `99_archive_duplicates/` 中两份重复文件。  
 > 阅读口径：每篇核对标题、摘要、目录和关键章节；长综述按研究问题、方法分类和结论抽取，不等同于逐字全文精读。  
 > 用途：任务一文献综述、任务二/三技术选型、README 与架构文档中的“设计依据”索引。
-> 实现映射（2026-09-18）：当前已实现向量 RAG + BM25 + RRF + 引用校验；KG/GraphRAG、Cross-Encoder 重排和 C6 Agentic 意图路由尚未实现。
+> 实现映射（2026-09-18）：当前已实现向量 RAG + BM25 + RRF + 引用校验 + 规则/LLM 意图分类 + pure_kb 路由；KG/GraphRAG、Cross-Encoder 重排和 C6 完整 Agentic 路由尚未实现。
 
 ---
 

@@ -186,3 +186,45 @@ BM25 Top-3：7.1.5、7.1.6、7.1.8
 
 自动回归共 24 项：通过 23 项、失败 0 项、已知问题 1 项。
 原 KNOWN-002 由桩响应推断，真实 API 验证无问题，已撤销并明确不需要修复。
+## 11. 2026-09-18：意图路由、纯知识库接入与真实 A/B
+
+### 意图理解
+
+- `data/rules/intent_rules.json` 定义 5 类意图和冲突规则。
+- `vector_kb/intent_classifier.py` 实现规则优先、LLM 兜底和多意图 `multi`。
+- 规则命中不调用 LLM；规则返回 `None` 时才调用 `deepseek-chat`。
+
+### 纯知识库
+
+- 成员纯知识库已落位到 `pure_kb/`。
+- 共 198 条，六个领域：`dga / oil_temp / safety / equipment / dp / cases`。
+- 公开 API 只有 `list_domains / search / exact_lookup / stats`。
+- `knowledge_base_adapter.py` 负责字段归一化、dp 过滤、去重和 RRF 融合。
+- `retrieval_router.py` 负责意图识别、domain 路由、hybrid + pure_kb 调度。
+
+### 真实 DeepSeek 影子对比
+
+使用 7 条关键用例：
+
+| 指标 | A路 hybrid | B路 hybrid+kb |
+|---|---:|---:|
+| Top-5 命中率 | 50.00% | 83.33% |
+| 引用正确率 | 100.00% | 100.00% |
+| 拒答率 | 100.00% | 100.00% |
+| 平均响应时间 | 422.57 ms | 563.80 ms |
+| LLM 兜底次数 | — | 1 |
+
+B路 Top-5 命中率提升 33.33 个百分点，实测报告见 `docs/影子对比报告.md`。
+
+### 接入状态
+
+- `main.py` 使用 `USE_ROUTER` 直接控制检索路径。
+- 默认 `USE_ROUTER=true`：调用 `route_and_retrieve()`。
+- 设置 `USE_ROUTER=false`：回退纯 `hybrid_retrieve()`。
+- `--debug` 已增加意图识别、意图路由、混合检索、知识库检索和最终融合输出。
+
+### 测试用例集
+
+- 已建立 `data/evaluation/acceptance_cases.jsonl`，共 50 条。
+- 覆盖 DGA、油温、安全、设备参数、多意图、无关问题和边界用例。
+- 当前尚未编写基于该用例集的自动批量评测脚本。

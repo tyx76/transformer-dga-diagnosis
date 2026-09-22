@@ -22,18 +22,24 @@
 | 引用校验 | `vector_kb/citation_verifier.py`，最多重写 2 次 |
 | 调试 | `python main.py --debug ...` |
 | 领域过滤 | `vector_kb/domain_guard.py`，规则版临时方案 |
+| 意图理解 | `vector_kb/intent_classifier.py`，规则优先 + LLM 兜底 + `multi` |
+| 意图路由 | `vector_kb/intent_router.py`，输出 domains/filters/mode |
+| 纯知识库 | `pure_kb/`，198 条、六领域、显式 domains/filters |
+| 知识库适配 | `vector_kb/knowledge_base_adapter.py`，字段归一化 + RRF |
+| 检索调度 | `vector_kb/retrieval_router.py` + `USE_ROUTER` 开关 |
 | 统一语料 | `scripts/build_unified_corpus.py` → `data/corpus/clauses.jsonl` |
 | CLI | `vector_kb/cli.py` 保留纯向量 `query/ask` 工具，不是当前混合主链路 |
 | Agent 工作流 | 尚未实现，本文后半部分为后续目标设计 |
-| 端到端评测 | 已建立 24 项自动回归；仍需扩充正式评测集 |
+| 端到端评测 | 24 项自动回归 + 50 条测试用例集；批量评测脚本待补 |
 
 当前主链路：
 
 ```text
 用户问题
-→ domain_guard
-→ 向量 Top-10 + BM25 Top-10
-→ RRF Top-5
+→ classify_intent：规则优先，必要时 LLM 兜底
+→ route_intent：intent → domains/filters
+→ USE_ROUTER=true：hybrid + pure_kb + RRF
+→ USE_ROUTER=false：纯 hybrid_retrieve
 → DeepSeek generate
 → verify_citations
 → 重写或删除无依据句
@@ -41,11 +47,10 @@
 
 后续优先项：
 
-1. 查询意图路由：区分 DGA、油温/冷却、安全操作、无关问题。
-2. 按意图进行 `doc_id` 文档域过滤。
-3. RRF 动态权重和相关性门槛。
-4. 建立正式评测集和真实环境验收。
-
+1. 基于 `data/evaluation/acceptance_cases.jsonl` 建立批量自动评测脚本。
+2. 调整 RRF 动态权重和相关性门槛。
+3. 扩大真实 DeepSeek 端到端验收样本。
+4. 完善 Agent Workflow 和 C6 Agentic 路由。
 ---
 ## 1. 总体结论
 

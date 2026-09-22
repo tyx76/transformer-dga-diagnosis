@@ -32,7 +32,11 @@ python scripts\build_unified_corpus.py
 | `domain_guard.py` | 规则版领域与明显无关意图过滤 |
 | `generation.py` | 上下文拼接、引用格式和 DeepSeek `generate()` |
 | `citation_verifier.py` | 引用存在性校验、重写提示和删除无效句 |
-| `cli.py` | 保留的 `ingest / info / query / ask` 工具，当前仍为纯向量链路 |
+| `intent_classifier.py` | 规则优先、LLM 兜底、多意图识别 |
+| `intent_router.py` | 意图 → pure_kb domains/filters/mode |
+| `knowledge_base_adapter.py` | pure_kb 结果字段归一化、去重和 RRF 融合 |
+| `retrieval_router.py` | 意图识别 + hybrid + pure_kb 调度 |
+| `cli.py` | 保留的 `ingest / info / query / ask` 纯向量调试工具 |
 
 ## 3. 目录内容
 
@@ -50,6 +54,10 @@ vector_kb/
 ├─ domain_guard.py
 ├─ generation.py
 ├─ citation_verifier.py
+├─ intent_classifier.py
+├─ intent_router.py
+├─ knowledge_base_adapter.py
+├─ retrieval_router.py
 ├─ cli.py
 ├─ corpus/
 │  ├─ clauses.jsonl                     DL/T 722 判据（5 条）
@@ -62,16 +70,19 @@ vector_kb/
 
 ```text
 main.py
-  → domain_guard.is_in_domain()
-  → retrieval.retrieve(top_k=10, min_score=0.45)
-  → bm25_retriever.bm25_retrieve(top_k=10)
-  → rrf_fusion.rrf_fusion(top_k=5)
+  → USE_ROUTER
+      ├─ true: route_and_retrieve()
+      │    → classify_intent()
+      │    → route_intent()
+      │    → hybrid_retrieve() + pure_kb
+      │    → merge_with_hybrid()
+      └─ false: hybrid_retrieve()
   → generation.generate()
   → citation_verifier.verify_citations()
   → 最多重写 2 次，仍失败则删除无依据句
 ```
 
-`hybrid_retrieve()` 默认 `top_k=3`，但当前 `main.py` 显式请求 `top_k=5`。
+`hybrid_retrieve()` 默认 `top_k=3`，但当前检索调度和 `main.py` 显式请求 `top_k=5`。
 
 ## 5. 常用命令
 
@@ -112,6 +123,8 @@ from vector_kb.rrf_fusion import rrf_fusion
 from vector_kb.hybrid_retriever import hybrid_retrieve
 from vector_kb.generation import generate
 from vector_kb.citation_verifier import verify_citations
+from vector_kb.intent_classifier import classify_intent
+from vector_kb.retrieval_router import route_and_retrieve
 ```
 
 ## 6. 返回字段
@@ -142,13 +155,12 @@ doc_id / clause / title / text / page / rrf_score
 
 ## 8. 已知问题
 
-- 统一语料后，DGA 查询可能混入 DL/T 572 运维条款，BM25 存在跨文档域干扰。
-- 当前 RRF 两路等权，尚未根据问题意图动态调整。
-- 当前领域判断为规则方案，后续计划引入 C6 FaultSeer 的 Agentic 意图判断。
-- 油温问题已经能召回 `7.1.5/7.1.6/7.1.8`，但生成器仍可能因处置流程不完整而拒答，提示词待优化。
+- 意图路由和 pure_kb 已接入；RRF 仍采用固定权重，后续可根据 50 条测试用例调整。
+- DGA 与运维领域的交叉干扰已通过 domain 路由降低，但仍需量化验证残余误召回。
+- cases 仅作类比证据，不能替代 standards、rules 或 safety。
 - 572 页码暂未记录；722 `9.3.3 / 10.2.4 / 10.3` 正文条款待补。
-- `cli.py query/ask` 未同步混合检索和引用校验，保留用于纯向量对比。
-
+- `cli.py query/ask` 未同步混合检索、意图路由和引用校验，保留用于纯向量对比。
+- C6 FaultSeer 的完整 Agentic 路由仍属后续路线。
 ## 9. 环境与版权
 
 - Python 3.10+；本机实测 3.14.7。

@@ -36,10 +36,11 @@
 
 ```text
 用户问题
-  → 领域过滤 domain_guard
-  → 向量 retrieve Top-10
-  → BM25 bm25_retrieve Top-10
-  → RRF rrf_fusion Top-5
+  → 规则优先 + LLM 兜底意图分类 classify_intent
+  → 意图到 domain/filter 路由 route_intent
+  → USE_ROUTER 开关
+      ├─ route_and_retrieve：hybrid + pure_kb + RRF
+      └─ hybrid_retrieve：纯混合检索回退
   → generate DeepSeek
   → verify_citations
   → 最多重写 2 次
@@ -61,6 +62,7 @@ python main.py
 - 两路候选各取：`candidate_k=10`
 - `main.py` 最终上下文：`top_k=5`
 - RRF 平滑常数：`k=60`
+- 检索开关：`USE_ROUTER=true` 默认启用路由，设为 `false` 回退纯 hybrid
 - 引用重写：初次生成 + 最多 2 次重写
 - DeepSeek：`deepseek-chat`，`temperature=0.1`，`max_tokens=800`
 
@@ -71,18 +73,23 @@ python main.py
 | 统一语料 | `data/corpus/clauses.jsonl`，123 条（722 判据 5 + 572 条款 118） | ✅ 本地生成，不入库 |
 | 统一脚本 | `scripts/build_unified_corpus.py` | ✅ |
 | 向量库 | `vector_kb/knowledge.db`，123 块，bge-m3 1024 维 | ✅ 本地资产 |
-| 纯知识库候选 | `pure_kb/`，198 条、六领域、纯 domains/filters API | ✅ 已落位，未接入 main |
+| 纯知识库 | `pure_kb/`，198 条、六领域、纯 domains/filters API | ✅ 已接入检索路由 |
 | 向量检索 | `vector_kb/retrieval.py` | ✅ |
 | BM25 | `vector_kb/bm25_retriever.py` + `bm25_index.pkl` | ✅ v2，源文件变化自动重建 |
 | RRF | `vector_kb/rrf_fusion.py` | ✅ |
 | 混合检索 | `vector_kb/hybrid_retriever.py` | ✅ |
+| 意图分类 | `vector_kb/intent_classifier.py` + `data/rules/intent_rules.json` | ✅ 规则优先、LLM 兜底、多意图 |
+| 意图路由 | `vector_kb/intent_router.py` | ✅ intent → domains/filters |
+| 纯知识库适配器 | `vector_kb/knowledge_base_adapter.py` | ✅ 字段归一化、去重、RRF 融合 |
+| 检索调度 | `vector_kb/retrieval_router.py` | ✅ 意图 + hybrid + pure_kb |
 | 领域过滤 | `vector_kb/domain_guard.py` | ✅ 规则版 |
 | 生成 | `vector_kb/generation.py` | ✅ |
 | 引用校验 | `vector_kb/citation_verifier.py` | ✅ |
 | CLI 调试工具 | `vector_kb/cli.py`：`ingest/info/query/ask` | ✅ 纯向量链路保留 |
-| 主入口 | `main.py`：混合检索 + 生成 + 引用校验 + `--debug` | ✅ |
+| 主入口 | `main.py`：USE_ROUTER 检索调度 + 生成 + 引用校验 + `--debug` | ✅ |
 | 规则基线 | `scripts/dga_ratio.py`，样本归并准确率 61.8% | ✅ |
 | 样本 | `data/samples/dga_samples_uL_per_L.csv`，3466 条 | ✅ |
+| 测试用例集 | `data/evaluation/acceptance_cases.jsonl`，50 条 | ✅ 已建立 |
 | 文档 | `docs/00–10` + `docs/notes/` + `docs/exam_proof/` | ✅ |
 | 环境 | `venv` Python 3.14.7 + `requirements.txt` | ✅ |
 
@@ -98,6 +105,10 @@ python main.py
 - ✅ 09-18：完成 `--debug`，输出问题、查询改写、向量 Top-K、BM25 Top-K、RRF、生成、校验和最终输出摘要。
 - ✅ 09-18：完成统一语料合并，BM25 从 5 条扩展到 123 条。
 - ✅ 09-18：完成阈值与规则过滤。无关问题“今天晚上吃什么”“变压器怎么炒菜”不会进入生成。
+- ✅ 09-18：完成规则优先 + LLM 兜底意图分类，并支持 `multi` 多意图。
+- ✅ 09-18：完成纯知识库适配器和 `USE_ROUTER` 直切开关。
+- ✅ 09-18：真实 DeepSeek A/B 对比 7 条关键用例，Top-5 命中率从 50.00% 提升至 83.33%。
+- ✅ 09-18：建立 50 条测试用例题集。
 
 代表性结果：
 
@@ -112,34 +123,30 @@ python main.py
 
 | 优先级 | 事项 | 状态 |
 |---|---|---|
-| P0 | 查询意图路由：区分 DGA、油温/冷却、安全操作和无关问题 | ⏳ 后续 |
-| P0 | 按意图做 `doc_id` 域过滤，解决统一语料后的跨文档域干扰 | ⏳ 后续 |
-| P0 | RRF 动态权重和相关门槛，避免低相关 BM25 挤掉高相关向量结果 | ⏳ 后续 |
-| P1 | 10 条以上端到端评测集：Recall@5、MRR、引用正确率、拒答率 | ⏳ |
+| P0 | 基于 50 条测试用例建立批量自动评测脚本 | ⏳ 下一步 |
+| P0 | RRF 动态权重和相关性门槛 | ⏳ 后续 |
 | P1 | 补 722 `9.3.3 / 10.2.4 / 10.3` 正文原则条款 | ⏳ |
 | P1 | 补充 572 页码映射 | ⏳ |
-| P1 | 真实 DeepSeek + Ollama 全链路验收归档到 `docs/08` | ⏳ |
-| P0 | 编写 `knowledge_base_adapter` 并影子接入 `pure_kb` | ⏳ 下一步 |
-| P2 | 引入 C6 FaultSeer 的 Agentic 意图判断与路由 | 暂缓 |
+| P1 | 扩大真实 DeepSeek 端到端验收样本 | ⏳ |
+| P2 | 引入 C6 FaultSeer 的完整 Agentic 判断与路由 | 暂缓 |
 | P2 | embedding 配置参数化 | 暂缓 |
 | — | KNOWN-002 桩测试误判已撤销：真实 API 验证无问题，不修复 | 已关闭 |
 | P2 | 572 表格、GB 26860、中文故障案例 | 阶段二 |
 
 ## 6. 远程与工作区状态
 
-- 当前已推送基线：`108494c feat: add hybrid BM25 and RRF retrieval`。
+- 当前已推送基线：`a423dd5 feat: add USE_ROUTER retrieval switch`。
 - `main` 与 `origin/main` 在已推送提交上同步。
-- 工作区仍包含 09-18 的调试、引用校验、领域过滤、统一语料和文档同步改动，提交前以 `git status` 为准。
+- 工作区包含测试用例题集和最新文档同步改动，提交前以 `git status` 为准。
 - 标准正文、PDF、大体积样本、`knowledge.db`、`bm25_index.pkl` 和本地统一语料不提交。
 
 ## 7. 下一步顺序
 
-1. 提交并回归 09-18 已完成模块，确保默认输出和 `--debug` 均可重复。
-2. 建立意图路由和文档域策略，先解决 DGA 与运维条款交叉污染。
-3. 调整 RRF 权重和文档域策略，复测“油温过高”“乙炔超标”“无关问题”。
-4. 建立正式评测集并记录 Recall、MRR、引用正确率和拒答指标。
-5. 补 722 正文原则条款和 572 页码。
-6. 再考虑 C6 Agentic 意图判断、重排和 Agent 工作流。
+1. 基于 50 条测试用例建立批量自动评测脚本。
+2. 调整 RRF 动态权重和文档域策略，复测“油温过高”“乙炔超标”“无关问题”。
+3. 扩大真实 DeepSeek 端到端验收样本。
+4. 补 722 正文原则条款和 572 页码。
+5. 完善 Agent Workflow 和 C6 Agentic 路由。
 
 ## 8. 旧编号对照（历史版本见 Git）
 

@@ -69,11 +69,37 @@ def _format_output_summary(answer: str) -> str:
 
 
 def _retrieval_trace(debug: bool):
-    """返回供 hybrid_retrieve 使用的可选 trace 回调。"""
+    """Return an optional trace callback for the retrieval pipeline."""
     if not debug:
         return None
 
-    def callback(step: str, hits: list[dict]) -> None:
+    def callback(step: str, payload) -> None:
+        if step == "意图识别":
+            if not isinstance(payload, dict):
+                summary = "无结果"
+            elif payload.get("intent") == "multi":
+                summary = (
+                    f"intent=multi；intents={_format_citations(payload.get('intents'))}；"
+                    f"confidence={payload.get('confidence')}；source={payload.get('source')}"
+                )
+            else:
+                summary = (
+                    f"intent={payload.get('intent')}；confidence={payload.get('confidence')}；"
+                    f"source={payload.get('source')}"
+                )
+            _trace(debug, step, summary)
+            return
+
+        if step == "意图路由":
+            route = payload if isinstance(payload, dict) else {}
+            summary = (
+                f"mode={route.get('mode')}；domains={route.get('domains') or []}；"
+                f"filters={route.get('filters') or {}}；source={route.get('source')}"
+            )
+            _trace(debug, step, summary)
+            return
+
+        hits = payload if isinstance(payload, list) else []
         score_key = "rrf_score" if step.startswith("RRF") else "score"
         _trace(debug, step, _format_hits(hits, score_key))
 
@@ -85,6 +111,7 @@ def ask(question: str, debug: bool = False) -> str:
     _trace(debug, "用户问题", _shorten(question))
     _trace(debug, "查询改写结果", "无改写，使用原问题")
     use_router = os.getenv("USE_ROUTER", "true").strip().lower() == "true"
+    _trace(debug, "检索入口", "router" if use_router else "hybrid")
     if use_router:
         chunks = route_and_retrieve(
             question,
