@@ -1,351 +1,181 @@
 # 变压器 DGA 智能诊断项目实现方案
 
-> 版本：v0.1
-> 整理日期：2026-09-14
-> 历史依据（旧交接包，相关路径已不在当前仓库）：`main/00_project_status.md`、`main/05_dev_log_and_schedule.md`、`main/cli.py`、`main/main.py`、`main/docs.zip`
-> 目标：在现有知识库与检索能力上，闭合“现象/DGA 数据 → 规则诊断 → 检索取证 → Agent 验证 → 带引用报告 → 评测”的端到端链路。
+> 文档状态：现行｜更新：2026-09-27
+> 当前主入口：根目录 `main.py`
+> 目标：闭合“现象/DGA 数据 → 规则诊断 → 检索取证 → 引用校验 → 带依据报告 → 评测”的链路。
+> 历史交接方案和已废弃的 `app/`、FastAPI、Chroma 目录设计不再作为当前实现依据。
 
----
+## 1. 总体结论
 
-## 0. 状态同步（2026-09-18）
+技术路线为：
 
-> 本节是当前代码状态的权威说明；下文“当前项目状态”“建议目录”等保留为早期交接与目标架构记录，其中的 `app/`、FastAPI 和 Web 页面不是当前仓库的实现形态。
+> **规则/机理作为确定性底座 + 向量与 BM25 检索提供可溯源证据 + 受控路由和 Agent 编排排因 + LLM 组织报告 + 引用校验与人工复核兜底。**
 
-| 能力 | 当前实现 |
-|---|---|
-| 主入口 | 根目录 `main.py` |
-| 检索 | `vector_kb/retrieval.py` 向量检索，默认阈值 `0.45` |
-| 关键词检索 | `vector_kb/bm25_retriever.py`，统一语料 123 条，索引 v2 |
-| 融合 | `vector_kb/rrf_fusion.py` |
-| 混合入口 | `vector_kb/hybrid_retriever.py`，领域过滤 + 向量 + BM25 + RRF |
-| 生成 | `vector_kb/generation.py`，DeepSeek `deepseek-chat` |
-| 引用校验 | `vector_kb/citation_verifier.py`，最多重写 2 次 |
-| 调试 | `python main.py --debug ...` |
-| 领域过滤 | `vector_kb/domain_guard.py`，规则版临时方案 |
-| 意图理解 | `vector_kb/intent_classifier.py`，规则优先 + LLM 兜底 + `multi` |
-| 意图路由 | `vector_kb/intent_router.py`，输出 domains/filters/mode |
-| 纯知识库 | `pure_kb/`，198 条、六领域、显式 domains/filters |
-| 知识库适配 | `vector_kb/knowledge_base_adapter.py`，字段归一化 + RRF |
-| 检索调度 | `vector_kb/retrieval_router.py` + `USE_ROUTER` 开关 |
-| 统一语料 | `scripts/build_unified_corpus.py` → `data/corpus/clauses.jsonl` |
-| CLI | `vector_kb/cli.py` 保留纯向量 `query/ask` 工具，不是当前混合主链路 |
-| Agent 工作流 | 尚未实现，本文后半部分为后续目标设计 |
-| 端到端评测 | 24 项自动回归 + 50 条测试用例集；批量评测脚本待补 |
+当前已完成单轮问答主链路，但还没完成“数值 DGA 输入自动进入规则引擎”的闭环。当前最优先事项不是继续增加模型能力，而是：
 
-当前主链路：
+1. 把 `scripts/dga_ratio.py` 接入 `main.py`；
+2. 统一规则结果、检索证据和最终报告的数据结构；
+3. 用 50 条验收用例做可维护的批量评测；
+4. 解决排序层瓶颈，再考虑更复杂的 Agent 和图谱。
+
+## 2. 当前系统分层
+
+| 层级 | 当前职责 | 主要文件 |
+|---|---|---|
+| 数据层 | 722 判据、572 条款、规则 JSON、DGA 样本、验收用例 | `data/`、`pure_kb/data/` |
+| 存储层 | SQLite 向量库、BM25 索引 | `vector_kb/store.py`、`knowledge.db` |
+| 向量层 | Ollama embedding 与余弦检索 | `vector_kb/embeddings.py`、`retrieval.py` |
+| 关键词层 | jieba + rank-bm25 | `vector_kb/bm25_retriever.py` |
+| 融合层 | RRF 与去重归一化 | `vector_kb/rrf_fusion.py`、`knowledge_base_adapter.py` |
+| 路由层 | 意图分类、domain/filter 路由 | `intent_classifier.py`、`intent_router.py`、`retrieval_router.py` |
+| 领域层 | 明显无关问题拦截 | `domain_guard.py` |
+| 生成层 | 上下文拼接、引用格式、DeepSeek 调用 | `generation.py` |
+| 校验层 | 引用存在性检查、重写提示、删除无依据句 | `citation_verifier.py` |
+| 入口层 | CLI 单轮问答和交互模式 | `main.py` |
+| 评测层 | 回归、A/B、权重搜索、规则基线 | `scripts/`、`data/evaluation/` |
+| 文档层 | 单点状态、方案、日志、验收和调研 | `docs/`、`survey/` |
+
+## 3. 当前主链路
 
 ```text
 用户问题
-→ classify_intent：规则优先，必要时 LLM 兜底
-→ route_intent：intent → domains/filters
-→ USE_ROUTER=true：hybrid + pure_kb + RRF
-→ USE_ROUTER=false：纯 hybrid_retrieve
-→ DeepSeek generate
-→ verify_citations
-→ 重写或删除无依据句
+  |
+  v
+classify_intent
+  规则优先 -> 命中直接返回
+  规则不确定 -> DeepSeek LLM 兜底
+  |
+  v
+route_intent
+  intent -> domains / filters / mode
+  |
+  +-- irrelevant -> 直接拒答，不检索、不生成
+  |
+  v
+USE_ROUTER=true
+  +-- hybrid_retrieve：领域过滤 + 向量 + BM25 + RRF
+  +-- pure_kb.search：显式 domains/filters
+  +-- merge_with_hybrid：两路证据再次 RRF 融合
+  |
+  v
+Top-5 证据
+  |
+  v
+generate(question, chunks)
+  |
+  v
+verify_citations(answer, chunks)
+  |
+  +-- valid -> 返回
+  +-- invalid -> 最多重写 2 次
+  +-- 仍失败 -> 删除无依据句或拒答
 ```
 
-后续优先项：
+关键参数：
 
-1. 基于 `data/evaluation/acceptance_cases.jsonl` 建立批量自动评测脚本。
-2. 调整 RRF 动态权重和相关性门槛。
-3. 扩大真实 DeepSeek 端到端验收样本。
-4. 完善 Agent Workflow 和 C6 Agentic 路由。
----
-## 1. 总体结论
+| 参数 | 当前值 | 位置 |
+|---|---:|---|
+| 向量相似度阈值 | 0.45 | `retrieval.py` |
+| BM25/向量候选数 | 10 | `hybrid_retriever.py` |
+| 路由两路候选数 | 各 20 | `retrieval_router.py` |
+| 最终上下文 | Top-5 | `main.py` |
+| RRF 平滑常数 | 60 | `rrf_fusion.py`、adapter |
+| hybrid/pure_kb 权重 | 1.0 / 1.0 | `knowledge_base_adapter.py` |
+| 引用重写上限 | 2 | `main.py` |
 
-项目方案已经明确，核心路线为：
+## 4. 数据组织与边界
 
-> **规则机理作为确定性底座 + 向量 RAG 提供可溯源证据 + Agent 工作流编排排因 + LLM 负责组织报告 + 引用校验与人工复核兜底。**
+### 4.1 公开可提交内容
 
-当前不建议直接重写项目，也不建议把交接包中的 `main/cli.py` 原样覆盖现有代码。正确做法是：
+- 代码、脚本和测试；
+- 文档、日志、验收记录和调研报告；
+- 经人工整理的事实性判据参数；
+- 规则标识、条号来源和自撰摘要；
+- 公开数据整理后的数值表（遵守原始仓库许可）。
 
-1. 继续使用现有模块化的 `app/` 作为工程底座；
-2. 将 `main/cli.py` 中的 `retrieve()`、`generate()` 作为接口基线移植到 `app/`；
-3. 先在现有 FastAPI、SQLite 向量库和规范校验之上补齐生成与 Agent 闭环；
-4. 在主干闭环稳定后，再引入混合检索、重排、知识图谱等增强模块。
+### 4.2 本地不提交内容
 
----
+- DL/T 572、DL/T 722 等标准 PDF 和正文转写；
+- 572 条款 JSONL 和统一语料 `data/corpus/clauses.jsonl`；
+- `vector_kb/knowledge.db`、`bm25_index.pkl`；
+- 第三方原始 xlsx；
+- `.env` 和 API Key；
+- `literature/`、`source_materials/`、`submissions_pending_review/`。
 
-## 2. 当前项目状态
+### 4.3 可复现性边界
 
-### 2.1 已完成能力
+公开仓库可以重建 722 的 5 条事实性判据库。完整 123 块向量库依赖本地合法取得的 572 条款文件，干净 clone 无法单独重建全量库。文档必须明确标注这一边界，不能把本地资产写成公开可复现。
 
-- 语料已经按条文切块，并具备 `doc_id / clause / title / text / page / citation` 等元数据。
-- `app/` 已实现素材导入、文本提取、规范校验、向量化、SQLite 存储和语义检索。
-- 已具备 FastAPI、Web 页面和 CLI 管理接口。
-- 已实现 `retrieve()` 和 `generate()` 接口原型。
-- 已跑通“检索 + DeepSeek 生成 + 未命中拒答”的基础链路。
-- 规则基线在 220kV 口径下的归并准确率为 `61.8%`。
+## 5. 当前数据资产
 
-### 2.2 当前关键缺口
+| 资产 | 规模 | 说明 |
+|---|---:|---|
+| 722 判据 | 5 | 表3、表4、表6、表7、CO2/CO |
+| 572 条款 | 118 | 运行监视与异常处理等 |
+| 统一语料 | 123 | 本地生成，用于向量与 BM25 |
+| pure_kb | 198 | dga/oil_temp/safety/equipment/dp/cases |
+| DGA 样本 | 3466 | 统一为 μL/L |
+| 验收用例 | 50 | 10 DGA、8 油温、6 安全、6 设备、6 多意图、6 无关、8 边界 |
+| 自动回归 | 24 | 2026-09-18 产物 |
 
-- DL/T 722-2014 的 `9.3.3`、`10.2.4`、`10.3` 等正文原则条款尚未进入正式知识库。
-- “乙炔超标该怎么处理”目前能命中注意值和产气速率，但未能命中完整的故障类型判断和处置原则。
-- 生成结果只有提示词层约束，缺少生成后的引用存在性校验。
-- 规则诊断、检索、生成和报告输出尚未编排为完整 Agent Workflow。
-- 尚无正式的 10 条以上端到端验收用例和自动评测脚本。
-- 工作区存在两个数据库版本，需要统一数据真源：
-  - `知识库/knowledge.db`：123 块，与交接文档一致。
-  - `data/knowledge.db`：202 块，其中 123 条带条号，另有 79 条旧参考块，可能造成检索抢位。
-- ✅ 历史问题已解决：当前根目录 `main.py` 导入 `vector_kb.hybrid_retriever` 和 `vector_kb.generation`，不再依赖旧交接目录结构。
+## 6. 当前接口
 
----
+### 6.1 向量检索
 
-## 3. 目标系统架构
+```python
+retrieve(
+    question: str,
+    top_k: int = 3,
+    min_score: float = 0.45,
+    db: str = DB_DEFAULT,
+) -> list[dict]
+```
+
+返回字段：
 
 ```text
-用户问题 / DGA 数值
-        |
-        v
-输入路由与标准化
-  |-- 数值型：电压等级、H2、CH4、C2H6、C2H4、C2H2、CO、CO2
-  |-- 文本型：异常现象、故障问题
-        |
-        |-----------------------------|
-        v                             v
-规则诊断引擎                     混合检索
-  - 注意值                        - 规范库优先
-  - 产气速率                      - 参考库补充
-  - 三比值/表6/表7                - 条款意图重排
-        |                             |
-        |----------证据聚合-----------|
-                       |
-                       v
-              Agent 验证与排因工作流
-        假设生成 -> 条文验证 -> 证据补检 -> 结论收敛
-                       |
-                       v
-              LLM 生成结构化诊断报告
-                       |
-                       v
-         引用校验、危险建议检查、拒答判断
-                       |
-                       v
-          最终报告 + 证据列表 + 人工复核标记
+doc_id / clause / title / text / page / score / citation
 ```
 
-### 3.1 系统分层
+### 6.2 生成
 
-| 层级 | 职责 |
-|---|---|
-| 数据层 | 规程正文、结构化条文、规则 JSON、DGA 样本、向量库 |
-| 检索层 | 向量召回、关键词加分、集合过滤、重排 |
-| 规则层 | 注意值、产气率、三比值、故障类型判断 |
-| Agent 层 | 输入路由、工具调用、证据验证、状态流转 |
-| 生成层 | DeepSeek 调用、报告组织、拒答 |
-| 校验层 | 引用校验、危险建议检查、人工复核标记 |
-| 接口层 | CLI、FastAPI、Web 页面 |
-| 评测层 | 验收用例、检索指标、引用指标、规则基线对比 |
-
----
-
-## 4. 建议目录与模块
-
-```text
-项目八/
-├─ app/
-│  ├─ api.py
-│  ├─ service.py
-│  ├─ generation.py          # 新增：DeepSeek 生成接口
-│  ├─ rules.py               # 新增：注意值、产气率、三比值
-│  ├─ diagnosis.py           # 新增：Agent 工作流编排
-│  ├─ citations.py           # 新增：引用解析与校验
-│  ├─ report.py              # 新增：统一报告结构
-│  ├─ store.py
-│  ├─ embeddings.py
-│  └─ norms.py
-├─ data/
-│  ├─ corpus/                # 结构化条文与正文
-│  ├─ rules/                 # 规则 JSON
-│  ├─ samples/               # DGA 样本
-│  ├─ evaluation/            # 验收用例
-│  └─ knowledge.db           # 唯一生产向量库
-├─ scripts/
-│  ├─ build_vector_kb.py     # 可复现重建向量库
-│  └─ evaluate.py            # 自动评测
-├─ tests/
-│  ├─ test_retrieval.py
-│  ├─ test_generation.py
-│  ├─ test_rules.py
-│  └─ test_diagnosis.py
-├─ docs/
-├─ cli.py
-├─ main.py
-└─ README.md
+```python
+generate(question: str, chunks: list[dict]) -> str
 ```
 
-`main.py` 建议保持兼容：
+- chunks 为空时不调用 API；
+- 模型默认 `deepseek-chat`；
+- temperature=0.1，max_tokens=800；
+- 提示词要求只依据检索条文回答。
 
-- `python main.py`：启动 Web 服务；
-- `python main.py "乙炔超标该怎么处理"`：单次问答；
-- `python main.py --interactive`：交互式问答；
-- `cli.py diagnose`：直接执行诊断工作流；
-- `cli.py evaluate`：执行评测。
+### 6.3 引用校验
 
----
-
-## 5. 分阶段实施计划
-
-## 阶段 0：统一工程与数据基线
-
-**目标：消除双数据库、路径错误和代码重复，建立可信的工程基线。**
-
-### 任务
-
-- [x] 历史交接文档已整理为当前 `docs/00–10`；旧 `main/docs.zip` 不再作为当前依据。
-- [ ] 统一英文目录，将旧中文目录迁移到 `data/`、`docs/`、`vector_kb/`。
-- [ ] 确定唯一生产数据库，建议重建 `data/knowledge.db`。
-- [ ] 只从校验通过的 JSONL 构建知识库，不直接沿用旧库。
-- [ ] 检查 `knowledge.db` 中是否混入无条号参考块。
-- [ ] 记录数据 SHA256、文档数、块数、条号覆盖率和向量维度。
-- [x] 接口已迁移为 `vector_kb/retrieval.py` 与 `vector_kb/generation.py`；当前不采用历史方案中的 `app/` 结构。
-- [ ] 删除或归档重复实现，保证仓库只保留一套检索与生成逻辑。
-
-### 产物
-
-- `data/corpus/clauses.jsonl`
-- `data/knowledge.db`
-- 数据清单与校验报告
-- 更新后的 `README.md`
-
-### 验收
-
-- [ ] 同一份 JSONL 重建数据库后块数完全一致。
-- [ ] 所有规范块条号非空率 100%。
-- [ ] 检索结果不再被无条号旧参考块抢占。
-- [ ] `main.py` 的导入路径在干净环境中可正常运行。
-
----
-
-## 阶段 1：主干 MVP 闭环
-
-**目标：完成“问题 → 检索 → 生成 → 带依据结果”的端到端闭环，并修复“乙炔超标”验收场景。**
-
-### 1. 补齐 722 正文条款
-
-至少补入：
-
-- [ ] `9.3.3` 注意值应用原则；
-- [ ] `10.2.4` 比值法应用原则；
-- [ ] `10.3` 判断故障的步骤。
-
-按 `docs/07` 规范切条、填页码、校验并重新入库。
-
-### 2. 检索策略
-
-- [ ] 默认查询 `normative` 规范库，必要时再查 `reference`。
-- [ ] 对“乙炔超标”优先召回：
-  - `9.3.1-表3`
-  - `10.2.1-表7`
-  - `9.3.3`
-  - `10.2.4`
-  - `10.3`
-- [ ] 默认 Top-k 调整为 5。
-- [ ] 使用条款、标题和问题意图进行重排。
-- [ ] 抑制无关 572 条款排在规范依据之前。
-
-### 3. 生成接口
-
-新增 `app/generation.py`：
-
-- [ ] 输入问题与检索块；
-- [ ] 无检索结果时直接拒答，不调用 API；
-- [ ] DeepSeek 参数保持 `temperature=0.1`、`max_tokens=800`；
-- [ ] 所有结论必须带 `doc_id + clause` 引用；
-- [ ] 不得输出检索条文之外的处置建议。
-
-### 4. 引用校验
-
-新增 `app/citations.py`：
-
-- [ ] 提取回答中的 `【依据：...】`；
-- [ ] 校验引用是否存在于本次检索结果；
-- [ ] 引用不存在时自动重试一次；
-- [ ] 重试后仍失败则退回条文摘录或拒答；
-- [ ] 禁止输出“有结论、无依据”的回答。
-
-### 5. 统一输出
-
-报告至少包含：
-
-1. 问题或现象；
-2. 检索到的规程依据；
-3. 故障类型或运行风险；
-4. 适用条件；
-5. 处置建议；
-6. 不确定项与覆盖缺口；
-7. 是否需要人工复核。
-
-### 验收
-
-- [ ] `python main.py "乙炔超标该怎么处理"` 可输出完整报告。
-- [ ] 回答能命中 `9.3.1` 与 `10.2.1`，并在补充条款后覆盖处置原则。
-- [ ] 报告中的引用全部能在本次检索结果中找到。
-- [ ] 知识库外问题明确拒答，不编造。
-- [ ] 不给出标准条文未支持的处置建议。
-
----
-
-## 阶段 2：规则引擎与 Agent Workflow
-
-**目标：从单轮问答升级为可验证、可追踪的多步排因流程。**
-
-### 1. 规则引擎
-
-新增 `app/rules.py`，输入：
-
-- 电压等级；
-- H2、CH4、C2H6、C2H4、C2H2；
-- CO、CO2；
-- 总烃；
-- 产气速率等可选值。
-
-输出：
-
-- 是否触发注意值；
-- 是否触发产气速率注意值；
-- 三比值编码；
-- 候选故障类型；
-- 规则依据和未覆盖项。
-
-### 2. Agent 状态机
-
-建议先采用确定性状态机，不急于引入 LangGraph：
-
-```text
-route
-  -> rule_diagnosis
-  -> retrieve
-  -> verify
-  -> generate
-  -> validate
-  -> report
+```python
+verify_citations(answer: str, chunks: list[dict]) -> dict
+remove_invalid_citation_sentences(answer: str, chunks: list[dict]) -> str
+build_retry_prompt(question: str, verification: dict, chunks: list[dict]) -> str
 ```
 
-路由规则：
+### 6.4 路由
 
-- 数值型 DGA 输入：规则诊断 + RAG 补充；
-- 自然语言现象：规范检索 + RAG；
-- 知识库外问题：直接拒答；
-- 输入信息不足：列出缺失字段，不强行判断。
-
-### 3. 冲突处理
-
-- 规则结论与 LLM 结论冲突：以规则和原文为准。
-- 规程未覆盖：标记“资料未覆盖”，不得推测。
-- 涉及停运、检修、灭火等处置：统一标记人工复核。
-- 证据不足：允许多轮补检，但每轮必须保留检索轨迹。
-
-### 4. API
-
-建议新增：
-
-```http
-POST /api/diagnose
+```python
+route_and_retrieve(
+    question: str,
+    top_k: int = 5,
+    shadow: bool = True,
+    trace=None,
+) -> dict
 ```
 
-请求示例：
+返回 `chunks / source / intent / route / hybrid_top5 / kb_top5 / llm_calls`。
+
+## 7. 规则诊断接入方案
+
+这是下一阶段 P0。
+
+### 7.1 目标输入
+
+支持自然语言和结构化输入同时存在：
 
 ```json
 {
@@ -358,163 +188,200 @@ POST /api/diagnose
     "C2H4": 84,
     "C2H2": 0.87
   },
-  "top_k": 5,
-  "mode": "auto"
+  "production_rate": null
 }
 ```
 
-响应至少包含：
+### 7.2 目标流程
+
+```text
+输入解析
+  -> 字段/单位/电压等级校验
+  -> 注意值判断
+  -> 产气速率判断（有数据时）
+  -> 改良三比值编码
+  -> 故障类型候选
+  -> 检索对应条号和处置条款
+  -> LLM 生成解释
+  -> 规则/引用/安全校验
+  -> 报告
+```
+
+### 7.3 输出结构
 
 ```json
 {
   "status": "answered",
-  "route": "rules+rag",
-  "diagnosis": {},
-  "evidence": [],
-  "citations": [],
-  "report": "",
-  "validation": {
-    "citations_ok": true,
-    "refused": false
+  "input_validation": {},
+  "rule_diagnosis": {
+    "attention_values_triggered": [],
+    "ratio_codes": [],
+    "fault_candidates": [],
+    "evidence": []
   },
-  "requires_human_review": true
+  "retrieval_evidence": [],
+  "answer": "",
+  "citations": [],
+  "requires_human_review": true,
+  "coverage_gaps": []
 }
 ```
 
-### 验收
+### 7.4 冲突处理
 
-- [ ] 数值型输入能够输出规则故障类型。
-- [ ] 文本型问题能够检索到对应规程条文。
-- [ ] Agent 每一步都有可追踪的状态或日志。
-- [ ] 规则、检索与生成结果可以互相对照。
-- [ ] 所有最终结论均能回溯到规则或条文。
+- 规则结论与 LLM 冲突时，以规则和合法原文为准；
+- 输入缺电压等级、单位或关键气体时，列出缺失项，不强行判断；
+- 规程未覆盖时标记“资料未覆盖”；
+- 涉及停运、检修、灭火等操作时必须标记人工复核。
 
----
+## 8. 检索优化路线
 
-## 阶段 3：评测与质量指标
+2026-09-22 的 50 条评测已把瓶颈定位到排序层：
 
-**目标：用数据证明系统有效，而不是只展示单次成功案例。**
+- 目标条文通常已在向量或 BM25 候选中；
+- 两路候选高度重叠；
+- 目标条文可能未进入最终 Top-5；
+- 四组 RRF 权重结果持平；
+- 扩大候选池不能从根本解决排序。
 
-### 1. 验收用例
+优先级：
 
-建立 `data/evaluation/acceptance_cases.jsonl`，至少 10 条，覆盖：
+1. **查询改写**：抽取设备、电压等级、气体、现象和处置意图；
+2. **Reranker**：对融合候选与问题逐条精排；
+3. **检索质量闸门**：参考 Self-RAG/CRAG，判断证据相关性和支持度；
+4. **分块优化**：检查表格、复合条款和标题是否被切坏；
+5. **加权融合**：只有在召回和精排不足时再考虑，避免无依据调参。
 
-- [ ] 乙炔超标；
-- [ ] 氢气异常；
-- [ ] 总烃异常；
-- [ ] 低温/中温/高温过热；
-- [ ] 局部放电；
-- [ ] 低能放电；
-- [ ] 高能/电弧放电；
-- [ ] 正常但需继续观察；
-- [ ] 知识库外问题；
-- [ ] 缺少电压等级或单位；
-- [ ] 要求给出危险处置；
-- [ ] 复合故障或规则未覆盖场景。
+暂不做：
 
-每条用例建议包含：
+- 无边界扩大 Top-K；
+- 完整 GraphRAG 前置；
+- 领域微调；
+- 用公开 Web 作为正式标准依据。
 
-```json
-{
-  "case_id": "DGA-001",
-  "question": "乙炔超标该怎么处理",
-  "voltage_level": "220kV",
-  "gases": {},
-  "expected_clauses": ["9.3.1-表3", "10.2.1-表7"],
-  "expected_diagnosis": "低能放电",
-  "must_refuse": false,
-  "forbidden_advice": []
-}
+## 9. 受控 Agent Workflow
+
+目标不是自由 ReAct 循环，而是白名单工具和有限步骤的受控流程：
+
+```text
+route
+  -> validate_input
+  -> run_dga_rules
+  -> retrieve_evidence
+  -> check_evidence_sufficiency
+  -> maybe_rewrite_query
+  -> maybe_retrieve_again
+  -> generate_report
+  -> validate_citations
+  -> validate_safety
+  -> human_review_gate
 ```
 
-### 2. 评测指标
+约束：
 
-- `Retrieval Recall@3`
-- `Retrieval Recall@5`
-- `MRR`
-- `Citation Precision`
-- `Citation Recall`
-- 条文引用正确率
-- 拒答准确率
-- 危险建议拦截率
-- 人工复核触发准确率
-- 规则诊断归并准确率，与 `61.8%` 基线对比
+- 最大步骤数；
+- 工具白名单；
+- 每个结论必须有证据 ID；
+- 规则具有否决权；
+- 禁止自动执行停送电、隔离、检修等高风险操作；
+- 失败时明确拒答并提出补检项。
 
-### 3. 测试方式
+## 10. 评测方案
 
-- [ ] 使用桩 Embedding 和桩 HTTP 完成离线单元测试；
-- [ ] 使用真实 Ollama `bge-m3` 完成检索验收；
-- [ ] 使用真实 `DEEPSEEK_API_KEY` 完成生成验收；
-- [ ] 保存原始输出、运行环境、命令与结果；
-- [ ] 将结果写入 `docs/08_acceptance_record.md`。
+### 10.1 检索指标
 
-### 建议目标
+- Recall@5；
+- MRR；
+- Top-5 跨域干扰率；
+- 多意图覆盖；
+- 无关问题拒答率；
+- 平均响应时间。
+
+### 10.2 生成与合规指标
+
+- 引用正确率；
+- 引用覆盖率；
+- 无依据断言率；
+- 危险建议拦截率；
+- 人工复核触发正确率；
+- 规则/LLM 结论一致率。
+
+### 10.3 评测层级
+
+1. 离线结构代理：低成本、覆盖 50 条用例，当前用于权重比较；
+2. 真实 DeepSeek 生成：少量关键用例，补充回答质量与引用正确性；
+3. 端到端回归：固定命令、环境、原始输出和报告；
+4. 规则样本评测：3466 条 DGA 样本，单独报告 61.8% 基线，不与生成正确率混写。
+
+### 10.4 目标
 
 | 指标 | 建议目标 |
 |---|---:|
-| 核心验收问题 Recall@5 | >= 90% |
+| 核心问题 Recall@5 | ≥ 90% |
 | 引用正确率 | 100% |
-| 知识库外拒答准确率 | 100% |
-| 不允许出现在答案中的危险建议 | 0 条 |
-| 可自动复现验收用例 | >= 10 条 |
+| 应拒答用例拒答率 | 100% |
+| 危险建议 | 0 条 |
+| 自动复现用例 | ≥ 50 条 |
+| 人工复核标记 | 高风险建议 100% 覆盖 |
 
----
+## 11. 分阶段实施计划
 
-## 阶段 4：增强模块与最终发布
+### 阶段 A：数据与文档基线（已完成）
 
-**优先级从高到低：**
+- 整理文档和数据目录；
+- 核验 722 真本；
+- 完成判据和处置规则结构化；
+- 建立切块与元数据规范；
+- 建立 50 条验收用例。
 
-1. jieba + BM25 混合检索；
-2. Cross-Encoder 或规则加权重排；
-3. 查询意图路由；
-4. 引用校验后的自省纠错；
-5. 轻量知识图谱：特征气体 → 故障类型 → 处置；
-6. Web 页面的人工复核交互；
-7. 中文故障案例 10–20 篇；
-8. 572 表格、GB 26860 摘录等阶段二语料。
+### 阶段 B：检索与生成闭环（已完成）
 
-**明确不作为主线：**
+- 向量检索、BM25、RRF、混合检索；
+- 规则/LLM 意图分类和 domain 路由；
+- pure_kb 适配与融合；
+- DeepSeek 生成和引用校验；
+- `main.py` 调试链路和自动回归。
 
-- 领域微调；
-- 完整 GraphRAG；
-- 黑箱 ML 分类器；
-- 复杂浏览器自动化。
+### 阶段 C：规则诊断接入与报告统一（当前）
 
----
+- [ ] 结构化输入解析和校验；
+- [ ] 调用 `scripts/dga_ratio.py`；
+- [ ] 把规则结论接入检索和生成；
+- [ ] 输出统一诊断 JSON 与人类可读报告；
+- [ ] 增加高风险建议和人工复核字段。
 
-## 6. 里程碑与时间安排
+### 阶段 D：排序与质量闸门（下一阶段）
 
-| 时间 | 目标 | 主要产物 |
-|---|---|---|
-| 09-14 至 09-16 | 统一数据、补齐 722、完成生成与引用校验 | 可运行的 MVP 闭环 |
-| 09-17 至 09-20 | 规则引擎、Agent 状态机、验收用例 | `rules.py`、`diagnosis.py`、用例集 |
-| 09-21 至 09-26 | 评测、检索优化、阶段二技术债 | 评测报告、混合检索 |
-| 10-01 至 10-07 | 语料补充、Web/API 完善 | 完整演示版本 |
-| 10-08 至 10-11 | README、开发日志、验收记录、最终回归 | GitHub 可交付版本 |
+- [ ] 查询改写；
+- [ ] Reranker 实验；
+- [ ] 相关性和支持度判断；
+- [ ] 复测 50 条并报告消融。
 
----
+### 阶段 E：受控 Agent 与增强证据（后置）
 
-## 7. 最终验收标准
+- [ ] 有限步骤 Agent 状态机；
+- [ ] 工具白名单和证据 ID；
+- [ ] 轻量“气体—故障—处置”关系图；
+- [ ] 多模态和案例库作为辅助证据。
 
-- [ ] 端到端命令可运行，并输出带条号的诊断报告。
-- [ ] “乙炔超标”能命中注意值、故障判断和处置原则。
-- [ ] 所有引用都能在实际检索结果中找到。
-- [ ] 知识库外问题能够明确拒答。
-- [ ] 无法确认或涉及危险处置时标记人工复核。
-- [ ] 至少 10 条验收用例可自动评测。
-- [ ] 评测报告同时包含检索、引用、拒答和规则基线指标。
-- [ ] 按 README 在干净机器上可重建数据库并得到一致结果。
-- [ ] `docs/05`、`docs/08` 和 README 与最终代码状态一致。
+## 12. 最终验收标准
 
----
+- [ ] `python main.py "乙炔超标该怎么处理"` 能稳定返回带条号的诊断结果；
+- [ ] 数值 DGA 输入能够输出注意值、三比值、候选故障类型和规则依据；
+- [ ] “乙炔超标”能同时覆盖注意值、故障判断和处置原则；
+- [ ] 所有引用都能在本次检索结果中找到；
+- [ ] 知识库未命中时明确拒答，并指出缺失信息或补检项；
+- [ ] 危险处置建议 100% 标记人工复核；
+- [ ] 至少 50 条验收用例可以自动评测；
+- [ ] 评测报告同时包含检索、引用、拒答、规则基线和响应时间；
+- [ ] README、docs/00、docs/05、docs/08、docs/09 与最终代码一致；
+- [ ] 公开仓库明确说明版权资产和本地可复现边界。
 
-## 8. 建议立即执行的下一步
+## 13. 当前下一步
 
-按以下顺序开始，避免并行制造重复实现：
-
-1. 合并并确认正式 `docs/`、`data/` 和唯一知识库路径。
-2. 从 722 正文补入 `9.3.3`、`10.2.4`、`10.3`，重新切块和入库。
-3. 在 `app/` 中新增 `generation.py` 与 `citations.py`，接通现有 `service.search()`。
-4. 将 `main.py` 改为“单次问答/服务启动”双模式。
-5. 建立 10 条验收用例，先跑离线桩测试，再进行真实 Ollama + DeepSeek 验收。
-6. 更新 README、`docs/05`、`docs/08`，形成可复现的第一版交付。
+1. 在 `main.py` 增加结构化 DGA 输入与规则诊断路径。
+2. 设计规则 + 检索 + LLM 的统一输出 schema。
+3. 将 50 条用例评测封装为固定 CLI 报告。
+4. 选择 5–10 条低分排序用例做查询改写和 Reranker 实验。
+5. 补齐 722 正文原则条款和 572 页码后重新回归。
+6. 最后再考虑受控 Agent、轻量图谱和多模态扩展。

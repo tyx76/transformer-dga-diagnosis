@@ -1,6 +1,6 @@
-﻿markdown
-
 # 项目规则
+
+> 文档状态：项目规则基线｜整理更新：2026-09-27
 
 ## 参赛口径
 - 考核：四川大学未来技术创新创业社团考核 · 考题八「工业设备故障根因分析与处置决策智能体」（高级挑战）。
@@ -21,6 +21,6 @@
 - 输出约束：根因结论与合规处置建议须落在规程条文内（如 GB 26860-2011 的安全动作边界）；知识库未命中时拒答而非臆测；处置建议保留人工复核关口。
 
 ## 技术栈与命令
- - 技术线:[Python 3.10+ / LangChain / Chroma（向量数据库）/ HuggingFace Embedding / DeepSeek V4 Flash API ]
+ - 技术线：Python 3.10+；当前原型运行时为 SQLite 向量库 + Ollama `bge-m3` + jieba/rank-bm25 + DeepSeek API。LangChain、Chroma 和 HuggingFace Embedding 仅作为候选学习或扩展方案，不是当前主链路依赖。
  - 安装依赖：`pip install -r requirements.txt`
  - 运行核心程序：`python main.py`

@@ -1,5 +1,7 @@
 # Pure Knowledge Base
 
+> 文档状态：现行｜更新：2026-09-27｜已通过 knowledge_base_adapter.py 接入主检索链路
+
 纯检索知识库后端。它只负责按照调用方给定的 `domains` 和 `filters` 查询证据，不判断意图、不选择领域、不生成回答、不做引用校验。
 
 调用边界：
@@ -26,7 +28,7 @@ pure_kb/
    └─ knowledge.jsonl
 ```
 
-`knowledge.db` 由 `data/knowledge.jsonl` 和 `build_db.py` 重建。
+`knowledge.db` 由 `pure_kb/data/knowledge.jsonl` 和 `build_db.py` 重建，数据库为本地资产，不提交 Git。
 
 ## 领域
 
@@ -173,3 +175,14 @@ python -m pure_kb.smoke_test
 - `filters={"doc_id": "DL/T 722-2014"}` 生效
 - `exact_lookup` 的 Top-1 为 `9.3.1-表3`
 - `search()` 始终标记为 `vector`，不会静默切换成精确查询
+## 主链路接入状态
+
+> 更新时间：2026-09-27
+
+- `vector_kb/intent_router.py` 把业务意图映射为显式 domains/filters；
+- `vector_kb/knowledge_base_adapter.py` 调用 `search()`，归一化字段并过滤 `dp` 领域；
+- hybrid 与 pure_kb 结果通过二次 RRF 融合，当前权重为 1.0/1.0；
+- `cases` 只能作为类比参考，标准、规则和安全依据优先级更高；
+- 主链路仍为客户端的 `main.py`，pure_kb 自身不负责意图、生成或引用校验；
+- 50 条离线评测中 39 条可评，Top-5 命中率为 76.92%；
+- 四组融合权重测试持平，当前没有证据支持调高或调低 pure_kb 权重。
