@@ -1,5 +1,8 @@
 # 文献速览与笔记索引
 
+> **当前项目口径（2026-10-03）**：项目主对象已转为“通用电厂设备故障诊断”，覆盖锅炉、汽轮机、发电机及辅机。DGA 仅保留为可选专项、历史技术资产或备用能力，不再作为主链路范围；本文如涉及 DGA，请按专项资料阅读。
+
+
 > 阅读卡与原始笔记在 docs/notes/：C2_RCAgent_close_reading.md、skimming_cards_non_essential_papers.md、paper_reading_notes.md、template_paper_reading_card.md。
 > 文档状态：现行索引｜更新：2026-09-27（笔记内容基线 2026-09-11）
 

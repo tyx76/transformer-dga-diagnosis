@@ -1,5 +1,17 @@
 # 任务二方案与评测
 
+> **当前项目口径（2026-10-03）**：项目主对象已转为“通用电厂设备故障诊断”，覆盖锅炉、汽轮机、发电机及辅机。DGA 仅保留为可选专项、历史技术资产或备用能力，不再作为主链路范围；本文如涉及 DGA，请按专项资料阅读。
+
+## 0. 当前口径变更（2026-10-03）
+
+- 项目主对象已从“油浸式变压器 DGA 专项”转为“通用电厂设备故障诊断”。
+- 主对象覆盖锅炉、汽轮机、发电机及主要辅机。
+- 目标主知识库为 `plant_kb`，按设备领域和子域组织检索证据。
+- 当前 P0 是通用设备路由、plant_kb 数据源统一、检索精排和 138 题端到端评测。
+- DGA、DL/T 722/572、`pure_kb` 和三比值脚本降为可选专项、历史资产或回退能力。
+- 本文后续如出现“DGA 主链路”“变压器主对象”等措辞，按历史技术资产阅读，以本节口径为准。
+
+
 > 文档状态：现行｜更新：2026-09-27
 > 对应任务：设计面向工业非结构化文档的知识提取，建立适配故障排查的专业知识组织体系，并支撑根因分析、Agent Workflow 和最小原型。
 > 当前主链路和资产状态见 [`docs/00_project_status.md`](00_project_status.md) 与 [`docs/README.md`](README.md)。
@@ -90,7 +102,7 @@
 
 - 向量库：SQLite + Ollama `bge-m3:latest`，1024 维；
 - 关键词检索：jieba + rank-bm25；
-- 融合：RRF，当前 hybrid/pure_kb 权重为 1.0/1.0；
+- 融合：RRF，当前 hybrid/plant_kb 权重为 1.0/1.0；
 - 路由：意图 → domains/filters/mode；
 - 生成：DeepSeek 仅基于检索条文；
 - 校验：引用存在性校验、最多两次重写、最终拒答或无依据句删除。
@@ -101,7 +113,7 @@
 L0 原始材料：合法 PDF、案例、手册（不公开分发）
 L1 条文层：doc_id + clause + title + text + page
 L2 规则层：注意值、产气速率、三比值、处置条件 JSON
-L3 证据层：向量库、BM25、pure_kb 六领域知识
+L3 证据层：向量库、BM25、plant_kb 六领域知识
 L4 生成层：DeepSeek 组织根因与处置报告
 L5 校验层：引用校验、规则否决、安全边界和人工复核
 ```
@@ -186,6 +198,6 @@ python scripts\tune_rrf_weights.py
 | 意图路由 | `intent_classifier.py`、`intent_router.py` | 已落地 |
 | 引用校验 | `citation_verifier.py` | 已落地 |
 | 50 条评测 | `data/evaluation`、`tune_rrf_weights.py` | 已落地 |
-| 数值 DGA 规则接入 main | 尚待实现 | P0 |
+| 数值 DGA 规则接入 main | 可选专项，暂不阻塞主链路 | P2 |
 | Reranker / 自适应检索闸门 | 方案已明确 | P1 |
 | 完整 Agent Workflow | 尚未实现 | P2 |

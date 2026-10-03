@@ -19,7 +19,28 @@ PROJECT_ROOT = ROOT.parent
 RULES_DEFAULT = PROJECT_ROOT / "data" / "rules" / "intent_rules.json"
 
 _SUBSCRIPT_DIGITS = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
-_INTENT_CATEGORIES = ("dga_analysis", "oil_temp", "safety_check", "equipment_spec", "irrelevant")
+_INTENT_ORDER = ("boiler", "turbine", "generator", "auxiliary", "safety", "transformer", "irrelevant")
+VALID_INTENTS = set(_INTENT_ORDER)
+_INTENT_PROMPT = (
+    "锅炉(boiler)：锅炉本体、水冷壁、过热器、再热器、省煤器、空预器、磨煤机、制粉系统、燃烧器；"
+    "汽轮机(turbine)：汽轮机本体、通流、级组、转子、轴承、轴系、轴封、凝汽器、DEH、调速、旁路；"
+    "发电机(generator)：发电机本体、定子、转子、励磁、氢冷、密封油、绝缘、局放；"
+    "辅机(auxiliary)：风机、给水泵、循环水泵、油系统、冷却系统；"
+    "安全操作(safety)：停机、停运、停电、隔离、检修、紧急处置；"
+    "变压器(transformer)：变压器本体、DGA、油色谱、乙炔、氢气、总烃、三比值、注意值；"
+    "无关问题(irrelevant)：与电厂设备诊断无关的问题"
+)
+_INTENT_ALIASES = {
+    "锅炉": "boiler",
+    "汽轮机": "turbine",
+    "发电机": "generator",
+    "辅机": "auxiliary",
+    "安全操作": "safety",
+    "安全": "safety",
+    "变压器": "transformer",
+    "无关问题": "irrelevant",
+    "无关": "irrelevant",
+}
 _DEEPSEEK_API_BASE = os.environ.get("DEEPSEEK_API_BASE", "https://api.deepseek.com")
 _DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
 _STRONG_FEATURE_WORDS = (
@@ -35,6 +56,11 @@ _STRONG_FEATURE_WORDS = (
     "停运",
     "限值",
     "注意值",
+    "锅炉",
+    "汽轮机",
+    "发电机",
+    "磨煤机",
+    "减温水",
 )
 
 
@@ -128,7 +154,10 @@ def rule_classify(question: str) -> dict | None:
         return _multi_result(ranked, rules)
 
     best_intent = ranked[0]
-    confidence = _confidence(len(matches[best_intent]), matches[best_intent])
+    if best_intent == "general_plant" and matches[best_intent]:
+        confidence = 0.7
+    else:
+        confidence = _confidence(len(matches[best_intent]), matches[best_intent])
     if confidence < 0.5:
         return None
     return _single_result(best_intent, confidence)
@@ -159,10 +188,12 @@ def _extract_intent(content: str) -> str | None:
     """从模型响应中提取唯一合法意图。"""
     normalized = unicodedata.normalize("NFKC", str(content or "")).strip().lower()
     normalized = normalized.strip("`\"'。.!！:：")
-    if normalized in _INTENT_CATEGORIES:
+    if normalized in VALID_INTENTS:
         return normalized
+    if normalized in _INTENT_ALIASES:
+        return _INTENT_ALIASES[normalized]
     tokens = re.findall(r"[a-z_]+", normalized)
-    matches = [token for token in tokens if token in _INTENT_CATEGORIES]
+    matches = [token for token in tokens if token in VALID_INTENTS]
     return matches[0] if len(matches) == 1 else None
 
 
@@ -177,7 +208,7 @@ def llm_classify(question: str) -> dict:
     if not key:
         raise RuntimeError("未找到 DEEPSEEK_API_KEY，无法执行 LLM 意图兜底")
 
-    categories = "、".join(_INTENT_CATEGORIES)
+    categories = _INTENT_PROMPT
     prompt = (
         f"判断以下问题属于哪个意图类别：{categories}。"
         f"只返回类别名称。\n问题：{question}"
@@ -219,4 +250,4 @@ def classify_intent(question: str) -> dict:
     return llm_classify(question)
 
 
-__all__ = ["rule_classify", "llm_classify", "classify_intent"]
+__all__ = ["rule_classify", "llm_classify", "classify_intent", "VALID_INTENTS"]

@@ -1,0 +1,412 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="2620" height="1700" viewBox="0 0 2620 1700" role="img" aria-labelledby="title desc">
+  <title id="title">油浸式变压器故障诊断智能体知识库结构图</title>
+  <desc id="desc">知识库采用六域隔离与域内融合图谱结构，每域包含概念图谱层和段落证据图谱层；规则库和多模态仓独立于六域；检索流程按意图路由在选定域内并行检索。</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow-green" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#10B981"/></marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 z" fill="#64748B"/></marker>
+    <marker id="arrow-domain" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker>
+    <style>
+      .title { font: 700 36px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .subtitle { font: 400 17px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #475569; }
+      .section { font: 700 25px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .domain-id { font: 700 17px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; }
+      .layer-title { font: 700 15px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #334155; }
+      .node-text { font: 700 13px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .evidence-text { font: 600 12px "Consolas", "Cascadia Mono", monospace; fill: #0F172A; }
+      .edge-text { font: 500 10.5px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #64748B; }
+      .box-title { font: 700 18px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .box-subtitle { font: 700 15px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #334155; }
+      .small { font: 400 13.5px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #475569; }
+      .tiny { font: 400 11.5px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #64748B; }
+      .mono { font: 600 13px "Consolas", "Cascadia Mono", monospace; fill: #1E293B; }
+      .mono-small { font: 500 12px "Consolas", "Cascadia Mono", monospace; fill: #475569; }
+      .tag { font: 700 13px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; letter-spacing: .2px; }
+      .green-title { font: 700 18px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #065F46; }
+    </style>
+  </defs>
+
+  <rect width="2620" height="1700" rx="28" fill="#F6F8FB"/>
+  <rect x="0" y="0" width="2620" height="122" rx="28" fill="#0F172A"/>
+  <rect x="0" y="94" width="2620" height="28" fill="#0F172A"/>
+  <rect x="68" y="32" width="8" height="58" rx="4" fill="#22D3EE"/>
+  <text x="96" y="61" class="title" fill="#FFFFFF">油浸式变压器故障诊断智能体 · 知识库结构图</text>
+  <text x="96" y="94" class="subtitle" fill="#CBD5E1">六域隔离 + 域内融合图谱 · 概念图谱与段落证据图谱双层组织 · 域外独立规则与多模态资产</text>
+  <rect x="2130" y="36" width="410" height="46" rx="23" fill="#1E293B" stroke="#334155"/>
+  <text x="2335" y="65" text-anchor="middle" class="tag" fill="#A5F3FC">KNOWLEDGE BASE ARCHITECTURE</text>
+
+  <!-- Knowledge base outer box -->
+  <rect x="40" y="140" width="1840" height="1480" rx="24" fill="#FFFFFF" stroke="#0F766E" stroke-width="3" filter="url(#shadow)"/>
+  <rect x="40" y="140" width="14" height="1480" rx="7" fill="#0F766E"/>
+  <text x="78" y="182" class="section">知识库</text>
+  <text x="78" y="210" class="small">六域是检索隔离边界；每个域内融合概念图谱与段落证据图谱；跨域不建边。</text>
+  <rect x="1260" y="168" width="246" height="34" rx="17" fill="#ECFDF5" stroke="#6EE7B7"/>
+  <text x="1383" y="190" text-anchor="middle" class="tag" fill="#047857">跨域不建边</text>
+  <rect x="1522" y="168" width="318" height="34" rx="17" fill="#ECFDF5" stroke="#6EE7B7"/>
+  <text x="1681" y="190" text-anchor="middle" class="tag" fill="#047857">多域并行由意图路由触发</text>
+
+  <!-- Domain cards -->
+  <!-- domain dga -->
+  <g>
+    <rect x="70" y="250" width="570" height="480" rx="20" fill="#FFFFFF" stroke="#0F766E" stroke-width="2.5"/>
+    <rect x="70" y="250" width="570" height="60" rx="20" fill="#CCFBF1" stroke="#0F766E" stroke-width="2"/>
+    <rect x="70" y="290" width="570" height="20" fill="#CCFBF1"/>
+    <text x="94" y="277" class="tag" fill="#0F766E">DOMAIN 01</text>
+    <text x="94" y="300" class="domain-id" fill="#0F172A">dga · DGA 气体分析</text>
+    <rect x="500" y="267" width="116" height="28" rx="14" fill="#FFFFFF" stroke="#0F766E"/>
+    <text x="558" y="286" text-anchor="middle" class="tiny" fill="#0F766E">隔离边界</text>
+
+    <rect x="90" y="325" width="530" height="170" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="108" y="353" class="layer-title">概念图谱层</text>
+    <text x="246" y="352" class="tiny">概念节点 + 关系边 + 挂载段落 ID</text>
+    <ellipse cx="180" cy="401" rx="58" ry="27" fill="#CCFBF1" stroke="#0F766E" stroke-width="1.8"/>
+    <text x="180" y="406" text-anchor="middle" class="node-text">乙炔</text>
+    <ellipse cx="355" cy="401" rx="58" ry="27" fill="#CCFBF1" stroke="#0F766E" stroke-width="1.8"/>
+    <text x="355" y="406" text-anchor="middle" class="node-text">电弧放电</text>
+    <ellipse cx="530" cy="401" rx="58" ry="27" fill="#CCFBF1" stroke="#0F766E" stroke-width="1.8"/>
+    <text x="530" y="406" text-anchor="middle" class="node-text">三比值</text>
+    <path d="M238 401 H297" stroke="#0F766E" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <path d="M413 401 H472" stroke="#0F766E" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <text x="267" y="393" text-anchor="middle" class="edge-text">关系</text>
+    <text x="442" y="393" text-anchor="middle" class="edge-text">关系</text>
+    <rect x="108" y="448" width="494" height="32" rx="10" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="124" y="469" class="tiny">挂载：P722-9.3.1  ·  P722-10.2.1  ·  P722-9.3.3</text>
+
+    <rect x="90" y="515" width="530" height="175" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="108" y="543" class="layer-title">段落证据图谱层</text>
+    <text x="260" y="542" class="tiny">段落节点 + 引用边 / 层级边</text>
+    <rect x="112" y="574" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#0F766E" stroke-width="1.8"/>
+    <text x="178" y="602" text-anchor="middle" class="evidence-text">P722-9.3.1</text>
+    <rect x="289" y="574" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#0F766E" stroke-width="1.8"/>
+    <text x="355" y="602" text-anchor="middle" class="evidence-text">P722-10.2.1</text>
+    <rect x="466" y="574" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#0F766E" stroke-width="1.8"/>
+    <text x="532" y="602" text-anchor="middle" class="evidence-text">P722-9.3.3</text>
+    <path d="M244 597 H281" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <path d="M421 597 H458" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <text x="262" y="587" text-anchor="middle" class="edge-text">引用</text>
+    <text x="439" y="587" text-anchor="middle" class="edge-text">层级</text>
+    <text x="112" y="652" class="tiny">图谱输出：段落 ID → 原文证据</text>
+    <rect x="478" y="640" width="120" height="28" rx="14" fill="#CCFBF1" stroke="#0F766E"/>
+    <text x="538" y="659" text-anchor="middle" class="tiny" fill="#0F766E">域内融合</text>
+  </g>
+  <!-- domain oil_temp -->
+  <g>
+    <rect x="680" y="250" width="570" height="480" rx="20" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="2.5"/>
+    <rect x="680" y="250" width="570" height="60" rx="20" fill="#DBEAFE" stroke="#1D4ED8" stroke-width="2"/>
+    <rect x="680" y="290" width="570" height="20" fill="#DBEAFE"/>
+    <text x="704" y="277" class="tag" fill="#1D4ED8">DOMAIN 02</text>
+    <text x="704" y="300" class="domain-id" fill="#0F172A">oil_temp · 油温与冷却</text>
+    <rect x="1110" y="267" width="116" height="28" rx="14" fill="#FFFFFF" stroke="#1D4ED8"/>
+    <text x="1168" y="286" text-anchor="middle" class="tiny" fill="#1D4ED8">隔离边界</text>
+
+    <rect x="700" y="325" width="530" height="170" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="718" y="353" class="layer-title">概念图谱层</text>
+    <text x="856" y="352" class="tiny">概念节点 + 关系边 + 挂载段落 ID</text>
+    <ellipse cx="790" cy="401" rx="58" ry="27" fill="#DBEAFE" stroke="#1D4ED8" stroke-width="1.8"/>
+    <text x="790" y="406" text-anchor="middle" class="node-text">油温</text>
+    <ellipse cx="965" cy="401" rx="58" ry="27" fill="#DBEAFE" stroke="#1D4ED8" stroke-width="1.8"/>
+    <text x="965" y="406" text-anchor="middle" class="node-text">冷却系统</text>
+    <ellipse cx="1140" cy="401" rx="58" ry="27" fill="#DBEAFE" stroke="#1D4ED8" stroke-width="1.8"/>
+    <text x="1140" y="406" text-anchor="middle" class="node-text">负载</text>
+    <path d="M848 401 H907" stroke="#1D4ED8" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <path d="M1023 401 H1082" stroke="#1D4ED8" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <text x="877" y="393" text-anchor="middle" class="edge-text">关系</text>
+    <text x="1052" y="393" text-anchor="middle" class="edge-text">关系</text>
+    <rect x="718" y="448" width="494" height="32" rx="10" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="734" y="469" class="tiny">挂载：P572-7.1.5  ·  P572-7.1.6  ·  P572-7.1.8</text>
+
+    <rect x="700" y="515" width="530" height="175" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="718" y="543" class="layer-title">段落证据图谱层</text>
+    <text x="870" y="542" class="tiny">段落节点 + 引用边 / 层级边</text>
+    <rect x="722" y="574" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="1.8"/>
+    <text x="788" y="602" text-anchor="middle" class="evidence-text">P572-7.1.5</text>
+    <rect x="899" y="574" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="1.8"/>
+    <text x="965" y="602" text-anchor="middle" class="evidence-text">P572-7.1.6</text>
+    <rect x="1076" y="574" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="1.8"/>
+    <text x="1142" y="602" text-anchor="middle" class="evidence-text">P572-7.1.8</text>
+    <path d="M854 597 H891" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <path d="M1031 597 H1068" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <text x="872" y="587" text-anchor="middle" class="edge-text">引用</text>
+    <text x="1049" y="587" text-anchor="middle" class="edge-text">层级</text>
+    <text x="722" y="652" class="tiny">图谱输出：段落 ID → 原文证据</text>
+    <rect x="1088" y="640" width="120" height="28" rx="14" fill="#DBEAFE" stroke="#1D4ED8"/>
+    <text x="1148" y="659" text-anchor="middle" class="tiny" fill="#1D4ED8">域内融合</text>
+  </g>
+  <!-- domain safety -->
+  <g>
+    <rect x="1290" y="250" width="570" height="480" rx="20" fill="#FFFFFF" stroke="#E11D48" stroke-width="2.5"/>
+    <rect x="1290" y="250" width="570" height="60" rx="20" fill="#FFE4E6" stroke="#E11D48" stroke-width="2"/>
+    <rect x="1290" y="290" width="570" height="20" fill="#FFE4E6"/>
+    <text x="1314" y="277" class="tag" fill="#E11D48">DOMAIN 03</text>
+    <text x="1314" y="300" class="domain-id" fill="#0F172A">safety · 安全与处置</text>
+    <rect x="1720" y="267" width="116" height="28" rx="14" fill="#FFFFFF" stroke="#E11D48"/>
+    <text x="1778" y="286" text-anchor="middle" class="tiny" fill="#E11D48">隔离边界</text>
+
+    <rect x="1310" y="325" width="530" height="170" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="1328" y="353" class="layer-title">概念图谱层</text>
+    <text x="1466" y="352" class="tiny">概念节点 + 关系边 + 挂载段落 ID</text>
+    <ellipse cx="1400" cy="401" rx="58" ry="27" fill="#FFE4E6" stroke="#E11D48" stroke-width="1.8"/>
+    <text x="1400" y="406" text-anchor="middle" class="node-text">停电</text>
+    <ellipse cx="1575" cy="401" rx="58" ry="27" fill="#FFE4E6" stroke="#E11D48" stroke-width="1.8"/>
+    <text x="1575" y="406" text-anchor="middle" class="node-text">隔离</text>
+    <ellipse cx="1750" cy="401" rx="58" ry="27" fill="#FFE4E6" stroke="#E11D48" stroke-width="1.8"/>
+    <text x="1750" y="406" text-anchor="middle" class="node-text">危险处置</text>
+    <path d="M1458 401 H1517" stroke="#E11D48" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <path d="M1633 401 H1692" stroke="#E11D48" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <text x="1487" y="393" text-anchor="middle" class="edge-text">关系</text>
+    <text x="1662" y="393" text-anchor="middle" class="edge-text">关系</text>
+    <rect x="1328" y="448" width="494" height="32" rx="10" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="1344" y="469" class="tiny">挂载：P572-7.1.2  ·  P572-7.1.3  ·  P572-7.5.3</text>
+
+    <rect x="1310" y="515" width="530" height="175" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="1328" y="543" class="layer-title">段落证据图谱层</text>
+    <text x="1480" y="542" class="tiny">段落节点 + 引用边 / 层级边</text>
+    <rect x="1332" y="574" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#E11D48" stroke-width="1.8"/>
+    <text x="1398" y="602" text-anchor="middle" class="evidence-text">P572-7.1.2</text>
+    <rect x="1509" y="574" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#E11D48" stroke-width="1.8"/>
+    <text x="1575" y="602" text-anchor="middle" class="evidence-text">P572-7.1.3</text>
+    <rect x="1686" y="574" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#E11D48" stroke-width="1.8"/>
+    <text x="1752" y="602" text-anchor="middle" class="evidence-text">P572-7.5.3</text>
+    <path d="M1464 597 H1501" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <path d="M1641 597 H1678" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <text x="1482" y="587" text-anchor="middle" class="edge-text">引用</text>
+    <text x="1659" y="587" text-anchor="middle" class="edge-text">层级</text>
+    <text x="1332" y="652" class="tiny">图谱输出：段落 ID → 原文证据</text>
+    <rect x="1698" y="640" width="120" height="28" rx="14" fill="#FFE4E6" stroke="#E11D48"/>
+    <text x="1758" y="659" text-anchor="middle" class="tiny" fill="#E11D48">域内融合</text>
+  </g>
+  <!-- domain equipment -->
+  <g>
+    <rect x="70" y="770" width="570" height="480" rx="20" fill="#FFFFFF" stroke="#D97706" stroke-width="2.5"/>
+    <rect x="70" y="770" width="570" height="60" rx="20" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+    <rect x="70" y="810" width="570" height="20" fill="#FEF3C7"/>
+    <text x="94" y="797" class="tag" fill="#D97706">DOMAIN 04</text>
+    <text x="94" y="820" class="domain-id" fill="#0F172A">equipment · 设备与参数</text>
+    <rect x="500" y="787" width="116" height="28" rx="14" fill="#FFFFFF" stroke="#D97706"/>
+    <text x="558" y="806" text-anchor="middle" class="tiny" fill="#D97706">隔离边界</text>
+
+    <rect x="90" y="845" width="530" height="170" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="108" y="873" class="layer-title">概念图谱层</text>
+    <text x="246" y="872" class="tiny">概念节点 + 关系边 + 挂载段落 ID</text>
+    <ellipse cx="180" cy="921" rx="58" ry="27" fill="#FEF3C7" stroke="#D97706" stroke-width="1.8"/>
+    <text x="180" y="926" text-anchor="middle" class="node-text">额定值</text>
+    <ellipse cx="355" cy="921" rx="58" ry="27" fill="#FEF3C7" stroke="#D97706" stroke-width="1.8"/>
+    <text x="355" y="926" text-anchor="middle" class="node-text">油温限值</text>
+    <ellipse cx="530" cy="921" rx="58" ry="27" fill="#FEF3C7" stroke="#D97706" stroke-width="1.8"/>
+    <text x="530" y="926" text-anchor="middle" class="node-text">铭牌</text>
+    <path d="M238 921 H297" stroke="#D97706" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <path d="M413 921 H472" stroke="#D97706" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <text x="267" y="913" text-anchor="middle" class="edge-text">关系</text>
+    <text x="442" y="913" text-anchor="middle" class="edge-text">关系</text>
+    <rect x="108" y="968" width="494" height="32" rx="10" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="124" y="989" class="tiny">挂载：P572-5.1.3  ·  P572-5.4.1  ·  P572-4.2.2</text>
+
+    <rect x="90" y="1035" width="530" height="175" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="108" y="1063" class="layer-title">段落证据图谱层</text>
+    <text x="260" y="1062" class="tiny">段落节点 + 引用边 / 层级边</text>
+    <rect x="112" y="1094" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#D97706" stroke-width="1.8"/>
+    <text x="178" y="1122" text-anchor="middle" class="evidence-text">P572-5.1.3</text>
+    <rect x="289" y="1094" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#D97706" stroke-width="1.8"/>
+    <text x="355" y="1122" text-anchor="middle" class="evidence-text">P572-5.4.1</text>
+    <rect x="466" y="1094" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#D97706" stroke-width="1.8"/>
+    <text x="532" y="1122" text-anchor="middle" class="evidence-text">P572-4.2.2</text>
+    <path d="M244 1117 H281" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <path d="M421 1117 H458" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <text x="262" y="1107" text-anchor="middle" class="edge-text">引用</text>
+    <text x="439" y="1107" text-anchor="middle" class="edge-text">层级</text>
+    <text x="112" y="1172" class="tiny">图谱输出：段落 ID → 原文证据</text>
+    <rect x="478" y="1160" width="120" height="28" rx="14" fill="#FEF3C7" stroke="#D97706"/>
+    <text x="538" y="1179" text-anchor="middle" class="tiny" fill="#D97706">域内融合</text>
+  </g>
+  <!-- domain dp -->
+  <g>
+    <rect x="680" y="770" width="570" height="480" rx="20" fill="#FFFFFF" stroke="#475569" stroke-width="2.5"/>
+    <rect x="680" y="770" width="570" height="60" rx="20" fill="#E2E8F0" stroke="#475569" stroke-width="2"/>
+    <rect x="680" y="810" width="570" height="20" fill="#E2E8F0"/>
+    <text x="704" y="797" class="tag" fill="#475569">DOMAIN 05</text>
+    <text x="704" y="820" class="domain-id" fill="#0F172A">dp · 通用规程</text>
+    <rect x="1110" y="787" width="116" height="28" rx="14" fill="#FFFFFF" stroke="#475569"/>
+    <text x="1168" y="806" text-anchor="middle" class="tiny" fill="#475569">隔离边界</text>
+
+    <rect x="700" y="845" width="530" height="170" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="718" y="873" class="layer-title">概念图谱层</text>
+    <text x="856" y="872" class="tiny">概念节点 + 关系边 + 挂载段落 ID</text>
+    <ellipse cx="790" cy="921" rx="58" ry="27" fill="#E2E8F0" stroke="#475569" stroke-width="1.8"/>
+    <text x="790" y="926" text-anchor="middle" class="node-text">通用规程</text>
+    <ellipse cx="965" cy="921" rx="58" ry="27" fill="#E2E8F0" stroke="#475569" stroke-width="1.8"/>
+    <text x="965" y="926" text-anchor="middle" class="node-text">安全边界</text>
+    <ellipse cx="1140" cy="921" rx="58" ry="27" fill="#E2E8F0" stroke="#475569" stroke-width="1.8"/>
+    <text x="1140" y="926" text-anchor="middle" class="node-text">组织措施</text>
+    <path d="M848 921 H907" stroke="#475569" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <path d="M1023 921 H1082" stroke="#475569" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <text x="877" y="913" text-anchor="middle" class="edge-text">关系</text>
+    <text x="1052" y="913" text-anchor="middle" class="edge-text">关系</text>
+    <rect x="718" y="968" width="494" height="32" rx="10" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="734" y="989" class="tiny">挂载：P-DP-001  ·  P-DP-014  ·  P-DP-027</text>
+
+    <rect x="700" y="1035" width="530" height="175" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="718" y="1063" class="layer-title">段落证据图谱层</text>
+    <text x="870" y="1062" class="tiny">段落节点 + 引用边 / 层级边</text>
+    <rect x="722" y="1094" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+    <text x="788" y="1122" text-anchor="middle" class="evidence-text">P-DP-001</text>
+    <rect x="899" y="1094" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+    <text x="965" y="1122" text-anchor="middle" class="evidence-text">P-DP-014</text>
+    <rect x="1076" y="1094" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+    <text x="1142" y="1122" text-anchor="middle" class="evidence-text">P-DP-027</text>
+    <path d="M854 1117 H891" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <path d="M1031 1117 H1068" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <text x="872" y="1107" text-anchor="middle" class="edge-text">引用</text>
+    <text x="1049" y="1107" text-anchor="middle" class="edge-text">层级</text>
+    <text x="722" y="1172" class="tiny">图谱输出：段落 ID → 原文证据</text>
+    <rect x="1088" y="1160" width="120" height="28" rx="14" fill="#E2E8F0" stroke="#475569"/>
+    <text x="1148" y="1179" text-anchor="middle" class="tiny" fill="#475569">域内融合</text>
+  </g>
+  <!-- domain cases -->
+  <g>
+    <rect x="1290" y="770" width="570" height="480" rx="20" fill="#FFFFFF" stroke="#7C3AED" stroke-width="2.5"/>
+    <rect x="1290" y="770" width="570" height="60" rx="20" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+    <rect x="1290" y="810" width="570" height="20" fill="#EDE9FE"/>
+    <text x="1314" y="797" class="tag" fill="#7C3AED">DOMAIN 06</text>
+    <text x="1314" y="820" class="domain-id" fill="#0F172A">cases · 故障案例</text>
+    <rect x="1720" y="787" width="116" height="28" rx="14" fill="#FFFFFF" stroke="#7C3AED"/>
+    <text x="1778" y="806" text-anchor="middle" class="tiny" fill="#7C3AED">隔离边界</text>
+
+    <rect x="1310" y="845" width="530" height="170" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="1328" y="873" class="layer-title">概念图谱层</text>
+    <text x="1466" y="872" class="tiny">概念节点 + 关系边 + 挂载段落 ID</text>
+    <ellipse cx="1400" cy="921" rx="58" ry="27" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.8"/>
+    <text x="1400" y="926" text-anchor="middle" class="node-text">故障案例</text>
+    <ellipse cx="1575" cy="921" rx="58" ry="27" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.8"/>
+    <text x="1575" y="926" text-anchor="middle" class="node-text">气体特征</text>
+    <ellipse cx="1750" cy="921" rx="58" ry="27" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.8"/>
+    <text x="1750" y="926" text-anchor="middle" class="node-text">处置经验</text>
+    <path d="M1458 921 H1517" stroke="#7C3AED" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <path d="M1633 921 H1692" stroke="#7C3AED" stroke-width="2.2" marker-end="url(#arrow-domain)"/>
+    <text x="1487" y="913" text-anchor="middle" class="edge-text">关系</text>
+    <text x="1662" y="913" text-anchor="middle" class="edge-text">关系</text>
+    <rect x="1328" y="968" width="494" height="32" rx="10" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="1344" y="989" class="tiny">挂载：P-CASE-001  ·  P-CASE-020  ·  P-CASE-041</text>
+
+    <rect x="1310" y="1035" width="530" height="175" rx="16" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.6"/>
+    <text x="1328" y="1063" class="layer-title">段落证据图谱层</text>
+    <text x="1480" y="1062" class="tiny">段落节点 + 引用边 / 层级边</text>
+    <rect x="1332" y="1094" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1.8"/>
+    <text x="1398" y="1122" text-anchor="middle" class="evidence-text">P-CASE-001</text>
+    <rect x="1509" y="1094" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1.8"/>
+    <text x="1575" y="1122" text-anchor="middle" class="evidence-text">P-CASE-020</text>
+    <rect x="1686" y="1094" width="132" height="46" rx="12" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1.8"/>
+    <text x="1752" y="1122" text-anchor="middle" class="evidence-text">P-CASE-041</text>
+    <path d="M1464 1117 H1501" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <path d="M1641 1117 H1678" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-gray)"/>
+    <text x="1482" y="1107" text-anchor="middle" class="edge-text">引用</text>
+    <text x="1659" y="1107" text-anchor="middle" class="edge-text">层级</text>
+    <text x="1332" y="1172" class="tiny">图谱输出：段落 ID → 原文证据</text>
+    <rect x="1698" y="1160" width="120" height="28" rx="14" fill="#EDE9FE" stroke="#7C3AED"/>
+    <text x="1758" y="1179" text-anchor="middle" class="tiny" fill="#7C3AED">域内融合</text>
+  </g>
+  <!-- Independent assets -->
+  <rect x="70" y="1310" width="890" height="250" rx="20" fill="#FFF7ED" stroke="#F59E0B" stroke-width="2.5"/>
+  <rect x="70" y="1310" width="890" height="54" rx="20" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+  <rect x="70" y="1344" width="890" height="20" fill="#FEF3C7"/>
+  <text x="98" y="1345" class="box-title">规则库</text>
+  <rect x="800" y="1322" width="132" height="30" rx="15" fill="#FFFFFF" stroke="#FCD34D"/>
+  <text x="866" y="1343" text-anchor="middle" class="tiny" fill="#B45309">独立于六域</text>
+  <text x="98" y="1400" class="small">结构：规则条目 + 域标签索引 + 规程条款引用</text>
+  <text x="98" y="1434" class="mono-small">tags: dga / oil_temp / safety / equipment / dp / cases</text>
+  <g>
+    <rect x="98" y="1462" width="104" height="34" rx="17" fill="#FFFFFF" stroke="#FDBA74"/><text x="150" y="1484" text-anchor="middle" class="tiny">注意值规则</text>
+    <rect x="216" y="1462" width="104" height="34" rx="17" fill="#FFFFFF" stroke="#FDBA74"/><text x="268" y="1484" text-anchor="middle" class="tiny">产气速率</text>
+    <rect x="334" y="1462" width="104" height="34" rx="17" fill="#FFFFFF" stroke="#FDBA74"/><text x="386" y="1484" text-anchor="middle" class="tiny">三比值规则</text>
+    <rect x="452" y="1462" width="118" height="34" rx="17" fill="#FFFFFF" stroke="#FDBA74"/><text x="511" y="1484" text-anchor="middle" class="tiny">安全动作边界</text>
+  </g>
+  <text x="98" y="1532" class="tiny">检索方式：按 intent domain tag 独立召回；可通过 evidence_id 关联六域证据，但不属于六域之一。</text>
+
+  <rect x="990" y="1310" width="860" height="250" rx="20" fill="#F5F3FF" stroke="#8B5CF6" stroke-width="2.5"/>
+  <rect x="990" y="1310" width="860" height="54" rx="20" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="2"/>
+  <rect x="990" y="1344" width="860" height="20" fill="#EDE9FE"/>
+  <text x="1018" y="1345" class="box-title">多模态仓</text>
+  <rect x="1690" y="1322" width="132" height="30" rx="15" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <text x="1756" y="1343" text-anchor="middle" class="tiny" fill="#6D28D9">独立于六域</text>
+  <text x="1018" y="1400" class="small">结构：图像 / 扫描件 / 表格 / 音频 + 域标签 + 摘要 + 原文定位</text>
+  <text x="1018" y="1434" class="mono-small">tags: dga / oil_temp / safety / equipment / dp / cases</text>
+  <g>
+    <rect x="1018" y="1462" width="98" height="34" rx="17" fill="#FFFFFF" stroke="#C4B5FD"/><text x="1067" y="1484" text-anchor="middle" class="tiny">巡检照片</text>
+    <rect x="1130" y="1462" width="98" height="34" rx="17" fill="#FFFFFF" stroke="#C4B5FD"/><text x="1179" y="1484" text-anchor="middle" class="tiny">标准扫描</text>
+    <rect x="1242" y="1462" width="98" height="34" rx="17" fill="#FFFFFF" stroke="#C4B5FD"/><text x="1291" y="1484" text-anchor="middle" class="tiny">检测图表</text>
+    <rect x="1354" y="1462" width="98" height="34" rx="17" fill="#FFFFFF" stroke="#C4B5FD"/><text x="1403" y="1484" text-anchor="middle" class="tiny">故障图片</text>
+  </g>
+  <text x="1018" y="1532" class="tiny">检索方式：按域标签过滤；多模态结果转换为证据记录后参与证据整合，不直接写入六域图谱。</text>
+
+  <!-- Retrieval flow green subgraph -->
+  <rect x="1920" y="140" width="640" height="1480" rx="24" fill="#ECFDF5" stroke="#10B981" stroke-width="3" filter="url(#shadow)"/>
+  <rect x="1920" y="140" width="14" height="1480" rx="7" fill="#10B981"/>
+  <text x="1962" y="184" class="green-title">检索流程 · 域隔离执行</text>
+  <text x="1962" y="211" class="small">意图路由选择 domains；仅在被选域内并行检索，域间不建边。</text>
+
+  <rect x="1962" y="244" width="560" height="105" rx="17" fill="#FFFFFF" stroke="#34D399" stroke-width="2.2"/>
+  <text x="1988" y="278" class="box-title">1. 意图路由</text>
+  <text x="1988" y="307" class="small">intent + domains + filters</text>
+  <text x="1988" y="332" class="mono-small">multi-intent → domains = [dga, safety, ...]</text>
+  <path d="M2242 349 V376" stroke="#10B981" stroke-width="3" marker-end="url(#arrow-green)"/>
+
+  <rect x="1962" y="386" width="560" height="60" rx="15" fill="#D1FAE5" stroke="#34D399" stroke-width="2"/>
+  <text x="2242" y="413" text-anchor="middle" class="box-subtitle">2. 在选定域内并行：概念图谱 + 混合检索</text>
+  <text x="2242" y="435" text-anchor="middle" class="tiny">示例：dga、oil_temp、safety 多域并行</text>
+
+  <g>
+    <!-- selected domain lane dga -->
+    <rect x="1955" y="470" width="574" height="205" rx="16" fill="#FFFFFF" stroke="#86EFAC" stroke-width="1.8" stroke-dasharray="8 5"/>
+    <rect x="1975" y="486" width="116" height="28" rx="14" fill="#D1FAE5" stroke="#34D399"/><text x="2033" y="505" text-anchor="middle" class="tag" fill="#047857">dga</text>
+    <rect x="1975" y="530" width="250" height="76" rx="12" fill="#F0FDF4" stroke="#6EE7B7"/><text x="2100" y="559" text-anchor="middle" class="box-subtitle">概念图谱检索</text><text x="2100" y="584" text-anchor="middle" class="tiny">概念节点 → 挂载段落 ID</text>
+    <rect x="2259" y="530" width="250" height="76" rx="12" fill="#F0FDF4" stroke="#6EE7B7"/><text x="2384" y="559" text-anchor="middle" class="box-subtitle">混合检索</text><text x="2384" y="584" text-anchor="middle" class="tiny">BM25 + 向量 → 段落候选</text>
+    <path d="M2100 606 V624 H2242" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+    <path d="M2384 606 V624 H2242" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+    <rect x="2100" y="629" width="280" height="31" rx="12" fill="#ECFDF5" stroke="#34D399"/><text x="2240" y="650" text-anchor="middle" class="mono-small">段落 ID 候选集合</text>
+  </g>
+
+  <g>
+    <!-- selected domain lane oil_temp -->
+    <rect x="1955" y="695" width="574" height="205" rx="16" fill="#FFFFFF" stroke="#86EFAC" stroke-width="1.8" stroke-dasharray="8 5"/>
+    <rect x="1975" y="711" width="136" height="28" rx="14" fill="#D1FAE5" stroke="#34D399"/><text x="2043" y="730" text-anchor="middle" class="tag" fill="#047857">oil_temp</text>
+    <rect x="1975" y="755" width="250" height="76" rx="12" fill="#F0FDF4" stroke="#6EE7B7"/><text x="2100" y="784" text-anchor="middle" class="box-subtitle">概念图谱检索</text><text x="2100" y="809" text-anchor="middle" class="tiny">概念节点 → 挂载段落 ID</text>
+    <rect x="2259" y="755" width="250" height="76" rx="12" fill="#F0FDF4" stroke="#6EE7B7"/><text x="2384" y="784" text-anchor="middle" class="box-subtitle">混合检索</text><text x="2384" y="809" text-anchor="middle" class="tiny">BM25 + 向量 → 段落候选</text>
+    <path d="M2100 831 V849 H2242" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+    <path d="M2384 831 V849 H2242" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+    <rect x="2100" y="854" width="280" height="31" rx="12" fill="#ECFDF5" stroke="#34D399"/><text x="2240" y="875" text-anchor="middle" class="mono-small">段落 ID 候选集合</text>
+  </g>
+
+  <g>
+    <!-- selected domain lane safety -->
+    <rect x="1955" y="920" width="574" height="205" rx="16" fill="#FFFFFF" stroke="#86EFAC" stroke-width="1.8" stroke-dasharray="8 5"/>
+    <rect x="1975" y="936" width="116" height="28" rx="14" fill="#D1FAE5" stroke="#34D399"/><text x="2033" y="955" text-anchor="middle" class="tag" fill="#047857">safety</text>
+    <rect x="1975" y="980" width="250" height="76" rx="12" fill="#F0FDF4" stroke="#6EE7B7"/><text x="2100" y="1009" text-anchor="middle" class="box-subtitle">概念图谱检索</text><text x="2100" y="1034" text-anchor="middle" class="tiny">概念节点 → 挂载段落 ID</text>
+    <rect x="2259" y="980" width="250" height="76" rx="12" fill="#F0FDF4" stroke="#6EE7B7"/><text x="2384" y="1009" text-anchor="middle" class="box-subtitle">混合检索</text><text x="2384" y="1034" text-anchor="middle" class="tiny">BM25 + 向量 → 段落候选</text>
+    <path d="M2100 1056 V1074 H2242" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+    <path d="M2384 1056 V1074 H2242" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+    <rect x="2100" y="1079" width="280" height="31" rx="12" fill="#ECFDF5" stroke="#34D399"/><text x="2240" y="1100" text-anchor="middle" class="mono-small">段落 ID 候选集合</text>
+  </g>
+
+  <path d="M2242 673 V1160" stroke="#10B981" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <path d="M2242 898 V1160" stroke="#10B981" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <path d="M2242 1123 V1160" stroke="#10B981" stroke-width="3" marker-end="url(#arrow-green)"/>
+
+  <rect x="1962" y="1170" width="560" height="85" rx="16" fill="#FFFFFF" stroke="#34D399" stroke-width="2.2"/>
+  <text x="2242" y="1203" text-anchor="middle" class="box-title">3. 合并段落 ID</text>
+  <text x="2242" y="1231" text-anchor="middle" class="small">跨域汇总候选，但保留 domain 来源标记</text>
+  <path d="M2242 1255 V1290" stroke="#10B981" stroke-width="3" marker-end="url(#arrow-green)"/>
+
+  <rect x="1962" y="1300" width="560" height="85" rx="16" fill="#FFFFFF" stroke="#34D399" stroke-width="2.2"/>
+  <text x="2242" y="1333" text-anchor="middle" class="box-title">4. 取原文</text>
+  <text x="2242" y="1361" text-anchor="middle" class="small">段落 ID → 原文 / 表格 / 条款 / 案例证据</text>
+  <path d="M2242 1385 V1420" stroke="#10B981" stroke-width="3" marker-end="url(#arrow-green)"/>
+
+  <rect x="1962" y="1430" width="560" height="105" rx="16" fill="#D1FAE5" stroke="#34D399" stroke-width="2.2"/>
+  <text x="2242" y="1463" text-anchor="middle" class="box-title">5. 证据整合</text>
+  <text x="2242" y="1492" text-anchor="middle" class="small">去重 + evidence_id + 来源标注</text>
+  <text x="2242" y="1518" text-anchor="middle" class="tiny">输出 EvidenceSet，进入复杂度判断与生成链路</text>
+
+  <text x="1962" y="1584" class="tiny">隔离规则：域内融合，跨域不建边；多域关系只由意图路由建立并行任务。</text>
+  <text x="78" y="1660" class="small">说明：规则库和多模态仓是域外独立资产；六域内部均采用“概念图谱 + 段落证据图谱”融合结构。</text>
+</svg>

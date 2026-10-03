@@ -26,6 +26,15 @@ def _contains_clause(content: str, clause: str) -> bool:
     return re.search(pattern, content) is not None
 
 
+def _is_citation_eligible(chunk: dict[str, Any]) -> bool:
+    """Return whether a chunk may be used for citation matching."""
+    if not isinstance(chunk, dict):
+        return False
+    if "citation_eligible" in chunk:
+        return bool(chunk.get("citation_eligible"))
+    return bool(chunk.get("doc_id") and chunk.get("clause"))
+
+
 def _matches_chunk(content: str, chunk: dict[str, Any], known_docs: set[str]) -> bool:
     """判断一条引用是否与某个检索结果匹配，优先校验文档号与条号。"""
     normalized_content = _normalize_text(content)
@@ -54,12 +63,17 @@ def _matches_chunk(content: str, chunk: dict[str, Any], known_docs: set[str]) ->
 
 
 def verify_citations(answer: str, chunks: list[dict] | None) -> dict:
-    """校验回答中的所有【依据：...】引用是否存在于检索结果中。"""
+    """校验回答中的引用是否存在于可引用检索结果中。"""
     citations = [match.group(1).strip() for match in _CITATION_RE.finditer(str(answer or ""))]
+    eligible_chunks = [
+        chunk
+        for chunk in (chunks or [])
+        if isinstance(chunk, dict) and _is_citation_eligible(chunk)
+    ]
     known_docs = {
         _normalize_text(chunk.get("doc_id"))
-        for chunk in (chunks or [])
-        if isinstance(chunk, dict) and chunk.get("doc_id")
+        for chunk in eligible_chunks
+        if chunk.get("doc_id")
     }
     valid_citations: list[str] = []
     invalid_citations: list[str] = []
@@ -68,8 +82,8 @@ def verify_citations(answer: str, chunks: list[dict] | None) -> dict:
 
     for citation in citations:
         matched = any(
-            isinstance(chunk, dict) and _matches_chunk(citation, chunk, known_docs)
-            for chunk in (chunks or [])
+            _matches_chunk(citation, chunk, known_docs)
+            for chunk in eligible_chunks
         )
         if matched:
             if citation not in seen_valid:
@@ -105,7 +119,10 @@ def build_retry_prompt(question: str, verification: dict, chunks: list[dict] | N
     available = sorted({
         _format_available_citation(chunk)
         for chunk in (chunks or [])
-        if isinstance(chunk, dict) and chunk.get("doc_id") and chunk.get("clause")
+        if isinstance(chunk, dict)
+        and chunk.get("doc_id")
+        and chunk.get("clause")
+        and _is_citation_eligible(chunk)
     })
     invalid_text = "、".join(str(item) for item in invalid) or "（无）"
     available_text = "；".join(available) or "（无可用条号）"

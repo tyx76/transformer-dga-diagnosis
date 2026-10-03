@@ -187,7 +187,7 @@ def ask(args):
 
 def main():
     ap = argparse.ArgumentParser(description="知识库 CLI（SQLite + Ollama bge-m3）")
-    ap.add_argument("--db", default=str(DB_DEFAULT), help="数据库路径，默认 ./knowledge.db")
+    ap.add_argument("--db", default=str(DB_DEFAULT), help="数据库路径，默认 knowledge/pure_kb/index/knowledge.db")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("ingest", help="从 JSONL 入库")

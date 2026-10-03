@@ -14,7 +14,7 @@ DEFAULT_INPUTS = (
     ROOT / "vector_kb" / "corpus" / "clauses.jsonl",
     ROOT / "vector_kb" / "corpus" / "DLT-572-2021_clauses.jsonl",
 )
-DEFAULT_OUTPUT = ROOT / "data" / "corpus" / "clauses.jsonl"
+DEFAULT_OUTPUT = ROOT / "knowledge" / "pure_kb" / "data" / "clauses.jsonl"
 
 
 def _dedupe_key(item: dict) -> tuple:

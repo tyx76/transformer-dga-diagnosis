@@ -7,7 +7,7 @@ from __future__ import annotations
 import re
 import unicodedata
 
-DOMAIN_TERMS = (
+PURE_DOMAIN_TERMS = (
     "变压器",
     "主变",
     "油浸式",
@@ -47,6 +47,48 @@ DOMAIN_TERMS = (
     "超标",
     "巡检",
     "油",
+)
+
+GENERAL_DOMAIN_TERMS = PURE_DOMAIN_TERMS + (
+    "锅炉",
+    "水冷壁",
+    "过热器",
+    "再热器",
+    "省煤器",
+    "空预器",
+    "磨煤机",
+    "制粉",
+    "燃烧器",
+    "爆管",
+    "结焦",
+    "吹灰",
+    "汽轮机",
+    "通流",
+    "级组",
+    "转子",
+    "轴承",
+    "轴系",
+    "振动",
+    "轴封",
+    "凝汽器",
+    "deh",
+    "调速",
+    "旁路",
+    "发电机",
+    "定子",
+    "励磁",
+    "氢冷",
+    "密封油",
+    "绝缘",
+    "局放",
+    "盖振",
+    "辅机",
+    "风机",
+    "给水泵",
+    "循环水泵",
+    "油系统",
+    "冷却系统",
+    "轴承温度",
 )
 
 OFF_TOPIC_TERMS = (
@@ -91,14 +133,15 @@ def _contains_term(text: str, term: str) -> bool:
     return term in text
 
 
-def is_in_domain(question: str) -> bool:
-    """判断问题是否值得进入变压器/DGA 检索与生成流程。"""
+def is_in_domain(question: str, backend: str | None = None) -> bool:
+    """判断问题是否值得进入当前后端的检索与生成流程。"""
     normalized = _normalize(question)
     if not normalized:
         return False
     if any(_contains_term(normalized, term) for term in OFF_TOPIC_TERMS):
         return False
-    return any(_contains_term(normalized, term) for term in DOMAIN_TERMS)
+    terms = PURE_DOMAIN_TERMS if backend == "pure_kb" else GENERAL_DOMAIN_TERMS
+    return any(_contains_term(normalized, term) for term in terms)
 
 
 __all__ = ["is_in_domain"]

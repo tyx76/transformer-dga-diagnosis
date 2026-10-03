@@ -1,6 +1,6 @@
 """Smoke tests for the pure knowledge backend.
 
-Requires knowledge.db and Ollama bge-m3 for vector searches.
+Requires knowledge/pure_kb/index/pure_kb.db and Ollama bge-m3 for vector searches.
 """
 from .api import exact_lookup, list_domains, search, stats
 

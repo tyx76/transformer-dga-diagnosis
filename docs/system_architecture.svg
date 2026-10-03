@@ -1,0 +1,296 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="2160" viewBox="0 0 2400 2160" role="img" aria-labelledby="title desc">
+  <title id="title">油浸式变压器故障根因分析与处置决策智能体系统架构设计图</title>
+  <desc id="desc">展示八层设计维度和九项执行流程，包括规则引擎与混合检索并行、证据整合、复杂度判断、受控 Agent 循环、生成、RARR 验证、规则否决、危险拦截与人工复核。</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#2563EB"/></marker>
+    <marker id="arrow-amber" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#D97706"/></marker>
+    <marker id="arrow-green" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#16A34A"/></marker>
+    <marker id="arrow-purple" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#7C3AED"/></marker>
+    <marker id="arrow-pink" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#DB2777"/></marker>
+    <marker id="arrow-red" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#E11D48"/></marker>
+    <marker id="arrow-slate" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#64748B"/></marker>
+    <style>
+      .title { font: 700 36px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .subtitle { font: 400 17px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #475569; }
+      .section { font: 700 25px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .stage-title { font: 700 20px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .box-title { font: 700 17px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .box-subtitle { font: 700 15px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #334155; }
+      .small { font: 400 13.5px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #475569; }
+      .tiny { font: 400 12px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #64748B; }
+      .mono { font: 600 13px "Consolas", "Cascadia Mono", monospace; fill: #1E293B; }
+      .mono-small { font: 500 12px "Consolas", "Cascadia Mono", monospace; fill: #475569; }
+      .tag { font: 700 13px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; letter-spacing: .2px; }
+      .condition { font: 700 12.5px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #475569; }
+      .layer-name { font: 700 17px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #0F172A; }
+      .layer-role { font: 400 11.5px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; fill: #64748B; }
+    </style>
+  </defs>
+
+  <rect width="2400" height="2160" rx="28" fill="#F6F8FB"/>
+  <rect x="0" y="0" width="2400" height="122" rx="28" fill="#0F172A"/>
+  <rect x="0" y="94" width="2400" height="28" fill="#0F172A"/>
+  <rect x="68" y="32" width="8" height="58" rx="4" fill="#22D3EE"/>
+  <text x="96" y="61" class="title" fill="#FFFFFF">油浸式变压器故障根因分析与处置决策智能体</text>
+  <text x="96" y="94" class="subtitle" fill="#CBD5E1">系统架构设计图 · 八层设计维度 + 执行流程 · 规则引擎与混合检索并行 · 受控 Agent 证据补充</text>
+  <rect x="1980" y="36" width="340" height="46" rx="23" fill="#1E293B" stroke="#334155"/>
+  <text x="2150" y="65" text-anchor="middle" class="tag" fill="#A5F3FC">SYSTEM ARCHITECTURE · 2026-09-27</text>
+
+  <rect x="50" y="150" width="2300" height="1970" rx="24" fill="#FFFFFF" stroke="#DBEAFE" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="50" y="150" width="13" height="1890" rx="6.5" fill="#2563EB"/>
+  <text x="88" y="191" class="section">分层设计与实际执行流程</text>
+  <text x="88" y="218" class="small">左侧为八层设计维度；右侧按任务明细完整呈现 1–9 个执行节点。实线为正常执行，虚线为条件分支或循环。</text>
+  <rect x="1870" y="176" width="440" height="36" rx="18" fill="#EFF6FF" stroke="#BFDBFE"/>
+  <text x="2090" y="199" text-anchor="middle" class="tag" fill="#1D4ED8">分层设计 + 执行流程混合架构</text>
+
+  <!-- Layer rail -->
+  <rect x="78" y="258" width="250" height="1745" rx="20" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
+  <text x="203" y="292" text-anchor="middle" class="box-title">八层设计维度</text>
+
+  <rect x="94" y="312" width="218" height="198" rx="15" fill="#CCFBF1" stroke="#14B8A6" stroke-width="2"/>
+  <text x="114" y="344" class="layer-name">L1 证据层</text>
+  <text x="114" y="373" class="layer-role">Evidence</text>
+  <text x="114" y="407" class="small">证据去重、编号</text>
+  <text x="114" y="434" class="small">来源与维度覆盖</text>
+  <text x="114" y="461" class="small">冲突检查</text>
+
+  <rect x="94" y="524" width="218" height="198" rx="15" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+  <text x="114" y="556" class="layer-name">L2 规则层</text>
+  <text x="114" y="585" class="layer-role">Rule Engine</text>
+  <text x="114" y="619" class="small">注意值 / 产气速率</text>
+  <text x="114" y="646" class="small">三比值编码</text>
+  <text x="114" y="673" class="small">规则否决权</text>
+
+  <rect x="94" y="736" width="218" height="198" rx="15" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
+  <text x="114" y="768" class="layer-name">L3 检索层</text>
+  <text x="114" y="797" class="layer-role">Retrieval</text>
+  <text x="114" y="831" class="small">BM25 + 向量召回</text>
+  <text x="114" y="858" class="small">RRF + Reranker</text>
+  <text x="114" y="885" class="small">强关联扩展</text>
+
+  <rect x="94" y="948" width="218" height="198" rx="15" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="2"/>
+  <text x="114" y="980" class="layer-name">L4 质量闸门</text>
+  <text x="114" y="1009" class="layer-role">Quality Gate</text>
+  <text x="114" y="1043" class="small">规则预判</text>
+  <text x="114" y="1070" class="small">Self-RAG 精判</text>
+  <text x="114" y="1097" class="small">simple / complex</text>
+
+  <rect x="94" y="1160" width="218" height="198" rx="15" fill="#FCE7F3" stroke="#EC4899" stroke-width="2"/>
+  <text x="114" y="1192" class="layer-name">L5 Agent层</text>
+  <text x="114" y="1221" class="layer-role">Controlled Agent</text>
+  <text x="114" y="1255" class="small">Controller + Tools</text>
+  <text x="114" y="1282" class="small">白名单 / JSON Schema</text>
+  <text x="114" y="1309" class="small">最多 5 步</text>
+
+  <rect x="94" y="1372" width="218" height="198" rx="15" fill="#CFFAFE" stroke="#06B6D4" stroke-width="2"/>
+  <text x="114" y="1404" class="layer-name">L6 生成层</text>
+  <text x="114" y="1433" class="layer-role">Generation</text>
+  <text x="114" y="1467" class="small">OBSK 上下文控制</text>
+  <text x="114" y="1494" class="small">强制 evidence_id</text>
+  <text x="114" y="1521" class="small">DeepSeek 生成</text>
+
+  <rect x="94" y="1584" width="218" height="198" rx="15" fill="#FFE4E6" stroke="#F43F5E" stroke-width="2"/>
+  <text x="114" y="1616" class="layer-name">L7 验证层</text>
+  <text x="114" y="1645" class="layer-role">RARR Verification</text>
+  <text x="114" y="1679" class="small">分句与逐句归因</text>
+  <text x="114" y="1706" class="small">回查 / 修正</text>
+  <text x="114" y="1733" class="small">VerificationResult</text>
+
+  <rect x="94" y="1796" width="218" height="198" rx="15" fill="#E2E8F0" stroke="#64748B" stroke-width="2"/>
+  <text x="114" y="1828" class="layer-name">L8 人工层</text>
+  <text x="114" y="1857" class="layer-role">Human Review</text>
+  <text x="114" y="1891" class="small">高风险处置确认</text>
+  <text x="114" y="1918" class="small">冲突 / 证据不足</text>
+  <text x="114" y="1945" class="small">人工修改与放行</text>
+
+  <!-- Flow area -->
+  <rect x="360" y="258" width="1965" height="1825" rx="20" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="10 7"/>
+
+  <!-- Step 1 -->
+  <rect x="440" y="286" width="1840" height="145" rx="18" fill="#EEF2FF" stroke="#6366F1" stroke-width="2.4"/>
+  <rect x="466" y="307" width="184" height="30" rx="15" fill="#6366F1"/>
+  <text x="558" y="328" text-anchor="middle" class="tag" fill="#FFFFFF">1 · 规范化 + 路由</text>
+  <text x="676" y="329" class="stage-title">查询规范化 + 意图路由</text>
+  <text x="466" y="365" class="small">机制：规则映射表（术语/单位归一化）+ 意图分类器（规则优先，LLM 兜底）+ 多意图识别 + 文档域映射</text>
+  <text x="466" y="397" class="mono">输出：RouteResult{intent, domains, filters, normalized_query}</text>
+
+  <!-- Split to parallel -->
+  <path d="M1360 431 V466 H820 V503" fill="none" stroke="#64748B" stroke-width="3" marker-end="url(#arrow-amber)"/>
+  <path d="M1360 466 H1810 V503" fill="none" stroke="#64748B" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <rect x="1262" y="452" width="200" height="28" rx="14" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="1362" y="471" text-anchor="middle" class="condition">并行执行</text>
+
+  <!-- Step 2a Rule engine -->
+  <rect x="440" y="510" width="760" height="285" rx="18" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2.4"/>
+  <rect x="466" y="531" width="174" height="30" rx="15" fill="#D97706"/>
+  <text x="553" y="552" text-anchor="middle" class="tag" fill="#FFFFFF">2a · 规则引擎</text>
+  <text x="666" y="553" class="stage-title">规则引擎</text>
+  <text x="466" y="590" class="small">· 注意值检查：DL/T 722-2014 表3</text>
+  <text x="466" y="620" class="small">· 产气速率计算：DL/T 722-2014 表4</text>
+  <text x="466" y="650" class="small">· 三比值编码：DL/T 722-2014 表6 / 表7</text>
+  <text x="466" y="694" class="mono-small">输出：RuleResult{exceeded_gases, fault_candidates, evidence_clauses}</text>
+  <rect x="1060" y="531" width="112" height="30" rx="15" fill="#FEF3C7" stroke="#FCD34D"/>
+  <text x="1116" y="551" text-anchor="middle" class="tag" fill="#B45309">可独立否决</text>
+
+  <!-- Step 2b retrieval -->
+  <rect x="1340" y="510" width="940" height="285" rx="18" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2.4"/>
+  <rect x="1366" y="531" width="238" height="30" rx="15" fill="#2563EB"/>
+  <text x="1485" y="552" text-anchor="middle" class="tag" fill="#FFFFFF">2b · 混合检索</text>
+  <text x="1632" y="553" class="stage-title">混合检索</text>
+  <rect x="1366" y="580" width="250" height="76" rx="12" fill="#FFFFFF" stroke="#93C5FD"/>
+  <text x="1386" y="607" class="box-subtitle">两路召回 Top-10</text>
+  <text x="1386" y="633" class="small">BM25 Top-10 + 向量 Top-10</text>
+  <path d="M1616 618 H1640" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <rect x="1648" y="580" width="276" height="76" rx="12" fill="#FFFFFF" stroke="#93C5FD"/>
+  <text x="1668" y="607" class="box-subtitle">融合与精排</text>
+  <text x="1668" y="633" class="small">RRF → Reranker（Top-10 → Top-5）</text>
+  <path d="M1924 618 H1948" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <rect x="1956" y="580" width="292" height="76" rx="12" fill="#FFFFFF" stroke="#93C5FD"/>
+  <text x="1976" y="607" class="box-subtitle">强关联扩展</text>
+  <text x="1976" y="633" class="small">补充关联条文与案例</text>
+  <text x="1366" y="694" class="mono-small">输出：RetrievalResult{chunks, scores, evidence_ids}</text>
+
+  <!-- Step 3 Evidence integration -->
+  <path d="M820 795 V843" stroke="#D97706" stroke-width="3" marker-end="url(#arrow-slate)"/>
+  <path d="M1810 795 V843" stroke="#2563EB" stroke-width="3" marker-end="url(#arrow-slate)"/>
+  <rect x="440" y="850" width="1840" height="150" rx="18" fill="#F0FDFA" stroke="#14B8A6" stroke-width="2.4"/>
+  <rect x="466" y="871" width="196" height="30" rx="15" fill="#0F766E"/>
+  <text x="564" y="892" text-anchor="middle" class="tag" fill="#FFFFFF">3 · 证据整合</text>
+  <text x="688" y="893" class="stage-title">证据整合</text>
+  <text x="466" y="930" class="small">机制：按 doc_id + clause 去重；分配 evidence_id（格式：{doc_id}:{clause}）；标注来源；检查维度覆盖与冲突</text>
+  <text x="466" y="966" class="mono">输出：EvidenceSet{evidence_ids, dimensions_covered, conflicts}</text>
+
+  <!-- Step 4 Complexity -->
+  <path d="M860 1000 V1030" stroke="#0F766E" stroke-width="3" marker-end="url(#arrow-purple)"/>
+  <rect x="440" y="1037" width="760" height="205" rx="18" fill="#F5F3FF" stroke="#8B5CF6" stroke-width="2.4"/>
+  <rect x="466" y="1058" width="188" height="30" rx="15" fill="#7C3AED"/>
+  <text x="560" y="1079" text-anchor="middle" class="tag" fill="#FFFFFF">4 · 复杂度判断</text>
+  <text x="680" y="1080" class="stage-title">复杂度判断（两级）</text>
+  <text x="466" y="1117" class="small">一级：规则预判 · 5 信号</text>
+  <text x="466" y="1144" class="small">意图数 / 维度覆盖 / 冲突 / 问题长度 / Top-1 分数</text>
+  <text x="466" y="1176" class="small">二级：LLM 精判（Self-RAG 式）</text>
+  <text x="466" y="1203" class="small">ISREL 相关？ · ISSUP 支持？ · ISUSE 有用？</text>
+  <text x="466" y="1227" class="mono-small">输出：ComplexityResult{level, reasons}</text>
+
+  <!-- Step 5 Controlled Agent -->
+  <path d="M1200 1139 H1308" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-pink)"/>
+  <text x="1212" y="1128" class="condition">复杂 / 不确定</text>
+  <rect x="1316" y="1025" width="964" height="350" rx="18" fill="#FDF2F8" stroke="#DB2777" stroke-width="2.4"/>
+  <rect x="1342" y="1046" width="230" height="30" rx="15" fill="#DB2777"/>
+  <text x="1457" y="1067" text-anchor="middle" class="tag" fill="#FFFFFF">5 · 受控 Agent 循环</text>
+  <text x="1592" y="1068" class="stage-title">仅复杂且证据不足时触发</text>
+
+  <rect x="1342" y="1100" width="230" height="126" rx="14" fill="#FFFFFF" stroke="#F9A8D4" stroke-width="2"/>
+  <text x="1364" y="1130" class="box-title">Controller</text>
+  <text x="1364" y="1158" class="small">判断下一步 action</text>
+  <text x="1364" y="1184" class="small">JSON action 固定 schema</text>
+  <text x="1364" y="1210" class="small">工具白名单</text>
+
+  <path d="M1572 1163 H1602" stroke="#DB2777" stroke-width="3" marker-end="url(#arrow-pink)"/>
+  <rect x="1610" y="1100" width="300" height="200" rx="14" fill="#FFFFFF" stroke="#F9A8D4" stroke-width="2"/>
+  <text x="1632" y="1130" class="box-title">Expert 工具集</text>
+  <text x="1632" y="1160" class="mono-small">search_dga · search_oil_temp</text>
+  <text x="1632" y="1187" class="mono-small">search_safety · lookup_clause</text>
+  <text x="1632" y="1214" class="mono-small">calc_ratio</text>
+  <text x="1632" y="1250" class="small">轨迹一致性检查（TSC）</text>
+  <text x="1632" y="1276" class="tiny">后续增强项，当前以工具约束为主</text>
+
+  <path d="M1910 1163 H1940" stroke="#DB2777" stroke-width="3" marker-end="url(#arrow-pink)"/>
+  <rect x="1948" y="1100" width="306" height="126" rx="14" fill="#FFFFFF" stroke="#F9A8D4" stroke-width="2"/>
+  <text x="1970" y="1130" class="box-title">补充证据</text>
+  <text x="1970" y="1158" class="small">追加 evidence_id</text>
+  <text x="1970" y="1184" class="small">更新 EvidenceSet</text>
+  <text x="1970" y="1210" class="small">返回 Controller</text>
+
+  <path d="M2101 1100 C2101 1052 1477 1052 1477 1096" fill="none" stroke="#DB2777" stroke-width="2.7" stroke-dasharray="9 7" marker-end="url(#arrow-pink)"/>
+  <text x="1578" y="1040" class="condition">证据不足且步数 &lt; 5</text>
+  <rect x="2130" y="1240" width="124" height="34" rx="17" fill="#FCE7F3" stroke="#F9A8D4"/>
+  <text x="2192" y="1262" text-anchor="middle" class="tag" fill="#BE185D">步数上限 5</text>
+
+  <!-- Step 6 Generation -->
+  <path d="M820 1242 V1322" stroke="#7C3AED" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <text x="834" y="1286" class="condition">简单</text>
+  <path d="M2101 1226 V1354 H1180 V1375" fill="none" stroke="#DB2777" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <text x="1660" y="1319" class="condition">证据充分 / 达到 5 步</text>
+  <rect x="440" y="1375" width="760" height="260" rx="18" fill="#ECFEFF" stroke="#06B6D4" stroke-width="2.4"/>
+  <rect x="466" y="1396" width="174" height="30" rx="15" fill="#0891B2"/>
+  <text x="553" y="1417" text-anchor="middle" class="tag" fill="#FFFFFF">6 · 生成</text>
+  <text x="666" y="1418" class="stage-title">生成答案草稿</text>
+  <text x="466" y="1457" class="small">· OBSK 控制上下文：长条文只放头部 + evidence_id</text>
+  <text x="466" y="1487" class="small">· 强制引用格式：【依据：evidence_id】</text>
+  <text x="466" y="1517" class="small">· DeepSeek：temperature=0.1，max_tokens=800</text>
+  <text x="466" y="1555" class="mono-small">输出：带引用的报告草稿</text>
+  <rect x="1020" y="1396" width="150" height="30" rx="15" fill="#CFFAFE" stroke="#67E8F9"/>
+  <text x="1095" y="1416" text-anchor="middle" class="tag" fill="#0E7490">证据可追溯</text>
+
+  <path d="M1200 1505 H1308" stroke="#06B6D4" stroke-width="3" marker-end="url(#arrow-red)"/>
+
+  <!-- Step 7 RARR -->
+  <rect x="1316" y="1375" width="964" height="350" rx="18" fill="#FFF1F2" stroke="#F43F5E" stroke-width="2.4"/>
+  <rect x="1342" y="1396" width="180" height="30" rx="15" fill="#E11D48"/>
+  <text x="1432" y="1417" text-anchor="middle" class="tag" fill="#FFFFFF">7 · RARR 验证</text>
+  <text x="1544" y="1418" class="stage-title">逐句归因验证与修正</text>
+
+  <rect x="1342" y="1455" width="202" height="82" rx="13" fill="#FFFFFF" stroke="#FDA4AF"/>
+  <text x="1362" y="1483" class="box-subtitle">1. 分句</text>
+  <text x="1362" y="1510" class="small">拆分为可验证陈述</text>
+  <path d="M1544 1496 H1566" stroke="#E11D48" stroke-width="3" marker-end="url(#arrow-red)"/>
+  <rect x="1574" y="1455" width="202" height="82" rx="13" fill="#FFFFFF" stroke="#FDA4AF"/>
+  <text x="1594" y="1483" class="box-subtitle">2. 提取引用</text>
+  <text x="1594" y="1510" class="small">匹配 evidence_id</text>
+  <path d="M1776 1496 H1798" stroke="#E11D48" stroke-width="3" marker-end="url(#arrow-red)"/>
+  <rect x="1806" y="1455" width="202" height="82" rx="13" fill="#FFFFFF" stroke="#FDA4AF"/>
+  <text x="1826" y="1483" class="box-subtitle">3. 无引用回查</text>
+  <text x="1826" y="1510" class="small">检索证据支持关系</text>
+  <path d="M2008 1496 H2030" stroke="#E11D48" stroke-width="3" marker-end="url(#arrow-red)"/>
+  <rect x="2038" y="1455" width="216" height="82" rx="13" fill="#FFFFFF" stroke="#FDA4AF"/>
+  <text x="2058" y="1483" class="box-subtitle">4. 修正</text>
+  <text x="2058" y="1510" class="small">补引用 / 删除 / 重写</text>
+
+  <rect x="1342" y="1575" width="912" height="112" rx="14" fill="#FFFFFF" stroke="#FDA4AF"/>
+  <text x="1364" y="1607" class="box-title">验证输出</text>
+  <text x="1364" y="1638" class="small">修正后的报告 + VerificationResult</text>
+  <text x="1364" y="1666" class="small">验证不通过时进入“修正 → 再次验证”回路，禁止未归因陈述直接进入最终答案</text>
+  <path d="M2146 1575 C2180 1545 2180 1475 1780 1475" fill="none" stroke="#E11D48" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow-red)"/>
+  <text x="1950" y="1465" class="condition">修正后复验</text>
+
+  <!-- Step 8 Rule veto -->
+  <path d="M1798 1725 V1750 H860 V1794" fill="none" stroke="#E11D48" stroke-width="3" marker-end="url(#arrow-slate)"/>
+  <text x="1340" y="1745" class="condition">验证通过</text>
+  <rect x="440" y="1802" width="760" height="170" rx="18" fill="#FFF7ED" stroke="#F59E0B" stroke-width="2.4"/>
+  <rect x="466" y="1823" width="244" height="30" rx="15" fill="#D97706"/>
+  <text x="588" y="1844" text-anchor="middle" class="tag" fill="#FFFFFF">8 · 规则否决 + 危险拦截</text>
+  <text x="466" y="1880" class="small">· 规则结果与 LLM 结论冲突检查，冲突时以规则为准</text>
+  <text x="466" y="1908" class="small">· 危险关键词：停电 / 送电 / 隔离 / 检修</text>
+  <text x="466" y="1944" class="mono-small">输出：SafetyResult{vetoed, intercepted, final_answer}</text>
+
+  <!-- Step 9 Human review -->
+  <path d="M1200 1887 H1308" stroke="#E11D48" stroke-width="3" marker-end="url(#arrow-slate)"/>
+  <text x="1207" y="1875" class="condition">高危 / 冲突 / 不足 / 拦截</text>
+  <rect x="1316" y="1802" width="964" height="170" rx="18" fill="#F1F5F9" stroke="#64748B" stroke-width="2.4"/>
+  <rect x="1342" y="1823" width="180" height="30" rx="15" fill="#475569"/>
+  <text x="1432" y="1844" text-anchor="middle" class="tag" fill="#FFFFFF">9 · 人工复核</text>
+  <text x="1544" y="1845" class="stage-title">仅高风险触发</text>
+  <text x="1342" y="1882" class="small">触发条件：高危处置 · 规则冲突 · 证据不充分 · 危险拦截</text>
+  <text x="1342" y="1910" class="small">复核动作：确认 / 修改处置建议 / 补充证据 / 退回重生成</text>
+  <text x="1342" y="1944" class="small">输出：人工确认标记 + 复核意见</text>
+
+  <!-- Final -->
+  <path d="M820 1972 V2002" stroke="#16A34A" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <text x="835" y="1992" class="condition">未触发风险</text>
+  <path d="M1798 1972 V2002" stroke="#64748B" stroke-width="3" marker-end="url(#arrow-slate)"/>
+  <text x="1812" y="1992" class="condition">人工确认 / 修改</text>
+  <rect x="700" y="2008" width="1500" height="58" rx="15" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2.2"/>
+  <text x="1450" y="2037" text-anchor="middle" class="box-title">FinalAnswer：规则否决 / 危险拦截标记 + 人工复核状态 + 可溯源报告</text>
+
+  <text x="88" y="2140" class="small">注：任务概述称“八步”，详细描述实际列出 1–9 项；本图忠实完整呈现全部 9 个执行节点。实线=正常流转，虚线=条件分支或循环。</text>
+  <rect x="1740" y="2092" width="24" height="24" rx="6" fill="#DBEAFE" stroke="#2563EB"/>
+  <text x="1778" y="2112" class="small">正常执行</text>
+  <rect x="1880" y="2092" width="24" height="24" rx="6" fill="#FCE7F3" stroke="#DB2777" stroke-dasharray="5 4"/>
+  <text x="1918" y="2112" class="small">循环 / 条件</text>
+  <rect x="2050" y="2092" width="24" height="24" rx="6" fill="#FFE4E6" stroke="#E11D48"/>
+  <text x="2088" y="2112" class="small">安全 / 人工</text>
+</svg>

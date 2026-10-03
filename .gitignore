@@ -1,4 +1,4 @@
-﻿# ---- 虚拟环境 ----
+# ---- 虚拟环境 ----
 venv/
 env/
 .venv/
@@ -52,3 +52,21 @@ vector_kb/bm25_index.pkl
 # ---- 纯知识库本地向量数据库 ----
 pure_kb/knowledge.db
 pure_kb/knowledge.db-*
+
+# ---- plant_kb 大文件与本地备份 ----
+plant_kb/knowledge.db
+plant_kb/knowledge.db-*
+plant_kb/data/knowledge.jsonl
+backups/
+plant_kb/plant_bm25_index.pkl
+plant_kb/knowledge_clean.db
+plant_kb/data/knowledge_clean.jsonl
+
+# ---- 分离后的知识库索引 ----
+knowledge/*/index/*.db
+knowledge/*/index/*.db-*
+knowledge/*/index/*.pkl
+
+# ---- 分离后的知识库大文件 ----
+knowledge/pure_kb/data/clauses.jsonl
+knowledge/plant_kb/data/*.jsonl

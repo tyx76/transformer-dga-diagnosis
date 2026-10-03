@@ -6,7 +6,8 @@ import sqlite3
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-DB_DEFAULT = ROOT / "knowledge.db"
+PROJECT_ROOT = ROOT.parent
+DB_DEFAULT = PROJECT_ROOT / "knowledge" / "pure_kb" / "index" / "knowledge.db"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS documents (

@@ -34,9 +34,9 @@ from vector_kb.retrieval import retrieve
 from vector_kb.rrf_fusion import rrf_fusion
 
 OUTPUT = ROOT / "docs" / "exam_proof" / "回归测试结果_20260918_修订版.xlsx"
-CORPUS = ROOT / "data" / "corpus" / "clauses.jsonl"
-INDEX = ROOT / "vector_kb" / "bm25_index.pkl"
-DB = ROOT / "vector_kb" / "knowledge.db"
+CORPUS = ROOT / "knowledge" / "pure_kb" / "data" / "clauses.jsonl"
+INDEX = ROOT / "knowledge" / "pure_kb" / "index" / "bm25_index.pkl"
+DB = ROOT / "knowledge" / "pure_kb" / "index" / "knowledge.db"
 RESULTS, RETRIEVAL, CITATIONS = [], [], []
 
 

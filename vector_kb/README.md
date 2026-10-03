@@ -1,5 +1,13 @@
 # vector_kb：检索、融合与生成模块
 
+> **当前项目口径（2026-10-03）**：项目主对象已转为“通用电厂设备故障诊断”，覆盖锅炉、汽轮机、发电机及辅机。DGA 仅保留为可选专项、历史技术资产或备用能力，不再作为主链路范围；本文如涉及 DGA，请按专项资料阅读。
+## 0. 当前口径（2026-10-03）
+
+- 检索主对象已转为通用电厂设备，目标知识库为 `plant_kb`。
+- 本目录的向量、BM25、RRF、生成、引用校验等通用检索代码继续保留。
+- `knowledge.db`、123 条统一语料和 DL/T 722/572 相关内容仅作为 DGA 专项和历史回归资产，不再代表通用设备主知识库。
+
+
 > 文档状态：现行｜更新：2026-09-27
 > 当前主入口：项目根目录 `main.py`
 > 本目录同时保留纯向量 CLI，用于调试和消融，不代表正式问答链路。
@@ -14,7 +22,7 @@
 | 572 条款 | `corpus/DLT-572-2021_clauses.jsonl`，118 条，本地保留 |
 | 统一语料 | `../data/corpus/clauses.jsonl`，本地生成 123 条 |
 | BM25 索引 | `bm25_index.pkl`，版本 v2，本地生成 |
-| 纯知识库 | `../pure_kb/`，198 条、六领域 |
+| 主知识库 | `../plant_kb/`，3800 条、六领域；默认只启用已核验记录 |
 
 生成统一语料：
 
@@ -35,8 +43,8 @@ python scripts\build_unified_corpus.py
 | `domain_guard.py` | 规则版领域和明显无关问题过滤 |
 | `intent_classifier.py` | 规则优先、LLM 兜底、多意图 |
 | `intent_router.py` | intent → domains/filters/mode |
-| `knowledge_base_adapter.py` | pure_kb 字段归一化、dp 过滤、去重和二次 RRF |
-| `retrieval_router.py` | hybrid + pure_kb 检索调度 |
+| `knowledge_base_adapter.py` | plant_kb 字段归一化、dp 过滤、去重和二次 RRF |
+| `retrieval_router.py` | hybrid + plant_kb 检索调度 |
 | `generation.py` | 上下文拼接、引用格式和 DeepSeek 调用 |
 | `citation_verifier.py` | 引用存在性校验、重写提示和无效句删除 |
 | `cli.py` | `ingest/info/query/ask`，纯向量管理工具 |
@@ -75,7 +83,7 @@ main.py
       → classify_intent
       → route_intent
       → hybrid_retrieve（向量 + BM25 + RRF）
-      → pure_kb.search（domains + filters）
+      → plant_kb.search（domains + filters）
       → merge_with_hybrid（二次 RRF）
   → generate
   → verify_citations
@@ -103,7 +111,7 @@ python vector_kb\cli.py query "乙炔超标怎么处理"
 python vector_kb\cli.py ask "乙炔超标怎么处理" --show-sources
 ```
 
-注意：`cli.py ask` 只调用 `retrieve()`，不调用 hybrid、pure_kb、路由或引用校验。
+注意：`cli.py ask` 只调用 `retrieve()`，不调用 hybrid、plant_kb、路由或引用校验。
 
 ### 5.3 库函数
 
@@ -131,7 +139,7 @@ RRF：
 doc_id / clause / title / text / page / rrf_score
 ```
 
-pure_kb 适配后统一为：
+plant_kb 适配后统一为：
 
 ```text
 doc_id / clause / title / text / page / citation / score
@@ -150,7 +158,7 @@ doc_id / clause / title / text / page / citation / score
 ## 8. 当前评测结论
 
 - 50 条用例中 39 条可评，Top-5 命中 30 条，命中率 76.92%；
-- 四组 hybrid/pure_kb 权重 `1.0/1.0、1.0/1.2、1.0/1.5、1.0/0.8` 指标持平；
+- 四组 hybrid/plant_kb 权重 `1.0/1.0、1.0/1.2、1.0/1.5、1.0/0.8` 指标持平；
 - 当前保留 `1.0/1.0`，瓶颈在排序层，不在召回层；
 - 下一步优先查询改写和 Reranker，而非无依据扩大 Top-K。
 
@@ -166,7 +174,7 @@ python scripts\run_regression.py
 
 - 数值 DGA 规则尚未接入 `main.py`；
 - 目标条文可能已召回但未进入最终 Top-5；
-- pure_kb 的 `cases` 只作类比证据，不能替代 standards/rules/safety；
+- plant_kb 的 `cases` 只作类比证据，不能替代 standards/rules/safety；
 - 572 页码暂未记录；
 - 722 `9.3.3 / 10.2.4 / 10.3` 正文原则条款待补；
 - `cli.py query/ask` 是纯向量工具，不包含正式主链路能力；

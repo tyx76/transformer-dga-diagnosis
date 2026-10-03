@@ -1,6 +1,18 @@
 # 项目状态与进度总览（单点真相）
 
-> 文档状态：现行单点真相｜更新：2026-09-27。
+> **当前项目口径（2026-10-03）**：项目主对象已转为“通用电厂设备故障诊断”，覆盖锅炉、汽轮机、发电机及辅机。DGA 仅保留为可选专项、历史技术资产或备用能力，不再作为主链路范围；本文如涉及 DGA，请按专项资料阅读。
+
+## 0. 当前口径变更（2026-10-03）
+
+- 项目主对象已从“油浸式变压器 DGA 专项”转为“通用电厂设备故障诊断”。
+- 主对象覆盖锅炉、汽轮机、发电机及主要辅机。
+- 目标主知识库为 `plant_kb`，按设备领域和子域组织检索证据。
+- 当前 P0 是通用设备路由、plant_kb 数据源统一、检索精排和 138 题端到端评测。
+- DGA、DL/T 722/572、`pure_kb` 和三比值脚本降为可选专项、历史资产或回退能力。
+- 本文后续如出现“DGA 主链路”“变压器主对象”等措辞，按历史技术资产阅读，以本节口径为准。
+
+
+> 文档状态：现行单点真相｜更新：2026-10-03。
 
 > 维护：全队每次功能或数据变更后同步
 > 完整文档导航：[`docs/README.md`](README.md)
@@ -9,8 +21,9 @@
 
 - 考题八·**技术向**：交付 GitHub 仓库，不参加产品向答辩。
 - 评比：2026-10-12 ~ 10-16；建议在 2026-10-11 前完成仓库整理和最终回归。
-- 对象：**油浸式电力变压器（主变）**。
-- 诊断主线：**DGA（油中溶解气体分析）**，核心判据为 **DL/T 722-2014**。
+- 对象：电厂通用设备，包括锅炉、汽轮机、发电机及主要辅机。
+- 诊断主线：设备异常现象、部件故障、运行处置和安全决策。
+- DGA、DL/T 722/572 降为可选专项能力。
 - 辅助语料：DL/T 572-2021 的运行监视、异常运行和处理条款。
 - IEC 60599:2022 因版权/费用原因不作为正式依据。
 - 知识库未命中时必须拒答；生成结论必须可追溯到实际检索条文；处置建议保留人工复核关口。
@@ -22,7 +35,7 @@
   → 规则优先 + LLM 兜底意图分类 classify_intent
   → 意图到 domains / filters / mode 路由 route_intent
   → USE_ROUTER 开关
-      ├─ true：hybrid + pure_kb + RRF
+      ├─ true：hybrid + plant_kb + RRF
       └─ false：纯 hybrid_retrieve
   → generate DeepSeek
   → verify_citations
@@ -42,10 +55,12 @@ python main.py
 关键参数：
 
 - 向量默认阈值：`min_score=0.45`
-- hybrid 与 pure_kb 候选池：各 20 条
+- hybrid 与 plant_kb 候选池：各 20 条
 - 最终上下文：Top-5
 - RRF 平滑常数：`k=60`
-- 当前融合权重：hybrid 1.0 / pure_kb 1.0
+- 当前融合权重：hybrid 1.0 / plant_kb 1.0
+- 知识库范围：`plant_kb` 默认只启用已核验记录；OCR 未复核数据需显式设置 `KB_INCLUDE_UNREVIEWED=true`
+- 过渡兜底：`plant_kb` 无可用结果时，默认允许旧 `pure_kb` 作为空结果兜底（`KB_BACKUP_FALLBACK=true`）
 - 引用重写：初次生成 + 最多 2 次重写
 - DeepSeek：`deepseek-chat`，temperature=0.1，max_tokens=800
 
@@ -56,15 +71,16 @@ python main.py
 | 统一语料 | `data/corpus/clauses.jsonl`，123 条（722 判据 5 + 572 条款 118） | 本地生成，不提交 |
 | 统一脚本 | `scripts/build_unified_corpus.py` | 可用 |
 | 向量库 | `vector_kb/knowledge.db`，123 块，bge-m3 1024 维 | 本地资产，不提交 |
-| 纯知识库 | `pure_kb/`，198 条、六领域、显式 domains/filters API | 已接入检索路由 |
+| 主知识库 | `plant_kb/`，3800 条、六领域、显式 domains/filters API | 已接入检索路由 |
+| 旧知识库备份 | `backups/pure_kb_20260928/` | 本地备份；仅在新库无结果时兜底，不是首选 |
 | 向量检索 | `vector_kb/retrieval.py` | 可用 |
 | BM25 | `vector_kb/bm25_retriever.py` + `bm25_index.pkl` | v2，源文件变化后自动重建 |
 | RRF | `vector_kb/rrf_fusion.py` | 可用 |
 | 混合检索 | `vector_kb/hybrid_retriever.py` | 领域过滤 + 向量 + BM25 + RRF |
 | 意图分类 | `vector_kb/intent_classifier.py` + `data/rules/intent_rules.json` | 规则优先、LLM 兜底、多意图 |
 | 意图路由 | `vector_kb/intent_router.py` | intent → domains/filters/mode |
-| pure_kb 适配 | `vector_kb/knowledge_base_adapter.py` | 字段归一化、dp 过滤、去重、RRF |
-| 检索调度 | `vector_kb/retrieval_router.py` | 意图 + hybrid + pure_kb |
+| KB 适配 | `vector_kb/knowledge_base_adapter.py` | 默认 plant_kb，字段归一化、dp 过滤、去重、RRF |
+| 检索调度 | `vector_kb/retrieval_router.py` | 意图 + hybrid + plant_kb |
 | 领域过滤 | `vector_kb/domain_guard.py` | 规则版 |
 | 生成 | `vector_kb/generation.py` | DeepSeek 生成 |
 | 引用校验 | `vector_kb/citation_verifier.py` | 校验、重写提示、无依据句删除 |
@@ -101,7 +117,7 @@ python main.py
 
 | 优先级 | 事项 | 状态 | 下一步 |
 |---|---|---|---|
-| P0 | 数值型 DGA 输入接入规则引擎 | 未完成 | `main.py` 增加结构化输入与规则诊断路径 |
+| P0 | 通用设备意图与领域迁移 | 规则层已完成 | 七类规则和域映射已切换；LLM 兜底类别、生成提示词和评测口径待同步 |
 | P0 | 排序层瓶颈 | 已定位 | 目标条文常已召回但被挤出 Top-5；评估 Reranker 与查询改写 |
 | P1 | 722 `9.3.3 / 10.2.4 / 10.3` 正文原则条款 | 待补 | 按 `docs/07` 切条、页码校验、重新入库 |
 | P1 | 572 页码映射 | 待补 | 从合法原文补齐 page 字段 |
@@ -115,24 +131,24 @@ python main.py
 
 - KNOWN-002 由桩响应推断，真实 API 未复现，已撤销。
 - RRF 权重并非未验证：四组方案结果持平，当前保留 1.0/1.0。
-- 意图路由、domain 过滤和 pure_kb 融合已接入，不再列为待开发项。
+- 意图路由、domain 过滤和 plant_kb 融合已接入，不再列为待开发项。
 
 ## 6. 当前限制
 
-1. `main.py` 目前是自然语言单轮 RAG，不会自动解析 H2、CH4、C2H2 等数值并调用三比值脚本。
-2. 公开仓库缺少版权受限的 DL/T 572 条款文件，干净 clone 无法独立重建 123 块完整向量库。
-3. DL/T 572 页码缺口会降低引用展示完整度。
-4. `vector_kb/cli.py query/ask` 不包含混合检索、路由和引用校验，只用于纯向量对比。
-5. 评测集已有 50 条，但部分用例的预期条号和真实生成质量仍需要继续复核。
+1. 当前代码意图类别仍偏变压器 DGA，尚未迁移到通用电厂设备领域。
+2. 通用设备主知识库存在多个候选版本，正式路径和同源 BM25 索引尚未统一。
+3. 生成提示词和报告结构仍需要从“变压器专家”迁移为“电厂设备诊断专家”。
+4. `vector_kb/cli.py query/ask` 不包含完整路由、精排和引用相关性校验。
+5. 旧 50 条评测与 138 条通用设备题库的口径需要分开维护。
 
 ## 7. 下一步顺序
 
-1. 让 `main.py` 支持结构化 DGA 输入，并调用 `scripts/dga_ratio.py` 返回规则诊断结果。
-2. 将规则结果、hybrid/pure_kb 证据和引用校验合并为统一诊断报告。
-3. 基于 50 条用例实现不依赖人工读表的自动评测汇总。
+1. 将意图和领域路由迁移到 boiler、turbine、generator_electrical、auxiliary 等通用设备领域。
+2. 统一 plant_kb 正式数据源、向量库和 BM25 索引。
+3. 基于 138 条通用设备题库实现端到端自动评测。
 4. 评估查询改写和 Cross-Encoder/Reranker，解决排序层瓶颈。
-5. 补 722 正文原则条款和 572 页码。
-6. 完善受控 Agent Workflow、检索质量闸门和人工复核字段。
+5. 更新生成提示词、报告结构和引用相关性校验。
+6. DGA 规则、722/572 资产和旧 50 条评测保留为专项能力，后续可选接入。
 
 ## 8. 远程与工作区状态
 

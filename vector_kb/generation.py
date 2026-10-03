@@ -16,6 +16,8 @@ SYSTEM_PROMPT = (
     "你是电力变压器故障诊断专家。请严格基于提供的规程条文回答。"
     "每条结论必须标注依据，格式为【依据：doc_id 第clause条】。"
     "如果条文无法回答问题，直接回复“资料未覆盖”，不要编造。"
+    "只有标注为【依据：...】的条文可以引用；"
+    "标注为【背景资料，不可引用】的条文只能用于理解，不得生成引用。"
     "不要给出规程之外的处置建议。"
 )
 
@@ -52,14 +54,28 @@ def _cite(doc_id, clause):
     return f"{doc} {c}"
 
 
+def _is_citation_eligible(chunk: dict) -> bool:
+    """Return whether a chunk may be cited in the generated answer."""
+    if not isinstance(chunk, dict):
+        return False
+    if "citation_eligible" in chunk:
+        return bool(chunk.get("citation_eligible"))
+    return bool(chunk.get("doc_id") and chunk.get("clause"))
+
+
 def build_context(chunks: list[dict]) -> str:
     """把 retrieve() 返回的条文拼成参考上下文。"""
     parts = []
     for chunk in chunks or []:
+        if not isinstance(chunk, dict):
+            continue
         doc = chunk.get("doc_id") or ""
         clause = chunk.get("clause") or ""
         text = str(chunk.get("text") or "").strip()
-        parts.append(f"【依据：{_cite(doc, clause)}】{text}")
+        if _is_citation_eligible(chunk):
+            parts.append(f"【依据：{_cite(doc, clause)}】{text}")
+        else:
+            parts.append(f"【背景资料，不可引用】{text}")
     return "\n\n".join(parts)
 
 

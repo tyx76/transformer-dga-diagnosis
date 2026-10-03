@@ -1,16 +1,16 @@
-"""Rebuild pure_kb/knowledge.db from the submitted JSONL."""
+"""Rebuild pure_kb database in knowledge/pure_kb from the submitted JSONL."""
 import argparse
 from pathlib import Path
 
 from .store import build_database
 
-ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Build the pure knowledge database")
-    parser.add_argument("--jsonl", default=str(ROOT / "data" / "knowledge.jsonl"))
-    parser.add_argument("--db", default=str(ROOT / "knowledge.db"))
+    parser.add_argument("--jsonl", default=str(PROJECT_ROOT / "knowledge" / "pure_kb" / "data" / "knowledge.jsonl"))
+    parser.add_argument("--db", default=str(PROJECT_ROOT / "knowledge" / "pure_kb" / "index" / "pure_kb.db"))
     parser.add_argument("--model", default="bge-m3:latest")
     parser.add_argument("--ollama-url", default="http://localhost:11434")
     args = parser.parse_args(argv)

@@ -14,10 +14,12 @@ from typing import Any
 from vector_kb.intent_classifier import classify_intent
 
 INTENT_DOMAIN_MAP = {
-    "dga_analysis": ("dga",),
-    "oil_temp": ("oil_temp",),
-    "safety_check": ("safety", "dp"),
-    "equipment_spec": ("equipment", "dp"),
+    "boiler": ("boiler",),
+    "turbine": ("turbine",),
+    "generator": ("generator_electrical",),
+    "auxiliary": ("auxiliary",),
+    "safety": ("standards_safety",),
+    "transformer": ("transformer_dga",),
     "irrelevant": (),
 }
 

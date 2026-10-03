@@ -9,7 +9,8 @@ from pathlib import Path
 from .embedding import embed_texts
 from .store import exact_rows, load_vectors
 
-DB_DEFAULT = Path(__file__).resolve().parent / "knowledge.db"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DB_DEFAULT = PROJECT_ROOT / "knowledge" / "pure_kb" / "index" / "pure_kb.db"
 REQUIRED_DOMAINS = ("dga", "oil_temp", "safety", "equipment", "dp", "cases")
 
 

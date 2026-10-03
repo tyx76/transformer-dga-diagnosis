@@ -1,8 +1,20 @@
-# 变压器 DGA 智能诊断项目实现方案
+# 通用电厂设备故障诊断项目实现方案
 
-> 文档状态：现行｜更新：2026-09-27
+> **当前项目口径（2026-10-03）**：项目主对象已转为“通用电厂设备故障诊断”，覆盖锅炉、汽轮机、发电机及辅机。DGA 仅保留为可选专项、历史技术资产或备用能力，不再作为主链路范围；本文如涉及 DGA，请按专项资料阅读。
+
+## 0. 当前口径变更（2026-10-03）
+
+- 项目主对象已从“油浸式变压器 DGA 专项”转为“通用电厂设备故障诊断”。
+- 主对象覆盖锅炉、汽轮机、发电机及主要辅机。
+- 目标主知识库为 `plant_kb`，按设备领域和子域组织检索证据。
+- 当前 P0 是通用设备路由、plant_kb 数据源统一、检索精排和 138 题端到端评测。
+- DGA、DL/T 722/572、`pure_kb` 和三比值脚本降为可选专项、历史资产或回退能力。
+- 本文后续如出现“DGA 主链路”“变压器主对象”等措辞，按历史技术资产阅读，以本节口径为准。
+
+
+> 文档状态：现行｜更新：2026-10-03
 > 当前主入口：根目录 `main.py`
-> 目标：闭合“现象/DGA 数据 → 规则诊断 → 检索取证 → 引用校验 → 带依据报告 → 评测”的链路。
+> 目标：闭合“设备异常现象 → 领域路由 → 向量/BM25/RRF 检索 → 精排 → 引用校验 → 带依据诊断报告 → 评测”的链路。DGA 仅作为可选专项。
 > 历史交接方案和已废弃的 `app/`、FastAPI、Chroma 目录设计不再作为当前实现依据。
 
 ## 1. 总体结论
@@ -11,18 +23,18 @@
 
 > **规则/机理作为确定性底座 + 向量与 BM25 检索提供可溯源证据 + 受控路由和 Agent 编排排因 + LLM 组织报告 + 引用校验与人工复核兜底。**
 
-当前已完成单轮问答主链路，但还没完成“数值 DGA 输入自动进入规则引擎”的闭环。当前最优先事项不是继续增加模型能力，而是：
+当前已完成单轮问答和检索基础链路，七类规则意图与域映射已切换到通用电厂设备。当前最优先事项是：
 
-1. 把 `scripts/dga_ratio.py` 接入 `main.py`；
-2. 统一规则结果、检索证据和最终报告的数据结构；
-3. 用 50 条验收用例做可维护的批量评测；
-4. 解决排序层瓶颈，再考虑更复杂的 Agent 和图谱。
+1. 将意图和领域路由迁移到 boiler、turbine、generator_electrical、auxiliary；
+2. 统一 plant_kb 正式数据源、向量库和 BM25 索引；
+3. 用 138 条通用设备题库做端到端评测；
+4. 解决查询改写、Reranker 和引用相关性问题。
 
 ## 2. 当前系统分层
 
 | 层级 | 当前职责 | 主要文件 |
 |---|---|---|
-| 数据层 | 722 判据、572 条款、规则 JSON、DGA 样本、验收用例 | `data/`、`pure_kb/data/` |
+| 数据层 | 722 判据、572 条款、规则 JSON、DGA 样本、验收用例 | `data/`、`plant_kb/data/` |
 | 存储层 | SQLite 向量库、BM25 索引 | `vector_kb/store.py`、`knowledge.db` |
 | 向量层 | Ollama embedding 与余弦检索 | `vector_kb/embeddings.py`、`retrieval.py` |
 | 关键词层 | jieba + rank-bm25 | `vector_kb/bm25_retriever.py` |
@@ -54,7 +66,7 @@ route_intent
   v
 USE_ROUTER=true
   +-- hybrid_retrieve：领域过滤 + 向量 + BM25 + RRF
-  +-- pure_kb.search：显式 domains/filters
+  +-- plant_kb.search：显式 domains/filters
   +-- merge_with_hybrid：两路证据再次 RRF 融合
   |
   v
@@ -80,7 +92,7 @@ verify_citations(answer, chunks)
 | 路由两路候选数 | 各 20 | `retrieval_router.py` |
 | 最终上下文 | Top-5 | `main.py` |
 | RRF 平滑常数 | 60 | `rrf_fusion.py`、adapter |
-| hybrid/pure_kb 权重 | 1.0 / 1.0 | `knowledge_base_adapter.py` |
+| hybrid/plant_kb 权重 | 1.0 / 1.0 | `knowledge_base_adapter.py` |
 | 引用重写上限 | 2 | `main.py` |
 
 ## 4. 数据组织与边界
@@ -113,7 +125,7 @@ verify_citations(answer, chunks)
 | 722 判据 | 5 | 表3、表4、表6、表7、CO2/CO |
 | 572 条款 | 118 | 运行监视与异常处理等 |
 | 统一语料 | 123 | 本地生成，用于向量与 BM25 |
-| pure_kb | 198 | dga/oil_temp/safety/equipment/dp/cases |
+| plant_kb | 3800 | dga/oil_temp/safety/equipment/dp/cases |
 | DGA 样本 | 3466 | 统一为 μL/L |
 | 验收用例 | 50 | 10 DGA、8 油温、6 安全、6 设备、6 多意图、6 无关、8 边界 |
 | 自动回归 | 24 | 2026-09-18 产物 |
@@ -171,7 +183,7 @@ route_and_retrieve(
 
 ## 7. 规则诊断接入方案
 
-这是下一阶段 P0。
+DGA 规则接入降为可选专项，不再是通用设备主链路 P0。
 
 ### 7.1 目标输入
 
@@ -338,7 +350,7 @@ route
 
 - 向量检索、BM25、RRF、混合检索；
 - 规则/LLM 意图分类和 domain 路由；
-- pure_kb 适配与融合；
+- plant_kb 适配与融合；
 - DeepSeek 生成和引用校验；
 - `main.py` 调试链路和自动回归。
 
