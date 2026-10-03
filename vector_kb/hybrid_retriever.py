@@ -11,6 +11,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from vector_kb.bm25_retriever import bm25_retrieve
+from vector_kb.chunk_filter import prioritize_results
 from vector_kb.domain_guard import is_in_domain
 from vector_kb.intent_classifier import rule_classify
 from vector_kb.query_expander import expand_query
@@ -276,7 +277,7 @@ def hybrid_retrieve(
         )
     if trace is not None:
         trace("RRF融合Top-K", fused)
-    return fused
+    return prioritize_results(fused, question=question, top_k=top_k)
 
 
 __all__ = ["hybrid_retrieve", "BACKEND_CONFIG"]

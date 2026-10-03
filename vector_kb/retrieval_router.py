@@ -9,7 +9,6 @@ import logging
 from vector_kb.hybrid_retriever import hybrid_retrieve
 from vector_kb.intent_classifier import classify_intent
 from vector_kb.intent_router import route_intent
-from vector_kb.knowledge_base_adapter import prioritize_results
 
 LOGGER = logging.getLogger(__name__)
 
@@ -59,11 +58,7 @@ def route_and_retrieve(question: str, top_k: int = 5, shadow: bool = True, trace
     )
     _emit(trace, "混合检索Top-K", hybrid_results[:5])
 
-    merged = prioritize_results(
-        hybrid_results,
-        query=question,
-        top_k=top_k,
-    )
+    merged = hybrid_results[:top_k]
     _emit(trace, "最终检索Top-K", merged)
 
     result = {

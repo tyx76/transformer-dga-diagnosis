@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""知识库适配层：统一 pure_kb/plant_kb 公开接口，转换为标准 chunk 格式。"""
+"""
+DEPRECATED: retained for legacy KB tooling only; the main retrieval route no longer calls search_knowledge_base() or merge_with_hybrid().
+"""
 
 from __future__ import annotations
 
@@ -10,6 +12,8 @@ import os
 import re
 import sys
 from typing import Any
+
+from vector_kb.chunk_filter import is_body_text, query_overlap
 
 LOGGER = logging.getLogger(__name__)
 
@@ -122,85 +126,6 @@ def _normalize_score(value: Any) -> float:
         return 0.0
 
 
-_HEADING_START_RE = re.compile(
-    r"^(?:第[一二三四五六七八九十百千万零0-9]+[章节篇]|[一二三四五六七八九十]+[、.]|[0-9]+(?:\.[0-9]+){0,3}[\s、.]?)"
-)
-_PUNCT_RE = re.compile(r"[。；，！？、,.!?;:\n]")
-_ACTION_WORDS = (
-    "应", "需", "必须", "检查", "处理", "发现", "导致",
-    "原因", "建议", "更换", "调整", "运行", "采取", "防止",
-    "启动", "停运", "超限", "泄漏", "温度",
-)
-_TITLE_TAIL_WORDS = (
-    "原因分析", "概述", "技术改造", "缺陷描述",
-    "处理措施", "检查情况", "处理过程", "安全措施",
-    "目录", "前言", "范围", "术语和定义",
-)
-
-
-def _is_body_text(text: str, title: str = "", clause: str = "") -> bool:
-    """Heuristically distinguish body chunks from heading/title chunks."""
-    value = str(text or "").strip()
-    compact = re.sub(r"\s+", "", value)
-    if len(compact) < 20:
-        return False
-    heading_source = f"{clause or ''} {title or ''} {compact}"
-    starts_like_heading = bool(_HEADING_START_RE.match(heading_source.strip()))
-    has_action = any(word in compact for word in _ACTION_WORDS)
-    has_punctuation = bool(_PUNCT_RE.search(value))
-    if starts_like_heading and len(compact) < 60 and not has_action:
-        return False
-    if not has_punctuation and len(compact) < 40:
-        return False
-    if not has_action and not has_punctuation and len(compact) < 60:
-        return False
-    lines = [line.strip().lstrip("#").strip() for line in value.splitlines() if line.strip()]
-    tail = lines[-1] if lines else compact
-    if len(compact) < 100 and any(word in tail for word in _TITLE_TAIL_WORDS):
-        return False
-    if tail and len(tail) < 24 and any(word in tail for word in _TITLE_TAIL_WORDS):
-        return False
-    return True
-
-
-def _query_features(query: str) -> set[str]:
-    """Build simple CJK n-gram and alphanumeric features for overlap scoring."""
-    normalized = re.sub(r"\s+", "", str(query or "").lower())
-    features: set[str] = set()
-    for run in re.findall(r"[\u4e00-\u9fff]+", normalized):
-        if len(run) >= 2:
-            features.add(run)
-        for size in (2, 3, 4, 5):
-            features.update(run[index:index + size] for index in range(max(0, len(run) - size + 1)))
-    features.update(re.findall(r"[a-z0-9_.-]{2,}", normalized))
-    return {feature for feature in features if feature}
-
-
-def _query_overlap(query: str, item: dict) -> int:
-    if not query or not isinstance(item, dict):
-        return 0
-    features = _query_features(query)
-    if not features:
-        return 0
-    content = " ".join(
-        str(item.get(field) or "")
-        for field in ("doc_id", "clause", "title", "text")
-    ).lower()
-    return sum(len(feature) for feature in features if feature in content)
-
-
-def _is_body_chunk(chunk: dict) -> bool:
-    if not isinstance(chunk, dict):
-        return False
-    if "is_body" in chunk:
-        return bool(chunk.get("is_body"))
-    return _is_body_text(
-        str(chunk.get("text") or ""),
-        str(chunk.get("title") or ""),
-        str(chunk.get("clause") or ""),
-    )
-
-
 def adapt_chunk(raw: dict) -> dict | None:
     """Convert a backend result into the standard chunk format."""
     if not isinstance(raw, dict):
@@ -228,7 +153,7 @@ def adapt_chunk(raw: dict) -> dict | None:
     score = _normalize_score(raw.get("score", 0.0))
 
     citation_eligible = bool(doc_id and clause)
-    is_body = _is_body_text(text, title, clause or "")
+    is_body = is_body_text({"text": text, "title": title, "clause": clause or ""})
     return {
         "doc_id": doc_id,
         "clause": clause,
@@ -265,7 +190,7 @@ def _dedupe_standard_chunks(chunks: list[dict], keep: int | None = None) -> list
             best[key] = chunk
     result = sorted(
         best.values(),
-        key=lambda item: (1 if _is_body_chunk(item) else 0, _normalize_score(item.get("score"))),
+        key=lambda item: (1 if is_body_text(item) else 0, _normalize_score(item.get("score"))),
         reverse=True,
     )
     return result[:keep] if keep is not None else result
@@ -338,13 +263,13 @@ def _rrf_merge(
 
     for index, item in enumerate(hybrid, start=1):
         key = _result_key(item)
-        body_weight = 1.0 if _is_body_chunk(item) else 0.5
+        body_weight = 1.0 if is_body_text(item) else 0.5
         scores[key] = scores.get(key, 0.0) + float(w_hybrid) * body_weight / (k + index)
         documents[key] = dict(item)
 
     for index, item in enumerate(kb, start=1):
         key = _result_key(item)
-        body_weight = 1.0 if _is_body_chunk(item) else 0.5
+        body_weight = 1.0 if is_body_text(item) else 0.5
         scores[key] = scores.get(key, 0.0) + float(w_kb) * body_weight / (k + index)
         if key not in documents:
             documents[key] = dict(item)
@@ -356,8 +281,8 @@ def _rrf_merge(
     def rank_key(key: str) -> tuple[int, int, float]:
         item = documents[key]
         return (
-            1 if _is_body_chunk(item) else 0,
-            _query_overlap(query or "", item),
+            1 if is_body_text(item) else 0,
+            query_overlap(item, query or ""),
             scores[key],
         )
 
@@ -370,55 +295,15 @@ def _rrf_merge(
             item["citation_eligible"] = bool(item.get("doc_id") and item.get("clause"))
         else:
             item["citation_eligible"] = bool(item.get("citation_eligible"))
-        item["is_body"] = _is_body_chunk(item)
+        item["is_body"] = is_body_text(item)
         merged.append(item)
     return merged
-
-
-def prioritize_results(
-    results: list[dict],
-    query: str | None = None,
-    top_k: int = 5,
-) -> list[dict]:
-    """Apply body/query-aware ranking to a single retrieval result list."""
-    if top_k <= 0:
-        return []
-    return _rrf_merge(
-        results or [],
-        [],
-        int(top_k),
-        k=60,
-        query=query,
-    )
-
-
-def merge_with_hybrid(
-    hybrid_results: list[dict],
-    kb_results: list[dict],
-    top_k: int = 5,
-    w_hybrid: float = 1.0,
-    w_kb: float = 1.0,
-    query: str | None = None,
-) -> list[dict]:
-    """Deduplicate and RRF-merge hybrid retrieval with KB results."""
-    if top_k <= 0:
-        return []
-    return _rrf_merge(
-        hybrid_results or [],
-        kb_results or [],
-        int(top_k),
-        k=60,
-        w_hybrid=w_hybrid,
-        w_kb=w_kb,
-        query=query,
-    )
 
 
 __all__ = [
     "adapt_chunk",
     "search_knowledge_base",
     "merge_with_hybrid",
-    "prioritize_results",
     "get_backend_name",
     "get_backend_stats",
 ]
