@@ -33,7 +33,7 @@ BACKEND_CONFIG = {
         "vector_db": "knowledge/plant_kb/index/knowledge.db",        # 新库向量库路径
         "bm25_corpus": "knowledge/plant_kb/data/knowledge.jsonl",   # 新库 BM25 语料路径
         "bm25_index": "knowledge/plant_kb/index/bm25_index.pkl",    # 新库 BM25 索引路径
-        "embedding_source": "plant_kb.embedding",                   # 新库使用独立 embedding
+        "embedding_source": None,                                   # ?? vector_kb.embeddings.embed
     },
 }
 
@@ -59,12 +59,6 @@ def _validate_embedding_source(source, backend: str):
         )
     return source
 
-
-_PLANT_EMBEDDING_FILE = PROJECT_ROOT / "plant_kb" / "embedding.py"
-if _PLANT_EMBEDDING_FILE.is_file():
-    BACKEND_CONFIG["plant_kb"]["embedding_source"] = "plant_kb.embedding"
-else:
-    LOGGER.warning("plant_kb 未提供独立 embedding，使用默认 embedding")
 
 for _backend, _config in BACKEND_CONFIG.items():
     _config["embedding_source"] = _validate_embedding_source(

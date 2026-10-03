@@ -63,7 +63,24 @@ def _load_backend(name: str):
             ) from fallback_exc
 
 
-kb_backend, _BACKEND_NAME = _load_backend(_REQUESTED_BACKEND)
+kb_backend = None
+_BACKEND_NAME = _REQUESTED_BACKEND
+_BACKEND_LOAD_ERROR: Exception | None = None
+
+
+def _ensure_backend():
+    """Load the configured member backend only when its API is actually used."""
+    global kb_backend, _BACKEND_NAME, _BACKEND_LOAD_ERROR
+    if kb_backend is not None:
+        return kb_backend
+    if _BACKEND_LOAD_ERROR is not None:
+        return None
+    try:
+        kb_backend, _BACKEND_NAME = _load_backend(_REQUESTED_BACKEND)
+        return kb_backend
+    except Exception as exc:
+        _BACKEND_LOAD_ERROR = exc
+        return None
 
 
 def get_backend_name() -> str:
@@ -274,9 +291,12 @@ def search_knowledge_base(question: str, route: dict, top_k: int = 20) -> list[d
     domains = _resolve_backend_domains(list(route.get("domains") or []))
     if not domains or route.get("mode") == "refuse":
         return []
+    backend = _ensure_backend()
+    if backend is None:
+        return []
     filters = _normalize_filters(route.get("filters"))
     try:
-        raw_results = kb_backend.search(
+        raw_results = backend.search(
             query=question,
             domains=domains,
             filters=filters or None,
