@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import re
+import sys
 import unicodedata
 from typing import Any
 
@@ -18,12 +19,51 @@ def _normalize_text(value: Any) -> str:
     return re.sub(r"\s+", "", text)
 
 
-def _contains_clause(content: str, clause: str) -> bool:
-    """判断规范化内容中是否独立包含某个条号，避免子串误命中。"""
-    if not clause:
+def _debug_enabled() -> bool:
+    return "--debug" in sys.argv[1:]
+
+
+def _clause_part(content: str) -> str:
+    """Extract the clause portion from a citation string."""
+    normalized = _normalize_text(content)
+    if "\u7b2c" in normalized:
+        return normalized.split("\u7b2c", 1)[1]
+    return normalized
+
+
+def normalize_clause(clause: Any) -> list[str]:
+    """Extract normalized numeric clause parts from one or more clauses."""
+    normalized = unicodedata.normalize("NFKC", str(clause or "")).lower()
+    normalized = normalized.replace("\uff0f", "/")
+    if "\u7b2c" in normalized:
+        normalized = normalized.split("\u7b2c", 1)[1]
+
+    parts = normalized.split("/") if "/" in normalized else [normalized]
+    result: list[str] = []
+    for part in parts:
+        base = part.split("\u8868", 1)[0]
+        match = re.search(r"\d+(?:\.\d+)*", base)
+        if not match:
+            continue
+        value = match.group(0)
+        if value not in result:
+            result.append(value)
+    return result
+
+
+def clause_matches(cited_clause: Any, valid_clause: Any) -> bool:
+    """Return whether cited and valid clauses match exactly or by hierarchy."""
+    cited = normalize_clause(cited_clause)
+    valid = normalize_clause(valid_clause)
+    if not cited or not valid:
         return False
-    pattern = rf"(?<![0-9.]){re.escape(clause)}(?![0-9.])"
-    return re.search(pattern, content) is not None
+    for left in cited:
+        for right in valid:
+            if left == right:
+                return True
+            if left.startswith(right + ".") or right.startswith(left + "."):
+                return True
+    return False
 
 
 def _is_citation_eligible(chunk: dict[str, Any]) -> bool:
@@ -36,24 +76,22 @@ def _is_citation_eligible(chunk: dict[str, Any]) -> bool:
 
 
 def _matches_chunk(content: str, chunk: dict[str, Any], known_docs: set[str]) -> bool:
-    """判断一条引用是否与某个检索结果匹配，优先校验文档号与条号。"""
+    """\u5224\u65ad\u4e00\u6761\u5f15\u7528\u662f\u5426\u4e0e\u67d0\u4e2a\u68c0\u7d22\u7ed3\u679c\u5339\u914d\uff0c\u4f18\u5148\u6821\u9a8c\u6587\u6863\u53f7\u4e0e\u6761\u53f7\u3002"""
     normalized_content = _normalize_text(content)
-    clause = _normalize_text(chunk.get("clause"))
-    if not _contains_clause(normalized_content, clause):
+    cited_clause = _clause_part(content)
+    if not clause_matches(cited_clause, chunk.get("clause")):
         return False
 
     doc_id = _normalize_text(chunk.get("doc_id"))
     if not doc_id:
         return True
 
-    # 若引用中明确写了一个带字母/斜杠的标准文档号，必须与当前 chunk 匹配。
-    doc_prefix = normalized_content.split("第", 1)[0]
+    doc_prefix = normalized_content.split("\u7b2c", 1)[0]
     if re.search(r"[a-z/]", doc_prefix) and doc_id not in doc_prefix:
         return False
     if doc_id in normalized_content:
         return True
 
-    # 未写文档号时可按唯一条号校验；若写了其他已知文档，则不匹配。
     mentioned_known_doc = any(
         known_doc and known_doc in normalized_content
         for known_doc in known_docs
@@ -81,18 +119,35 @@ def verify_citations(answer: str, chunks: list[dict] | None) -> dict:
     seen_invalid: set[str] = set()
 
     for citation in citations:
-        matched = any(
-            _matches_chunk(citation, chunk, known_docs)
-            for chunk in eligible_chunks
+        matched_chunk = next(
+            (
+                chunk
+                for chunk in eligible_chunks
+                if _matches_chunk(citation, chunk, known_docs)
+            ),
+            None,
         )
-        if matched:
+        if _debug_enabled():
+            normalized_cited = normalize_clause(citation)
+            cited_clause = "/".join(normalized_cited) or _clause_part(citation) or citation
+            if matched_chunk is not None:
+                print(
+                    f"[\u5f15\u7528\u6821\u9a8c] {cited_clause} \u2192 \u5339\u914d\u5230 "
+                    f"{matched_chunk.get('clause')}",
+                    flush=True,
+                )
+            else:
+                print(
+                    f"[\u5f15\u7528\u6821\u9a8c] {cited_clause} \u2192 \u672a\u5339\u914d",
+                    flush=True,
+                )
+        if matched_chunk is not None:
             if citation not in seen_valid:
                 valid_citations.append(citation)
                 seen_valid.add(citation)
         elif citation not in seen_invalid:
             invalid_citations.append(citation)
             seen_invalid.add(citation)
-
     return {
         "valid": not invalid_citations,
         "invalid_citations": invalid_citations,
@@ -148,6 +203,8 @@ def remove_invalid_citation_sentences(answer: str, chunks: list[dict] | None) ->
 
 
 __all__ = [
+    "normalize_clause",
+    "clause_matches",
     "verify_citations",
     "build_retry_prompt",
     "remove_invalid_citation_sentences",
