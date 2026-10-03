@@ -67,7 +67,12 @@ def route_and_retrieve(question: str, top_k: int = 5, shadow: bool = True, trace
         merged = kb_results[:top_k]
         source = "kb"
     else:
-        merged = merge_with_hybrid(hybrid_results, kb_results, top_k=top_k)
+        merged = merge_with_hybrid(
+            hybrid_results,
+            kb_results,
+            top_k=top_k,
+            query=question,
+        )
         source = "hybrid+kb"
 
     _emit(trace, "最终检索Top-K", merged)
