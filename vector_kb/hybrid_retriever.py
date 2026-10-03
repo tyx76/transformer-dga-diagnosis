@@ -12,6 +12,8 @@ from pathlib import Path
 
 from vector_kb.bm25_retriever import bm25_retrieve
 from vector_kb.domain_guard import is_in_domain
+from vector_kb.intent_classifier import rule_classify
+from vector_kb.query_expander import expand_query
 from vector_kb.retrieval import retrieve
 from vector_kb.rrf_fusion import rrf_fusion
 
@@ -105,8 +107,9 @@ def hybrid_retrieve(
     candidate_k: int = 10,
     rrf_k: int = 60,
     trace: TraceCallback | None = None,
+    intent: str | None = None,
 ) -> list[dict]:
-    """获取两路候选并经 RRF 融合；``trace`` 仅用于可选的调试观测。"""
+    """Retrieve with original vector query and expanded BM25 query."""
     question = str(question or "").strip()
     if not question:
         return []
@@ -126,10 +129,41 @@ def hybrid_retrieve(
     _ensure_placeholder(config["bm25_index"], "BM25索引", backend)
 
     embedding_source = config.get("embedding_source")
+    intent_name = str(intent or "").strip().lower()
+    if not intent_name:
+        try:
+            classified = rule_classify(question)
+            if isinstance(classified, dict):
+                intent_name = str(classified.get("intent") or "").strip().lower()
+        except Exception:
+            LOGGER.warning("Failed to infer intent for query expansion", exc_info=True)
+
+    try:
+        expansion = expand_query(question, intent_name)
+    except Exception:
+        LOGGER.warning("Query expansion failed; using original query", exc_info=True)
+        expansion = {
+            "original_query": question,
+            "expanded_query": question,
+            "expanded_terms": [],
+        }
+
+    original_query = str(expansion.get("original_query") or question)
+    expanded_query = str(expansion.get("expanded_query") or question)
+    expanded_terms = list(expansion.get("expanded_terms") or [])
+
     if trace is not None:
         print(
-            f"[向量检索] db_path={config['vector_db']} "
+            f"[查询扩展] original={original_query} expanded={expanded_query} terms={expanded_terms}",
+            flush=True,
+        )
+        print(
+            f"[向量检索] query={original_query} db_path={config['vector_db']} "
             f"embedding_source={embedding_source}",
+            flush=True,
+        )
+        print(
+            f"[BM25检索] query={expanded_query} index_path={config['bm25_index']}",
             flush=True,
         )
         trace(f"向量库路径:{config['vector_db']}", [])
@@ -137,7 +171,7 @@ def hybrid_retrieve(
         trace(f"BM25索引路径:{config['bm25_index']}", [])
 
     vector_results = retrieve(
-        question,
+        original_query,
         top_k=candidates,
         db_path=config["vector_db"],
         embedding_source=embedding_source,
@@ -146,7 +180,7 @@ def hybrid_retrieve(
         trace("向量检索Top-K", vector_results)
 
     bm25_results = bm25_retrieve(
-        question,
+        expanded_query,
         top_k=candidates,
         corpus_path=config["bm25_corpus"],
         index_path=config["bm25_index"],
