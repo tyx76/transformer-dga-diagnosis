@@ -74,8 +74,8 @@ for _backend, _config in BACKEND_CONFIG.items():
 
 
 def _backend_name() -> str:
-    # 默认值暂保持 pure_kb；knowledge base 正式落位并验证后再切换默认后端。
-    name = os.getenv("KB_BACKEND", "pure_kb").strip().lower()
+    # 默认后端为 plant_kb；KB_BACKEND=pure_kb 仅用于显式回退。
+    name = os.getenv("KB_BACKEND", "plant_kb").strip().lower()
     if name not in BACKEND_CONFIG:
         raise ValueError(
             f"KB_BACKEND={name!r} 无效，可选值为：{', '.join(BACKEND_CONFIG)}"

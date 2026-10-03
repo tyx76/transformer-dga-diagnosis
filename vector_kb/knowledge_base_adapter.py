@@ -18,8 +18,8 @@ def _debug_enabled() -> bool:
     return "--debug" in sys.argv[1:]
 # 支持的知识库后端。
 _VALID_BACKENDS = ("pure_kb", "plant_kb")
-# 默认保持旧后端；knowledge base 正式落位并验证后再切换默认值。
-_REQUESTED_BACKEND = os.getenv("KB_BACKEND", "pure_kb").strip().lower()
+# 默认使用 plant_kb；可通过 KB_BACKEND=pure_kb 回退旧库。
+_REQUESTED_BACKEND = os.getenv("KB_BACKEND", "plant_kb").strip().lower()
 _DOC_RE = re.compile(
     r"^(?P<doc_id>(?:DL/T|GB/T|GB|IEC)\s*\d+(?:\s*-\s*\d{4})?)",
     re.IGNORECASE,
