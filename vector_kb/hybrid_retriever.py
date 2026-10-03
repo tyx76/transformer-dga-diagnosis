@@ -244,7 +244,7 @@ def hybrid_retrieve(
         debug=trace is not None,
     )
     if trace is not None:
-        trace("向量检索Top-K", vector_results)
+        trace("向量检索Top-K", vector_results[:10])
 
     bm25_results = bm25_retrieve(
         expanded_query,
@@ -255,7 +255,7 @@ def hybrid_retrieve(
         debug=trace is not None,
     )
     if trace is not None:
-        trace("BM25检索Top-K", bm25_results)
+        trace("BM25检索Top-K", bm25_results[:10])
 
     fusion_k = top_k
     domain_set = {str(domain) for domain in (domains or []) if str(domain).strip()}
@@ -276,7 +276,7 @@ def hybrid_retrieve(
             top_k,
         )
     if trace is not None:
-        trace("RRF融合Top-K", fused)
+        trace("RRF融合Top-K", fused[:10])
     return prioritize_results(fused, question=question, top_k=top_k)
 
 

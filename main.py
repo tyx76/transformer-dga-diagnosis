@@ -38,21 +38,27 @@ def _shorten(text: str, limit: int = 120) -> str:
     return value[: limit - 1] + "…"
 
 
-def _format_hits(hits: list[dict] | None, score_key: str) -> str:
-    """把候选结果压缩为“条号(分数)”摘要。"""
+def _format_hits(
+    hits: list[dict] | None,
+    score_key: str,
+    include_title: bool = False,
+) -> str:
+    """Format hit summaries without printing full chunk text."""
     if not hits:
         return "无"
     parts = []
     for hit in hits:
         clause = hit.get("clause") or "（无条号）"
+        title = str(hit.get("title") or "").strip()
+        label = f"{clause}[{title}]" if include_title and title else str(clause)
         score = hit.get(score_key)
         if score is None:
-            parts.append(str(clause))
+            parts.append(label)
             continue
         try:
-            parts.append(f"{clause}({float(score):.4f})")
+            parts.append(f"{label}({float(score):.4f})")
         except (TypeError, ValueError):
-            parts.append(str(clause))
+            parts.append(label)
     return "；".join(parts)
 
 
@@ -101,7 +107,12 @@ def _retrieval_trace(debug: bool):
 
         hits = payload if isinstance(payload, list) else []
         score_key = "rrf_score" if step.startswith("RRF") else "score"
-        _trace(debug, step, _format_hits(hits, score_key))
+        include_title = step == "最终检索Top-K"
+        _trace(
+            debug,
+            step,
+            _format_hits(hits, score_key, include_title=include_title),
+        )
 
     return callback
 
