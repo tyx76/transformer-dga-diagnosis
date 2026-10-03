@@ -101,6 +101,60 @@ def _ensure_placeholder(path: Path, label: str, backend: str) -> None:
     )
 
 
+def _domain_lookup(vector_results: list[dict], bm25_results: list[dict]) -> dict[tuple[str, str], str]:
+    lookup: dict[tuple[str, str], str] = {}
+    for item in [*(vector_results or []), *(bm25_results or [])]:
+        if not isinstance(item, dict) or not item.get("domain"):
+            continue
+        key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+        lookup[key] = str(item["domain"])
+    return lookup
+
+
+def _ensure_domain_coverage(
+    fused: list[dict],
+    domains: list[str] | None,
+    vector_results: list[dict],
+    bm25_results: list[dict],
+    top_k: int,
+) -> list[dict]:
+    allowed = [str(domain) for domain in (domains or []) if str(domain).strip()]
+    if len(set(allowed)) <= 1:
+        return fused[:top_k]
+
+    lookup = _domain_lookup(vector_results, bm25_results)
+    selected: list[dict] = []
+    selected_keys: set[tuple[str, str]] = set()
+
+    # Reserve the highest-ranked result from each requested domain first.
+    for domain in dict.fromkeys(allowed):
+        for item in fused:
+            key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+            item_domain = item.get("domain") or lookup.get(key)
+            if item_domain != domain or key in selected_keys:
+                continue
+            copy = dict(item)
+            copy["domain"] = domain
+            selected.append(copy)
+            selected_keys.add(key)
+            break
+
+    for item in fused:
+        key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+        if key in selected_keys:
+            continue
+        copy = dict(item)
+        domain = lookup.get(key)
+        if domain:
+            copy["domain"] = domain
+        selected.append(copy)
+        selected_keys.add(key)
+        if len(selected) >= top_k:
+            break
+
+    return selected[:top_k]
+
+
 def hybrid_retrieve(
     question: str,
     top_k: int = 3,
@@ -185,6 +239,8 @@ def hybrid_retrieve(
         top_k=candidates,
         db_path=config["vector_db"],
         embedding_source=embedding_source,
+        domains=domains,
+        debug=trace is not None,
     )
     if trace is not None:
         trace("向量检索Top-K", vector_results)
@@ -194,16 +250,30 @@ def hybrid_retrieve(
         top_k=candidates,
         corpus_path=config["bm25_corpus"],
         index_path=config["bm25_index"],
+        domains=domains,
+        debug=trace is not None,
     )
     if trace is not None:
         trace("BM25检索Top-K", bm25_results)
 
+    fusion_k = top_k
+    domain_set = {str(domain) for domain in (domains or []) if str(domain).strip()}
+    if len(domain_set) > 1:
+        fusion_k = max(top_k, min(100, top_k * 5))
     fused = rrf_fusion(
         vector_results,
         bm25_results,
         k=rrf_k,
-        top_k=top_k,
+        top_k=fusion_k,
     )
+    if len(domain_set) > 1:
+        fused = _ensure_domain_coverage(
+            fused,
+            domains,
+            vector_results,
+            bm25_results,
+            top_k,
+        )
     if trace is not None:
         trace("RRF融合Top-K", fused)
     return fused

@@ -121,6 +121,7 @@ def _load_chunks(con: sqlite3.Connection) -> list[dict]:
             "text": row[2],
             "page": meta.get("page"),
             "citation": meta.get("citation") or "",
+            "domain": meta.get("domain"),
             "vec": vector,
             "dim": row[4],
         })
@@ -161,6 +162,7 @@ def _load_knowledge(con: sqlite3.Connection) -> list[dict]:
             "text": record["text"],
             "page": page,
             "citation": citation,
+            "domain": record.get("domain") or metadata.get("domain"),
             "vec": vector,
             "dim": record.get("dim") or len(vector),
         })
@@ -183,6 +185,7 @@ def retrieve(
     db_path: str | Path | None = None,
     embedding_source: Any = None,
     debug: bool = False,
+    domains: list[str] | None = None,
 ) -> list[dict]:
     """检索条文并返回标准 chunk 列表。
 
@@ -216,6 +219,20 @@ def retrieve(
             flush=True,
         )
 
+    before_filter = len(chunks)
+    if domains:
+        allowed = {str(domain) for domain in domains}
+        chunks = [
+            chunk for chunk in chunks
+            if not chunk.get("domain") or str(chunk.get("domain")) in allowed
+        ]
+    if debug:
+        print(
+            f"[向量检索] domains={domains or []} "
+            f"过滤前{before_filter}条 过滤后{len(chunks)}条",
+            flush=True,
+        )
+
     if not chunks:
         return []
 
@@ -241,6 +258,7 @@ def retrieve(
             "page": chunk.get("page"),
             "score": score,
             "citation": chunk.get("citation") or "",
+            "domain": chunk.get("domain"),
         })
     return hits
 

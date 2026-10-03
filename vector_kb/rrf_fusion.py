@@ -93,6 +93,7 @@ def rrf_fusion(
             "title": source.get("title") or "",
             "text": source.get("text") or "",
             "page": source.get("page"),
+            "domain": source.get("domain"),
             "rrf_score": scores[key],
         })
     return results

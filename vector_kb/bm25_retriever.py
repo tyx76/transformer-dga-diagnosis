@@ -235,6 +235,7 @@ def _adapt_v2_document(document: dict[str, Any], metadata: dict[str, Any] | None
         "text": document.get("text") or "",
         "page": document.get("page") if document.get("page") is not None else extra.get("page"),
         "citation": document.get("citation") or extra.get("citation") or "",
+        "domain": document.get("domain") or document.get("module") or extra.get("domain"),
         "_source_id": str(document.get("id") or ""),
     }
 
@@ -347,6 +348,7 @@ def _load_corpus(corpus_paths: tuple[Path, ...]) -> list[dict[str, Any]]:
                     "title": item.get("title") or "",
                     "text": text,
                     "page": item.get("page"),
+                    "domain": item.get("domain"),
                 })
     return documents
 
@@ -444,6 +446,8 @@ def bm25_retrieve(
     top_k: int = 10,
     corpus_path: str | Path | list | tuple | None = None,
     index_path: str | Path | None = None,
+    domains: list[str] | None = None,
+    debug: bool = False,
 ) -> list[dict]:
     """返回与问题最匹配的 Top-K 条文；无有效结果时返回空列表。"""
     if not str(question or "").strip():
@@ -475,8 +479,23 @@ def bm25_retrieve(
         return []
 
     scores = bm25.get_scores(query_tokens)
+    candidate_indices = list(range(len(documents)))
+    before_filter = len(candidate_indices)
+    if domains:
+        allowed = {str(domain) for domain in domains}
+        candidate_indices = [
+            index for index in candidate_indices
+            if not documents[index].get("domain")
+            or str(documents[index].get("domain")) in allowed
+        ]
+    if debug:
+        print(
+            f"[BM25检索] domains={domains or []} "
+            f"过滤前{before_filter}条 过滤后{len(candidate_indices)}条",
+            flush=True,
+        )
     ranked_indices = sorted(
-        range(len(documents)),
+        candidate_indices,
         key=lambda index: (-float(scores[index]), index),
     )
 
@@ -493,6 +512,7 @@ def bm25_retrieve(
             "text": document.get("text") or "",
             "page": document.get("page"),
             "score": score,
+            "domain": document.get("domain"),
         })
         if len(results) >= requested:
             break
