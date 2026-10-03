@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# DEPRECATED: uses the legacy hybrid + KB fusion path.
+# The main pipeline no longer uses this script. Last main-route use before 0eadd44.
 """Search RRF weights for hybrid-retrieval vs pure-knowledge-base fusion.
 
 The default mode is offline and deterministic: it uses rule-based intent
@@ -32,6 +34,7 @@ from vector_kb.generation import _cite, _load_env, generate
 from vector_kb.hybrid_retriever import hybrid_retrieve
 from vector_kb.intent_classifier import classify_intent, rule_classify
 from vector_kb.intent_router import route_intent
+# DEPRECATED: legacy KB fusion imports retained for reference.
 from vector_kb.knowledge_base_adapter import merge_with_hybrid, search_knowledge_base
 
 DEFAULT_CASES = ROOT / "test_cases" / "evaluation_set.jsonl"

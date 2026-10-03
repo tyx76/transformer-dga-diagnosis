@@ -209,6 +209,7 @@ def _resolve_backend_domains(domains: list[str]) -> list[str]:
     return resolved
 
 
+# DEPRECATED: main pipeline no longer calls this function. Use hybrid_retriever for retrieval.
 def search_knowledge_base(question: str, route: dict, top_k: int = 20) -> list[dict]:
     """Call the configured backend with explicit domains and return chunks."""
     if not isinstance(route, dict):
@@ -246,6 +247,7 @@ def search_knowledge_base(question: str, route: dict, top_k: int = 20) -> list[d
     return result
 
 
+# DEPRECATED: legacy KB fusion helper retained only for deprecated APIs.
 def _rrf_merge(
     hybrid_results: list[dict],
     kb_results: list[dict],
@@ -298,6 +300,29 @@ def _rrf_merge(
         item["is_body"] = is_body_text(item)
         merged.append(item)
     return merged
+
+
+# DEPRECATED: main pipeline no longer calls this function. Use chunk_filter.prioritize_results().
+def merge_with_hybrid(
+    hybrid_results: list[dict],
+    kb_results: list[dict],
+    top_k: int = 5,
+    w_hybrid: float = 1.0,
+    w_kb: float = 1.0,
+    query: str | None = None,
+) -> list[dict]:
+    """Legacy hybrid + KB RRF fusion retained for old scripts."""
+    if top_k <= 0:
+        return []
+    return _rrf_merge(
+        hybrid_results or [],
+        kb_results or [],
+        int(top_k),
+        k=60,
+        w_hybrid=w_hybrid,
+        w_kb=w_kb,
+        query=query,
+    )
 
 
 __all__ = [

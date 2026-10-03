@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# DEPRECATED: not called by the main retrieval pipeline.
+# Retained for legacy/reference use only. Last main-route use before 0eadd44.
 """Cleaned BM25 retriever for the independent plant_kb corpus."""
 
 from __future__ import annotations
