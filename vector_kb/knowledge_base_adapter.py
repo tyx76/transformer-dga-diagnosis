@@ -355,6 +355,23 @@ def _rrf_merge(
     return merged
 
 
+def prioritize_results(
+    results: list[dict],
+    query: str | None = None,
+    top_k: int = 5,
+) -> list[dict]:
+    """Apply body/query-aware ranking to a single retrieval result list."""
+    if top_k <= 0:
+        return []
+    return _rrf_merge(
+        results or [],
+        [],
+        int(top_k),
+        k=60,
+        query=query,
+    )
+
+
 def merge_with_hybrid(
     hybrid_results: list[dict],
     kb_results: list[dict],
@@ -381,6 +398,7 @@ __all__ = [
     "adapt_chunk",
     "search_knowledge_base",
     "merge_with_hybrid",
+    "prioritize_results",
     "get_backend_name",
     "get_backend_stats",
 ]
