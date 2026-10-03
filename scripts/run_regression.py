@@ -4,8 +4,10 @@
 
 from __future__ import annotations
 
+import argparse
 import contextlib
 import io
+import os
 import json
 import pickle
 import sqlite3
@@ -30,6 +32,9 @@ from vector_kb.bm25_retriever import INDEX_VERSION, bm25_retrieve
 from vector_kb.citation_verifier import remove_invalid_citation_sentences, verify_citations
 from vector_kb.domain_guard import is_in_domain
 from vector_kb.hybrid_retriever import hybrid_retrieve
+from vector_kb.knowledge_base_adapter import adapt_chunk
+from vector_kb.query_expander import expand_query
+from vector_kb.retrieval_router import route_and_retrieve
 from vector_kb.retrieval import retrieve
 from vector_kb.rrf_fusion import rrf_fusion
 
@@ -218,6 +223,75 @@ def known_issue_tests():
 
 
 
+
+PLANT_DB = ROOT / "knowledge" / "plant_kb" / "index" / "knowledge.db"
+PLANT_CORPUS = ROOT / "knowledge" / "plant_kb" / "data" / "knowledge.jsonl"
+PLANT_INDEX = ROOT / "knowledge" / "plant_kb" / "index" / "bm25_index.pkl"
+GROUP_RESULTS = {}
+
+
+@contextlib.contextmanager
+def environment(**values):
+    old = {key: os.environ.get(key) for key in values}
+    try:
+        for key, value in values.items():
+            os.environ[key] = str(value)
+        yield
+    finally:
+        for key, value in old.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+
+def reset_results():
+    RESULTS.clear()
+    RETRIEVAL.clear()
+    CITATIONS.clear()
+
+
+def store_group(name):
+    GROUP_RESULTS[name] = [dict(row) for row in RESULTS]
+
+
+
+def current_tests():
+    boiler_q = "\u9505\u7089\u8fc7\u70ed\u5668A\u4fa7\u4e8c\u7ea7\u51cf\u6e29\u6c34\u8c03\u8282\u95e8\u5185\u6f0f"
+    turbine_q = "\u6c7d\u8f6e\u673a\u632f\u52a8"
+    multi_q = "\u6c7d\u8f6e\u673a\u632f\u52a8\u5bfc\u81f4\u8f74\u627f\u6e29\u5ea6\u9ad8"
+    started = time.perf_counter()
+    result = route_and_retrieve(boiler_q, top_k=5, shadow=False)
+    domains = [chunk.get("domain") for chunk in result["chunks"]]
+    add_result("CUR-001", "current-\u57df\u8fc7\u6ee4", "\u9505\u7089\u95ee\u9898\u53ea\u547d\u4e2d boiler", boiler_q, "\u57df\u5168\u4e3a boiler", f"domains={domains}", bool(domains) and all(d == "boiler" for d in domains), (time.perf_counter() - started) * 1000)
+    started = time.perf_counter()
+    result = route_and_retrieve(turbine_q, top_k=5, shadow=False)
+    domains = [chunk.get("domain") for chunk in result["chunks"]]
+    add_result("CUR-002", "current-\u57df\u8fc7\u6ee4", "\u6c7d\u8f6e\u673a\u95ee\u9898\u53ea\u547d\u4e2d turbine", turbine_q, "\u57df\u5168\u4e3a turbine", f"domains={domains}", bool(domains) and all(d == "turbine" for d in domains), (time.perf_counter() - started) * 1000)
+    started = time.perf_counter()
+    result = route_and_retrieve(multi_q, top_k=5, shadow=False)
+    domains = {chunk.get("domain") for chunk in result["chunks"]}
+    passed = {"turbine", "auxiliary"}.issubset(domains)
+    add_result("CUR-003", "current-\u591a\u57df", "\u591a\u57df\u95ee\u9898\u5305\u542b\u4e24\u4e2a\u57df", multi_q, "\u5305\u542b turbine+auxiliary", f"domains={sorted(domains)}", passed, (time.perf_counter() - started) * 1000)
+    started = time.perf_counter()
+    result = route_and_retrieve("\u4eca\u5929\u665a\u996d\u5403\u4ec0\u4e48", top_k=5, shadow=False)
+    passed = result["source"] == "irrelevant" and not result["chunks"]
+    add_result("CUR-004", "current-\u62d2\u7b54", "\u65e0\u5173\u95ee\u9898\u62d2\u7b54", "\u4eca\u5929\u665a\u996d\u5403\u4ec0\u4e48", "source=irrelevant, chunks=[]", f"source={result['source']}?chunks={len(result['chunks'])}", passed, (time.perf_counter() - started) * 1000)
+    started = time.perf_counter()
+    chunks = [{"doc_id": "DOC-A", "clause": "16.1 \u73b0\u8c61 / 16.2 \u539f\u56e0 / 16.3 \u5904\u7406"}]
+    result = verify_citations("\u3010\u4f9d\u636e\uff1aDOC-A \u7b2c16.3.2\u6761\u3011", chunks)
+    add_result("CUR-005", "current-\u5f15\u7528\u5c42\u7ea7", "16.3.2 \u5339\u914d\u5408\u5e76\u6761\u53f7", "16.3.2 -> 16.1/16.2/16.3", "valid=True", json.dumps(result, ensure_ascii=False), result["valid"] is True, (time.perf_counter() - started) * 1000)
+    started = time.perf_counter()
+    expansion = expand_query(boiler_q, "boiler")
+    required = {"\u8c03\u8282\u9600", "\u8c03\u95e8", "\u51cf\u6e29\u6c34\u95e8"}
+    add_result("CUR-006", "current-\u67e5\u8be2\u6269\u5c55", "\u8c03\u8282\u95e8\u6269\u5c55", boiler_q, "\u5305\u542b\u9600\u7c7b\u672f\u8bed", json.dumps(expansion, ensure_ascii=False), required.issubset(set(expansion["expanded_terms"])), (time.perf_counter() - started) * 1000)
+    started = time.perf_counter()
+    eligible = adapt_chunk({"domain": "boiler", "doc_id": "DOC-A", "clause": "1.1", "title": "t", "text": "body"})
+    ineligible = adapt_chunk({"domain": "boiler", "doc_id": "DOC-A", "clause": "", "title": "t", "text": "body"})
+    passed = bool(eligible and eligible.get("citation_eligible") is True and ineligible and ineligible.get("citation_eligible") is False)
+    add_result("CUR-007", "current-\u5f15\u7528\u8d44\u683c", "\u5f15\u7528\u8d44\u683c\u5224\u65ad", "\u6709/\u65e0 clause", "True/False", f"eligible={eligible and eligible.get('citation_eligible')}; ineligible={ineligible and ineligible.get('citation_eligible')}", passed, (time.perf_counter() - started) * 1000)
+
+
 def git_value(*args):
     try:
         return subprocess.check_output(["git", *args], cwd=ROOT, text=True, encoding="utf-8").strip()
@@ -292,31 +366,62 @@ def build_report(path):
     wb.save(path)
 
 
-def main():
-    deterministic_tests()
-    data_tests()
-    ask_tests()
+def build_markdown_report(group_results, path):
+    lines = [f"# \u56de\u5f52\u6d4b\u8bd5\u62a5\u544a {datetime.now().strftime('%Y-%m-%d')}", "", "## \u5206\u7ec4\u6c47\u603b", "", "| \u7ec4\u522b | \u603b\u6570 | \u901a\u8fc7 | \u5931\u8d25 | \u5df2\u77e5 | \u901a\u8fc7\u7387 |", "|---|---:|---:|---:|---:|---:|"]
+    for name, rows in group_results.items():
+        passed = sum(row["status"] == "PASS" for row in rows); failed = sum(row["status"] == "FAIL" for row in rows); known = sum(row["status"] == "KNOWN" for row in rows)
+        lines.append(f"| {name} | {len(rows)} | {passed} | {failed} | {known} | {passed/max(1, passed+failed):.2%} |")
+    for name, rows in group_results.items():
+        lines.extend(["", f"## {name} \u5931\u8d25\u7528\u4f8b", ""])
+        failed_rows = [row for row in rows if row["status"] == "FAIL"]
+        if not failed_rows:
+            lines.append("\u65e0")
+        else:
+            lines.extend(["| \u7f16\u53f7 | \u7528\u4f8b | \u5b9e\u9645 |", "|---|---|---|"])
+            for row in failed_rows: lines.append(f"| {row['id']} | {row['name']} | {row['actual']} |")
+    path.parent.mkdir(parents=True, exist_ok=True); path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    retrieval_case("VEC-001", "vector", "C₂H₂注意值", {"9.3.1-表3"}, top_k=5)
-    retrieval_case("VEC-002", "vector", "变压器油温过高怎么处理", {"7.1.5", "7.1.6", "7.1.7", "7.1.8"}, top_k=5)
-    retrieval_case("BM25-001", "bm25", "变压器油温过高怎么处理", {"7.1.5", "7.1.6", "7.1.8"}, top_k=3)
-    retrieval_case("BM25-002", "bm25", "乙炔超标怎么处理", {"9.3.1-表3"}, top_k=3)
-    retrieval_case("HYB-001", "hybrid", "乙炔超标怎么处理", {"9.3.1-表3"}, top_k=5)
-    retrieval_case("HYB-002", "hybrid", "C₂H₂注意值", {"9.3.1-表3"}, top_k=5)
-    retrieval_case("HYB-003", "hybrid", "三比值故障类型判断", {"10.2.1-表6", "10.2.1-表7"}, top_k=5)
-    retrieval_case("HYB-004", "hybrid", "局部放电", {"10.2.1-表7"}, top_k=5)
-    retrieval_case("HYB-005", "hybrid", "变压器油温过高怎么处理", {"7.1.5", "7.1.6", "7.1.7", "7.1.8"},
-                   required_all={"7.1.5", "7.1.6", "7.1.8"}, top_k=5)
-    retrieval_case("HYB-006", "hybrid", "今天晚上吃什么", set(), top_k=5)
 
-    known_issue_tests()
-    build_report(OUTPUT)
-    failed = [r for r in RESULTS if r["status"] == "FAIL"]
-    print(json.dumps({"output": str(OUTPUT), "total": len(RESULTS),
-                      "pass": sum(r["status"] == "PASS" for r in RESULTS), "fail": len(failed),
-                      "known": sum(r["status"] == "KNOWN" for r in RESULTS),
-                      "failed_cases": [r["id"] for r in failed]}, ensure_ascii=False))
-    return 1 if failed else 0
+def run_legacy_group():
+    with environment(KB_BACKEND="pure_kb", USE_ROUTER="false"):
+        reset_results(); deterministic_tests(); data_tests(); ask_tests()
+        retrieval_case("VEC-001", "vector", "C\u2082H\u2082\u6ce8\u610f\u503c", {"9.3.1-\u88683"}, top_k=5)
+        retrieval_case("VEC-002", "vector", "\u53d8\u538b\u5668\u6cb9\u6e29\u8fc7\u9ad8\u600e\u4e48\u5904\u7406", {"7.1.5", "7.1.6", "7.1.7", "7.1.8"}, top_k=5)
+        retrieval_case("BM25-001", "bm25", "\u53d8\u538b\u5668\u6cb9\u6e29\u8fc7\u9ad8\u600e\u4e48\u5904\u7406", {"7.1.5", "7.1.6", "7.1.8"}, top_k=3)
+        retrieval_case("BM25-002", "bm25", "\u4e59\u7094\u8d85\u6807\u600e\u4e48\u5904\u7406", {"9.3.1-\u88683"}, top_k=3)
+        retrieval_case("HYB-001", "hybrid", "\u4e59\u7094\u8d85\u6807\u600e\u4e48\u5904\u7406", {"9.3.1-\u88683"}, top_k=5)
+        retrieval_case("HYB-002", "hybrid", "C\u2082H\u2082\u6ce8\u610f\u503c", {"9.3.1-\u88683"}, top_k=5)
+        retrieval_case("HYB-003", "hybrid", "\u4e09\u6bd4\u503c\u6545\u969c\u7c7b\u578b\u5224\u65ad", {"10.2.1-\u88686", "10.2.1-\u88687"}, top_k=5)
+        retrieval_case("HYB-004", "hybrid", "\u5c40\u90e8\u653e\u7535", {"10.2.1-\u88687"}, top_k=5)
+        retrieval_case("HYB-005", "hybrid", "\u53d8\u538b\u5668\u6cb9\u6e29\u8fc7\u9ad8\u600e\u4e48\u5904\u7406", {"7.1.5", "7.1.6", "7.1.7", "7.1.8"}, required_all={"7.1.5", "7.1.6", "7.1.8"}, top_k=5)
+        retrieval_case("HYB-006", "hybrid", "\u4eca\u5929\u665a\u4e0a\u5403\u4ec0\u4e48", set(), top_k=5)
+        known_issue_tests(); store_group("legacy")
+
+
+def run_current_group():
+    with environment(KB_BACKEND="plant_kb", USE_ROUTER="true"):
+        reset_results(); current_tests(); store_group("current")
+
+
+def summarize(group_results):
+    result = {}
+    for name, rows in group_results.items():
+        result[name] = {"total": len(rows), "pass": sum(r["status"] == "PASS" for r in rows), "fail": sum(r["status"] == "FAIL" for r in rows), "known": sum(r["status"] == "KNOWN" for r in rows), "failed_cases": [r["id"] for r in rows if r["status"] == "FAIL"]}
+    return result
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--group", choices=("legacy", "current", "all"), default="all")
+    args = parser.parse_args(argv)
+    GROUP_RESULTS.clear()
+    if args.group in ("legacy", "all"): run_legacy_group()
+    if args.group in ("current", "all"): run_current_group()
+    report = ROOT / "docs" / f"\u56de\u5f52\u6d4b\u8bd5\u62a5\u544a_{datetime.now().strftime('%Y%m%d')}.md"
+    build_markdown_report(GROUP_RESULTS, report)
+    summary = summarize(GROUP_RESULTS); summary["report"] = str(report)
+    print(json.dumps(summary, ensure_ascii=False))
+    return 1 if any(r["status"] == "FAIL" for rows in GROUP_RESULTS.values() for r in rows) else 0
 
 
 if __name__ == "__main__":
