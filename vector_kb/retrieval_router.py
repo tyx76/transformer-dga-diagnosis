@@ -53,7 +53,12 @@ def route_and_retrieve(question: str, top_k: int = 5, shadow: bool = True, trace
         return _empty_result(intent_result)
 
     # 3. 两路检索：hybrid 负责向量 + BM25 + RRF，知识库适配器读取所选后端。
-    hybrid_results = hybrid_retrieve(question, top_k=20, trace=trace)
+    hybrid_results = hybrid_retrieve(
+        question,
+        top_k=20,
+        candidate_k=300,
+        trace=trace,
+    )
     _emit(trace, "混合检索Top-K", hybrid_results[:5])
 
     kb_results = search_knowledge_base(question, route=route, top_k=20)
