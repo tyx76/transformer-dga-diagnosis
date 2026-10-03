@@ -54,6 +54,8 @@ def route_and_retrieve(question: str, top_k: int = 5, shadow: bool = True, trace
         top_k=20,
         candidate_k=300,
         trace=trace,
+        domains=route.get("domains"),
+        intent=intent_result.get("intent"),
     )
     _emit(trace, "混合检索Top-K", hybrid_results[:5])
 

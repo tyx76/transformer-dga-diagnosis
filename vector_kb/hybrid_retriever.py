@@ -108,6 +108,7 @@ def hybrid_retrieve(
     rrf_k: int = 60,
     trace: TraceCallback | None = None,
     intent: str | None = None,
+    domains: list[str] | None = None,
 ) -> list[dict]:
     """Retrieve with original vector query and expanded BM25 query."""
     question = str(question or "").strip()
@@ -130,6 +131,7 @@ def hybrid_retrieve(
 
     embedding_source = config.get("embedding_source")
     intent_name = str(intent or "").strip().lower()
+    intent_source = "router" if intent_name else "internal"
     if not intent_name:
         try:
             classified = rule_classify(question)
@@ -137,6 +139,14 @@ def hybrid_retrieve(
                 intent_name = str(classified.get("intent") or "").strip().lower()
         except Exception:
             LOGGER.warning("Failed to infer intent for query expansion", exc_info=True)
+
+    if trace is not None:
+        print(
+            f"[hybrid] intent={intent_name or 'None'}, source={intent_source} "
+            f"domains={domains or []}",
+            flush=True,
+        )
+        print(f"[查询扩展] intent={intent_name or 'None'}", flush=True)
 
     try:
         expansion = expand_query(question, intent_name)
