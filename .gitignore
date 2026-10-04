@@ -66,6 +66,9 @@ plant_kb/data/knowledge_clean.jsonl
 knowledge/*/index/*.db
 knowledge/*/index/*.db-*
 knowledge/*/index/*.pkl
+knowledge/plant_kb/index/bm25_*.pkl
+knowledge/plant_kb/index/bm25_manifest.json
+knowledge/plant_kb/index/lightweight_metadata.jsonl
 
 # ---- 分离后的知识库大文件 ----
 knowledge/pure_kb/data/clauses.jsonl

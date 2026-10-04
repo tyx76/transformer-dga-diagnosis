@@ -21,6 +21,7 @@ _TITLE_TAIL_WORDS = (
     "处理措施", "检查情况", "处理过程", "安全措施",
     "目录", "前言", "范围", "术语和定义",
 )
+_OVERLAP_WEIGHT = 0.15
 
 
 def _is_body_text(text: str, title: str = "", clause: str = "") -> bool:
@@ -103,6 +104,16 @@ def _normalize_score(value: Any) -> float:
         return 0.0
 
 
+def _score_value(item: dict) -> float:
+    """Read the original fusion score before falling back to a generic score."""
+    for field in ("rrf_score", "score"):
+        if item.get(field) is not None:
+            value = _normalize_score(item.get(field))
+            if value:
+                return value
+    return 0.0
+
+
 def _result_key(item: dict) -> tuple[str, str]:
     doc_id = str(item.get("doc_id") or "")
     clause = str(item.get("clause") or "")
@@ -111,20 +122,35 @@ def _result_key(item: dict) -> tuple[str, str]:
     return "CASE", str(item.get("citation") or item.get("title") or "")
 
 
+def _fill_missing_metadata(target: dict, source: dict) -> None:
+    """Backfill optional metadata when a higher-scored duplicate lacks it."""
+    for field in ("citation_eligible", "is_body", "citation", "page", "domain", "title"):
+        if target.get(field) is None and source.get(field) is not None:
+            target[field] = source.get(field)
+
+
 def _dedupe(results: list[dict]) -> list[dict]:
+    """Deduplicate while preserving input order and the highest-scored copy."""
     best: dict[tuple[str, str], dict] = {}
-    for item in results:
+    order: dict[tuple[str, str], int] = {}
+    for index, item in enumerate(results or []):
         if not isinstance(item, dict):
             continue
         key = _result_key(item)
         current = best.get(key)
-        if current is None or _normalize_score(item.get("score")) > _normalize_score(current.get("score")):
-            best[key] = item
-    return sorted(
-        best.values(),
-        key=lambda item: (1 if is_body_text(item) else 0, _normalize_score(item.get("score"))),
-        reverse=True,
-    )
+        candidate = dict(item)
+        if current is None:
+            best[key] = candidate
+            order[key] = index
+        elif _score_value(item) > _score_value(current):
+            _fill_missing_metadata(candidate, current)
+            best[key] = candidate
+            order[key] = index
+        else:
+            _fill_missing_metadata(current, candidate)
+            order.setdefault(key, index)
+
+    return [best[key] for key in sorted(best, key=lambda item: order[item])]
 
 
 def prioritize_results(
@@ -133,7 +159,7 @@ def prioritize_results(
     top_k: int = 5,
     **kwargs: Any,
 ) -> list[dict]:
-    """Apply the existing body-first and query-overlap ranking to results."""
+    """Rank primarily by RRF score, with a small body/query-overlap adjustment."""
     if question is None:
         question = kwargs.pop("query", None)
     if kwargs:
@@ -142,28 +168,70 @@ def prioritize_results(
         return []
 
     documents = _dedupe(results or [])
-    scores: dict[tuple[str, str], float] = {}
+    if not documents:
+        return []
+
+    question_text = str(question or "")
+    base_scores: dict[tuple[str, str], float] = {}
+    overlap_scores: dict[tuple[str, str], int] = {}
     document_by_key: dict[tuple[str, str], dict] = {}
-    for index, item in enumerate(documents, start=1):
+    first_seen: dict[tuple[str, str], int] = {}
+
+    for index, item in enumerate(documents):
         key = _result_key(item)
         document_by_key[key] = dict(item)
+        first_seen[key] = index
+        base_score = _score_value(item)
+        if base_score <= 0:
+            # Preserve the legacy rank-based fallback for callers that pass
+            # results without a fusion score.
+            base_score = 1.0 / (60.0 + index + 1)
+        base_scores[key] = base_score
+        overlap_scores[key] = query_overlap(document_by_key[key], question_text)
+
+    max_overlap = max(overlap_scores.values(), default=0)
+    final_scores: dict[tuple[str, str], float] = {}
+    for key, item in document_by_key.items():
         body_weight = 1.0 if is_body_text(item) else 0.5
-        scores[key] = body_weight / (60.0 + index)
+        normalized_overlap = (
+            overlap_scores[key] / max_overlap
+            if max_overlap > 0
+            else 0.0
+        )
+        final_scores[key] = (
+            base_scores[key]
+            * body_weight
+            * (1.0 + _OVERLAP_WEIGHT * normalized_overlap)
+        )
 
     ranked_keys = sorted(
-        scores,
+        final_scores,
         key=lambda key: (
-            1 if is_body_text(document_by_key[key]) else 0,
-            query_overlap(document_by_key[key], question or ""),
-            scores[key],
+            -final_scores[key],
+            -base_scores[key],
+            -overlap_scores[key],
+            first_seen[key],
         ),
-        reverse=True,
     )
+
+    # RRF remains primary. For near-ties (within 6%), a materially higher
+    # query overlap is allowed to break the tie so one weak overlap signal
+    # cannot dominate the whole ranking.
+    for index in range(1, len(ranked_keys)):
+        previous = ranked_keys[index - 1]
+        current = ranked_keys[index]
+        previous_score = final_scores[previous]
+        current_score = final_scores[current]
+        if previous_score <= 0 or current_score < previous_score * 0.94:
+            continue
+        if overlap_scores[current] > overlap_scores[previous] * 1.2:
+            ranked_keys[index - 1], ranked_keys[index] = current, previous
 
     output: list[dict] = []
     for key in ranked_keys[: int(top_k)]:
         item = dict(document_by_key[key])
-        item["score"] = round(scores[key], 6)
+        item["rrf_score"] = round(base_scores[key], 12)
+        item["score"] = round(final_scores[key], 6)
         output.append(item)
     return output
 

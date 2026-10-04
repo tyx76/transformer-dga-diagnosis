@@ -14,11 +14,17 @@ DEEPSEEK_API_BASE = os.environ.get("DEEPSEEK_API_BASE", "https://api.deepseek.co
 DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
 SYSTEM_PROMPT = (
     "你是通用电厂设备故障诊断专家。请严格基于提供的规程条文和检修正文回答。"
-    "每条结论必须标注依据，格式为【依据：doc_id 第clause条】。"
+    "引用分为两类："
+    "1）[直接依据] 或 scope=device_specific/procedure 的条文，使用格式"
+    "【依据：doc_id 第clause条】；"
+    "2）[同类机理参考] 或 scope=component_generic/instrument_generic 的条文，"
+    "使用格式【同类机理参考：来源名称】。"
+    "不得把同类机理参考写成【依据】，也不得把设备专项条文伪装成通用机理。"
     "如果检索结果包含与问题相关的正文内容，应回答能够确认的部分，并明确说明不能确认的部分；"
-    "只有完全没有相关内容时才回复“资料未覆盖”。不要编造。"
-    "只有标注为【依据：...】的条文可以引用；"
-    "标注为【背景资料，不可引用】的条文只能用于理解，不得生成引用。"
+    "只要上下文出现至少一个[直接依据]，回答中必须至少出现一次【依据：...】；"
+    "只要上下文出现至少一个[同类机理参考]，回答中必须至少出现一次【同类机理参考：...】；"
+    "即使证据只能支持部分结论，也不要因证据不完整而整体拒答。不要编造来源、条号或页码。"
+    "标注为【背景资料，不可引用】的条文只能用于理解，不得生成任何引用。"
     "不要给出规程之外的处置建议。"
 )
 
@@ -64,8 +70,47 @@ def _is_citation_eligible(chunk: dict) -> bool:
     return bool(chunk.get("doc_id") and chunk.get("clause"))
 
 
+def _scope_value(chunk: dict) -> str:
+    return str(chunk.get("scope") or "").strip()
+
+
+def _evidence_kind(chunk: dict) -> str:
+    return str(chunk.get("evidence_kind") or "").strip()
+
+
+def _is_direct_evidence(chunk: dict) -> bool:
+    scope = _scope_value(chunk)
+    kind = _evidence_kind(chunk)
+    if scope in ("device_specific", "procedure") or kind in ("direct", "procedure"):
+        return True
+    if scope in ("component_generic", "instrument_generic") or kind == "generic_mechanism":
+        return False
+    if str(chunk.get("source") or "") == "generic_mechanism":
+        return False
+    return True
+
+
+def _is_generic_evidence(chunk: dict) -> bool:
+    scope = _scope_value(chunk)
+    kind = _evidence_kind(chunk)
+    return (
+        scope in ("component_generic", "instrument_generic")
+        or kind == "generic_mechanism"
+        or str(chunk.get("source") or "") == "generic_mechanism"
+    )
+
+
+def _source_name(chunk: dict) -> str:
+    return str(
+        chunk.get("doc_id")
+        or chunk.get("citation")
+        or chunk.get("title")
+        or chunk.get("source")
+        or ""
+    ).strip()
+
 def build_context(chunks: list[dict]) -> str:
-    """把 retrieve() 返回的条文拼成参考上下文。"""
+    """把 retrieve() 返回的条文拼成带证据等级标记的参考上下文。"""
     parts = []
     for chunk in chunks or []:
         if not isinstance(chunk, dict):
@@ -73,12 +118,53 @@ def build_context(chunks: list[dict]) -> str:
         doc = chunk.get("doc_id") or ""
         clause = chunk.get("clause") or ""
         text = str(chunk.get("text") or "").strip()
-        if _is_citation_eligible(chunk):
-            parts.append(f"【依据：{_cite(doc, clause)}】{text}")
+        if not text:
+            continue
+
+        if _is_direct_evidence(chunk) and _is_citation_eligible(chunk):
+            parts.append(f"[直接依据] 可引用格式为【依据：{_cite(doc, clause)}】。{text}")
+        elif _is_generic_evidence(chunk):
+            source = _source_name(chunk)
+            parts.append(f"[同类机理参考] 可引用格式为【同类机理参考：{source}】。{text}")
         else:
-            parts.append(f"【背景资料，不可引用】{text}")
+            parts.append(f"[背景资料，不可引用] {text}")
     return "\n\n".join(parts)
 
+_DIRECT_CITATION_RE = re.compile(r"【\s*依据\s*[：:][^】]+】")
+_MECHANISM_CITATION_RE = re.compile(r"【\s*同类机理参考\s*[：:][^】]+】")
+
+
+def _ensure_reference_formats(answer: str, chunks: list[dict]) -> str:
+    """Ensure direct and generic evidence use their required reference formats."""
+    text = str(answer or "")
+    direct = next(
+        (
+            chunk for chunk in (chunks or [])
+            if isinstance(chunk, dict)
+            and _is_direct_evidence(chunk)
+            and _is_citation_eligible(chunk)
+        ),
+        None,
+    )
+    generic = next(
+        (
+            chunk for chunk in (chunks or [])
+            if isinstance(chunk, dict) and _is_generic_evidence(chunk) and _source_name(chunk)
+        ),
+        None,
+    )
+    additions: list[str] = []
+    if direct is not None and not _DIRECT_CITATION_RE.search(text):
+        excerpt = str(direct.get("text") or "").strip()[:180]
+        citation = _cite(direct.get("doc_id") or "", direct.get("clause") or "")
+        additions.append(f"补充直接依据：{excerpt}【依据：{citation}】")
+    if generic is not None and not _MECHANISM_CITATION_RE.search(text):
+        excerpt = str(generic.get("text") or "").strip()[:180]
+        source = _source_name(generic)
+        additions.append(f"同类机理参考：{excerpt}【同类机理参考：{source}】")
+    if additions:
+        text = text.rstrip() + "\n\n" + "\n".join(additions)
+    return text
 
 def generate(question: str, chunks: list[dict]) -> str:
     """基于检索条文调用 DeepSeek 生成回答。
@@ -128,6 +214,7 @@ def generate(question: str, chunks: list[dict]) -> str:
     except Exception as e:
         raise RuntimeError(f"DeepSeek API 调用失败：{e}") from e
     try:
-        return data["choices"][0]["message"]["content"]
+        answer = str(data["choices"][0]["message"]["content"] or "")
     except Exception as e:
         raise RuntimeError(f"DeepSeek 返回格式异常：{data}") from e
+    return _ensure_reference_formats(answer, chunks)

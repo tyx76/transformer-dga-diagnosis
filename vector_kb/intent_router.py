@@ -14,13 +14,20 @@ from typing import Any
 from vector_kb.intent_classifier import classify_intent
 
 INTENT_DOMAIN_MAP = {
-    "boiler": ("boiler",),
-    "turbine": ("turbine",),
-    "generator": ("generator_electrical",),
-    "auxiliary": ("auxiliary",),
+    "boiler": ("boiler", "fault_cases"),
+    "turbine": ("turbine", "fault_cases"),
+    "generator": ("generator_electrical", "fault_cases"),
+    "auxiliary": ("auxiliary", "fault_cases"),
     "safety": ("standards_safety",),
     "transformer": ("transformer_dga",),
     "irrelevant": (),
+}
+
+ADJACENT_DOMAINS = {
+    "turbine": ["turbine", "generator_electrical"],
+    "generator_electrical": ["generator_electrical", "turbine"],
+    "auxiliary": ["auxiliary", "turbine", "boiler"],
+    "boiler": ["boiler", "auxiliary"],
 }
 
 DOC_DEFAULTS = {
@@ -70,6 +77,15 @@ def _domains_for_intents(intents: list[str]) -> list[str]:
     return domains
 
 
+def _adjacent_domains_for_domains(domains: list[str]) -> list[str]:
+    adjacent: list[str] = []
+    for domain in domains:
+        for candidate in ADJACENT_DOMAINS.get(domain, ()):
+            if candidate not in adjacent:
+                adjacent.append(candidate)
+    return adjacent
+
+
 def route_intent(question: str, classification: dict | None = None) -> dict:
     """将意图分类结果转换为适配纯知识库的路由结果。"""
     result = dict(classification or classify_intent(question))
@@ -93,10 +109,13 @@ def route_intent(question: str, classification: dict | None = None) -> dict:
         mode = "search"
         domains = _domains_for_intents(intents)
 
+    adjacent_domains = _adjacent_domains_for_domains(domains)
+
     return {
         "intent": intent,
         "intents": intents,
         "domains": domains,
+        "adjacent_domains": adjacent_domains,
         "filters": filters,
         "mode": mode,
         "slots": slots,
@@ -105,4 +124,10 @@ def route_intent(question: str, classification: dict | None = None) -> dict:
     }
 
 
-__all__ = ["INTENT_DOMAIN_MAP", "DOC_DEFAULTS", "parse_query_slots", "route_intent"]
+__all__ = [
+    "INTENT_DOMAIN_MAP",
+    "ADJACENT_DOMAINS",
+    "DOC_DEFAULTS",
+    "parse_query_slots",
+    "route_intent",
+]

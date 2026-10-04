@@ -7,6 +7,7 @@ from __future__ import annotations
 import importlib
 import json
 import sqlite3
+import time
 from array import array
 from pathlib import Path
 from typing import Any
@@ -101,6 +102,77 @@ def _vector_from_blob(value: Any) -> list[float]:
     return list(vector)
 
 
+_VECTOR_CACHE: dict[str, tuple[tuple[int, int], str, list[dict[str, Any]]]] = {}
+
+
+def _db_signature(path: Path) -> tuple[int, int]:
+    try:
+        stat = path.stat()
+        return (stat.st_size, stat.st_mtime_ns)
+    except OSError:
+        return (0, 0)
+
+
+def _domain_matches(record: dict, allowed_domains: set[str] | list[str] | tuple[str, ...]) -> bool:
+    """Match primary or alternate domains; empty domain metadata remains permissive."""
+    allowed = {str(domain).strip().lower() for domain in allowed_domains}
+    domain = str(record.get("domain") or "").strip().lower()
+    domain_alt = str(record.get("domain_alt") or "").strip().lower()
+    if not domain and not domain_alt:
+        return True
+    return bool((domain and domain in allowed) or (domain_alt and domain_alt in allowed))
+
+
+def _normalize_domains(domains: list[str] | tuple[str, ...] | None) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for raw in domains or []:
+        domain = str(raw or "").strip().lower()
+        if not domain or domain in seen:
+            continue
+        seen.add(domain)
+        result.append(domain)
+    return result
+
+
+def _has_index_on_column(con: sqlite3.Connection, table: str, column: str) -> bool:
+    for row in con.execute(f"PRAGMA index_list({table})"):
+        index_name = row[1]
+        columns = [item[2] for item in con.execute(f"PRAGMA index_info({index_name})")]
+        if columns and columns[0] == column:
+            return True
+    return False
+
+
+def _ensure_domain_index(con: sqlite3.Connection, db_path: Path, debug: bool = False) -> None:
+    columns = {row[1] for row in con.execute("PRAGMA table_info(knowledge)")}
+    if "domain" not in columns:
+        return
+    existed = _has_index_on_column(con, "knowledge", "domain")
+    if existed:
+        return
+    con.execute("CREATE INDEX IF NOT EXISTS idx_knowledge_domain ON knowledge(domain)")
+    con.commit()
+    if debug:
+        print(f"[向量库] 已创建域索引 idx_knowledge_domain ({db_path})", flush=True)
+
+
+def _cache_lookup(db_path: Path, domain: str, signature: tuple[int, int], debug: bool = False):
+    key = f"{db_path.resolve()}::{domain}"
+    cached = _VECTOR_CACHE.get(key)
+    if cached is not None and cached[0] == signature:
+        if debug:
+            print(f"[向量库缓存] 命中 domain={domain}", flush=True)
+        return cached[1], cached[2]
+    if debug:
+        print(f"[向量库缓存] 未命中 domain={domain}", flush=True)
+    return None
+
+
+def _cache_store(db_path: Path, domain: str, signature: tuple[int, int], schema: str, chunks: list[dict[str, Any]]) -> None:
+    key = f"{db_path.resolve()}::{domain}"
+    _VECTOR_CACHE[key] = (signature, schema, chunks)
+
 def _load_chunks(con: sqlite3.Connection) -> list[dict]:
     """Load the legacy vector_kb chunks schema."""
     out = []
@@ -114,6 +186,9 @@ def _load_chunks(con: sqlite3.Connection) -> list[dict]:
             vector = _vector_from_blob(row[3])
         except Exception:
             continue
+        citation_eligible = meta.get("is_citable")
+        if citation_eligible is None:
+            citation_eligible = bool((meta.get("doc_id") or row[1]) and meta.get("clause"))
         out.append({
             "doc_id": meta.get("doc_id") or row[1],
             "clause": meta.get("clause"),
@@ -121,15 +196,17 @@ def _load_chunks(con: sqlite3.Connection) -> list[dict]:
             "text": row[2],
             "page": meta.get("page"),
             "citation": meta.get("citation") or "",
+            "citation_eligible": citation_eligible,
             "domain": meta.get("domain"),
+            "domain_alt": meta.get("domain_alt"),
             "vec": vector,
             "dim": row[4],
         })
     return out
 
 
-def _load_knowledge(con: sqlite3.Connection) -> list[dict]:
-    """Load the plant_kb knowledge schema."""
+def _load_knowledge(con: sqlite3.Connection, domains: list[str] | None = None) -> list[dict]:
+    """Load the plant_kb knowledge schema, optionally filtered by domain in SQL."""
     columns = {
         row[1]
         for row in con.execute("PRAGMA table_info(knowledge)")
@@ -138,8 +215,27 @@ def _load_knowledge(con: sqlite3.Connection) -> list[dict]:
     if missing:
         raise RuntimeError(f"knowledge 表缺少字段：{missing}")
 
+    normalized_domains = _normalize_domains(domains)
+    if normalized_domains and "domain" not in columns:
+        normalized_domains = []
+
+    if normalized_domains:
+        placeholders = ",".join("?" for _ in normalized_domains)
+        if "domain_alt" in columns:
+            query = (
+                f"SELECT * FROM knowledge WHERE domain IN ({placeholders}) "
+                f"OR domain_alt IN ({placeholders})"
+            )
+            params: tuple[Any, ...] = tuple(normalized_domains) * 2
+        else:
+            query = f"SELECT * FROM knowledge WHERE domain IN ({placeholders})"
+            params = tuple(normalized_domains)
+    else:
+        query = "SELECT * FROM knowledge"
+        params = ()
+
     out = []
-    for row in con.execute("SELECT * FROM knowledge"):
+    for row in con.execute(query, params):
         record = dict(row)
         metadata = _json_object(record.get("metadata") or record.get("meta"))
         try:
@@ -154,6 +250,11 @@ def _load_knowledge(con: sqlite3.Connection) -> list[dict]:
         if page is None:
             page = metadata.get("page")
         citation = record.get("citation") or metadata.get("citation") or ""
+        citation_eligible = record.get("is_citable")
+        if citation_eligible is None:
+            citation_eligible = metadata.get("is_citable")
+        if citation_eligible is None:
+            citation_eligible = bool(doc_id and clause)
 
         out.append({
             "doc_id": doc_id,
@@ -162,21 +263,30 @@ def _load_knowledge(con: sqlite3.Connection) -> list[dict]:
             "text": record["text"],
             "page": page,
             "citation": citation,
+            "citation_eligible": citation_eligible,
             "domain": record.get("domain") or metadata.get("domain"),
+            "domain_alt": record.get("domain_alt") or metadata.get("domain_alt"),
             "vec": vector,
             "dim": record.get("dim") or len(vector),
         })
     return out
 
 
-def _load_vectors(con: sqlite3.Connection, schema: str) -> list[dict]:
+def _load_vectors(
+    con: sqlite3.Connection,
+    schema: str,
+    domains: list[str] | None = None,
+) -> list[dict]:
     if schema == "chunks":
-        return _load_chunks(con)
+        chunks = _load_chunks(con)
+        normalized_domains = _normalize_domains(domains)
+        if normalized_domains:
+            allowed = set(normalized_domains)
+            chunks = [chunk for chunk in chunks if _domain_matches(chunk, allowed)]
+        return chunks
     if schema == "knowledge":
-        return _load_knowledge(con)
+        return _load_knowledge(con, domains=domains)
     raise ValueError(f"不支持的 schema：{schema}")
-
-
 def retrieve(
     question: str,
     top_k: int = 3,
@@ -189,24 +299,81 @@ def retrieve(
 ) -> list[dict]:
     """检索条文并返回标准 chunk 列表。
 
-    ``db_path`` 优先于旧参数 ``db``。自动识别 ``chunks`` 和
-    ``knowledge`` 两种 SQLite schema。
+    按域加载只发生在首次调用时；同一域向量在当前进程内缓存。
+    ``domains`` 为空时仍读取整张表，保持向后兼容。
     """
     top_k = max(1, int(top_k))
-    resolved_db = Path(db_path if db_path is not None else db)
+    resolved_db = Path(db_path if db_path is not None else db).resolve()
+    normalized_domains = _normalize_domains(domains)
     embedder = _resolve_embedder(embedding_source)
 
     if not resolved_db.exists():
-        # Preserve the old behavior for a missing default database.
         initializer = connect(resolved_db)
         initializer.close()
 
+    signature = _db_signature(resolved_db)
+    chunks: list[dict[str, Any]] = []
+    schema = ""
     try:
-        con = sqlite3.connect(str(resolved_db))
-        con.row_factory = sqlite3.Row
-        schema = _detect_schema(con, resolved_db)
-        chunks = _load_vectors(con, schema)
-        con.close()
+        if normalized_domains:
+            for domain in normalized_domains:
+                cached = _cache_lookup(resolved_db, domain, signature, debug)
+                if cached is not None:
+                    cached_schema, cached_chunks = cached
+                    schema = schema or cached_schema
+                    chunks.extend(cached_chunks)
+                    continue
+
+                con = sqlite3.connect(str(resolved_db))
+                try:
+                    con.row_factory = sqlite3.Row
+                    schema = _detect_schema(con, resolved_db)
+                    if schema == "knowledge":
+                        _ensure_domain_index(con, resolved_db, debug=debug)
+                    started = time.perf_counter()
+                    loaded = _load_vectors(con, schema, domains=[domain])
+                    elapsed = time.perf_counter() - started
+                finally:
+                    con.close()
+
+                _cache_store(resolved_db, domain, _db_signature(resolved_db), schema, loaded)
+                if debug:
+                    print(
+                        f"[向量库] 加载域={domain} 条数={len(loaded)} 耗时={elapsed:.3f}s",
+                        flush=True,
+                    )
+                chunks.extend(loaded)
+        else:
+            cache_domain = "__all__"
+            cached = _cache_lookup(resolved_db, cache_domain, signature, debug)
+            if cached is not None:
+                schema, cached_chunks = cached
+                chunks = list(cached_chunks)
+            else:
+                con = sqlite3.connect(str(resolved_db))
+                try:
+                    con.row_factory = sqlite3.Row
+                    schema = _detect_schema(con, resolved_db)
+                    if schema == "knowledge":
+                        _ensure_domain_index(con, resolved_db, debug=debug)
+                    started = time.perf_counter()
+                    loaded = _load_vectors(con, schema, domains=None)
+                    elapsed = time.perf_counter() - started
+                finally:
+                    con.close()
+                _cache_store(
+                    resolved_db,
+                    cache_domain,
+                    _db_signature(resolved_db),
+                    schema,
+                    loaded,
+                )
+                if debug:
+                    print(
+                        f"[向量库] 加载域=all 条数={len(loaded)} 耗时={elapsed:.3f}s",
+                        flush=True,
+                    )
+                chunks = loaded
     except Exception as exc:
         if isinstance(exc, RuntimeError):
             raise
@@ -220,15 +387,12 @@ def retrieve(
         )
 
     before_filter = len(chunks)
-    if domains:
-        allowed = {str(domain) for domain in domains}
-        chunks = [
-            chunk for chunk in chunks
-            if not chunk.get("domain") or str(chunk.get("domain")) in allowed
-        ]
+    if normalized_domains:
+        allowed = set(normalized_domains)
+        chunks = [chunk for chunk in chunks if _domain_matches(chunk, allowed)]
     if debug:
         print(
-            f"[向量检索] domains={domains or []} "
+            f"[向量检索] domains={normalized_domains or []} "
             f"过滤前{before_filter}条 过滤后{len(chunks)}条",
             flush=True,
         )
@@ -258,9 +422,10 @@ def retrieve(
             "page": chunk.get("page"),
             "score": score,
             "citation": chunk.get("citation") or "",
+            "citation_eligible": chunk.get("citation_eligible"),
             "domain": chunk.get("domain"),
+            "domain_alt": chunk.get("domain_alt"),
         })
     return hits
-
 
 __all__ = ["retrieve", "FIELD_MAPPINGS"]

@@ -61,6 +61,12 @@ _SUBSCRIPT_DIGITS = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789"
 _DICTIONARY_READY = False
 _INDEX_CACHE: tuple[Path, tuple[Any, ...], list[dict[str, Any]], Any | None] | None = None
 
+_SHARD_CACHE: dict[Path, tuple[tuple[int, int], list[dict[str, Any]], Any]] = {}
+_MANIFEST_CACHE: tuple[Path, tuple[int, int], dict[str, Any]] | None = None
+_LIGHT_METADATA_CACHE: tuple[Path, tuple[int, int], dict[tuple[str, str], dict[str, Any]]] | None = None
+BM25_MANIFEST_FILENAME = "bm25_manifest.json"
+LIGHTWEIGHT_METADATA_FILENAME = "lightweight_metadata.jsonl"
+
 
 class PlantBM25V2Index:
     """Precomputed BM25 index for the plant-bm25-v2 payload."""
@@ -71,6 +77,7 @@ class PlantBM25V2Index:
         df: dict[str, int],
         avgdl: float,
         field_weights: dict[str, int],
+        corpus_size: int | None = None,
         k1: float = 1.5,
         b: float = 0.75,
         epsilon: float = 0.25,
@@ -89,12 +96,20 @@ class PlantBM25V2Index:
             raise ValueError("plant-bm25-v2 field 'field_weights' must be a dict")
 
         self.docs = docs
+        self.num_docs = len(docs)
         self.df = df
         self.field_weights = dict(field_weights)
         self.k1 = float(k1)
         self.b = float(b)
         self.epsilon = float(epsilon)
-        self.corpus_size = len(docs)
+        try:
+            self.corpus_size = int(corpus_size) if corpus_size is not None else len(docs)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("plant-bm25-v2 corpus_size must be numeric") from exc
+        if self.corpus_size <= 0:
+            raise ValueError("plant-bm25-v2 corpus_size must be positive")
+        if self.corpus_size < self.num_docs:
+            raise ValueError("plant-bm25-v2 corpus_size cannot be smaller than docs")
         self.doc_tf: list[dict[str, int]] = []
         self.doc_len: list[int] = []
         self._idf_cache: dict[str, float] = {}
@@ -150,7 +165,7 @@ class PlantBM25V2Index:
         return idf
 
     def get_scores(self, query_tokens: list[str]) -> list[float]:
-        scores = [0.0] * self.corpus_size
+        scores = [0.0] * self.num_docs
         if not query_tokens:
             return scores
         seen: set[str] = set()
@@ -222,6 +237,7 @@ def _load_v2_corpus_metadata(corpus_paths: tuple[Path, ...]) -> dict[str, dict[s
                     "title": item.get("title") or "",
                     "page": item.get("page"),
                     "citation": item.get("citation") or "",
+                    "domain_alt": item.get("domain_alt"),
                 }
     return metadata
 
@@ -236,6 +252,7 @@ def _adapt_v2_document(document: dict[str, Any], metadata: dict[str, Any] | None
         "page": document.get("page") if document.get("page") is not None else extra.get("page"),
         "citation": document.get("citation") or extra.get("citation") or "",
         "domain": document.get("domain") or document.get("module") or extra.get("domain"),
+        "domain_alt": document.get("domain_alt") or extra.get("domain_alt"),
         "_source_id": str(document.get("id") or ""),
     }
 
@@ -248,6 +265,7 @@ def load_plant_bm25_v2(payload: dict[str, Any], corpus_paths: tuple[Path, ...] =
     df = payload["df"]
     avgdl = payload["avgdl"]
     field_weights = payload["field_weights"]
+    corpus_size = payload.get("corpus_size")
     if not isinstance(docs, list):
         raise ValueError("plant-bm25-v2 field 'docs' must be a list")
     if not isinstance(df, dict):
@@ -259,7 +277,13 @@ def load_plant_bm25_v2(payload: dict[str, Any], corpus_paths: tuple[Path, ...] =
         raise ValueError(f"plant-bm25-v2 record_count mismatch: {record_count} != {len(docs)}")
     metadata = _load_v2_corpus_metadata(corpus_paths)
     documents = [_adapt_v2_document(document, metadata.get(str(document.get("id") or ""))) for document in docs]
-    index = PlantBM25V2Index(docs, df, avgdl, field_weights)
+    index = PlantBM25V2Index(
+        docs,
+        df,
+        avgdl,
+        field_weights,
+        corpus_size=corpus_size,
+    )
     return documents, index
 
 
@@ -349,6 +373,7 @@ def _load_corpus(corpus_paths: tuple[Path, ...]) -> list[dict[str, Any]]:
                     "text": text,
                     "page": item.get("page"),
                     "domain": item.get("domain"),
+                    "domain_alt": item.get("domain_alt"),
                 })
     return documents
 
@@ -441,6 +466,220 @@ def _load_or_build_index(
     _INDEX_CACHE = (index_path, signature, documents, bm25)
     return documents, bm25
 
+def _path_signature(path: Path) -> tuple[int, int]:
+    try:
+        stat = path.stat()
+        return (stat.st_size, stat.st_mtime_ns)
+    except OSError:
+        return (0, 0)
+
+
+def _domain_matches(record: dict, allowed_domains: set[str] | list[str] | tuple[str, ...]) -> bool:
+    """Match primary or alternate domains; empty domain metadata remains permissive."""
+    allowed = {str(domain).strip().lower() for domain in allowed_domains}
+    domain = str(record.get("domain") or "").strip().lower()
+    domain_alt = str(record.get("domain_alt") or "").strip().lower()
+    if not domain and not domain_alt:
+        return True
+    return bool((domain and domain in allowed) or (domain_alt and domain_alt in allowed))
+
+
+def _dedupe_domains(domains: list[str] | tuple[str, ...] | None) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for raw in domains or []:
+        domain = str(raw or "").strip().lower()
+        if not domain or domain in seen:
+            continue
+        seen.add(domain)
+        result.append(domain)
+    return result
+
+
+def _load_manifest(index_path: Path) -> dict[str, Any] | None:
+    global _MANIFEST_CACHE
+    path = index_path.parent / BM25_MANIFEST_FILENAME
+    if not path.is_file():
+        return None
+    signature = _path_signature(path)
+    if _MANIFEST_CACHE is not None and _MANIFEST_CACHE[0] == path and _MANIFEST_CACHE[1] == signature:
+        return _MANIFEST_CACHE[2]
+    try:
+        with path.open("r", encoding="utf-8-sig") as stream:
+            manifest = json.load(stream)
+    except Exception:
+        LOGGER.warning("Failed to load BM25 shard manifest: %s", path, exc_info=True)
+        return None
+    if not isinstance(manifest, dict):
+        LOGGER.warning("Invalid BM25 shard manifest: %s", path)
+        return None
+    _MANIFEST_CACHE = (path, signature, manifest)
+    return manifest
+
+
+def _resolve_shard_paths(index_path: Path, domains: list[str]) -> list[Path]:
+    if not domains:
+        return []
+    manifest = _load_manifest(index_path)
+    shard_entries: dict[str, Any] = {}
+    if manifest is not None:
+        entries = manifest.get("shards")
+        if isinstance(entries, dict):
+            shard_entries = entries
+
+    paths: list[Path] = []
+    for domain in domains:
+        entry = shard_entries.get(domain)
+        filename = ""
+        if isinstance(entry, dict):
+            filename = str(entry.get("file") or "")
+        elif isinstance(entry, str):
+            filename = entry
+        if not filename:
+            filename = f"bm25_{domain}.pkl"
+        path = (index_path.parent / filename).resolve()
+        if not path.is_file():
+            return []
+        paths.append(path)
+    return paths
+
+
+def _load_shard(index_path: Path) -> tuple[list[dict[str, Any]], Any]:
+    path = index_path.resolve()
+    signature = _path_signature(path)
+    cached = _SHARD_CACHE.get(path)
+    if cached is not None and cached[0] == signature:
+        return cached[1], cached[2]
+
+    with path.open("rb") as stream:
+        payload = pickle.load(stream)
+    if not isinstance(payload, dict):
+        raise ValueError(f"Unknown BM25 shard payload: {type(payload).__name__}")
+    if payload.get("version") != PLANT_BM25_V2_VERSION:
+        raise ValueError(f"Unsupported BM25 shard version: {payload.get('version')!r}")
+    documents, bm25 = load_plant_bm25_v2(payload, ())
+    _SHARD_CACHE[path] = (signature, documents, bm25)
+    return documents, bm25
+
+
+def _load_lightweight_metadata(index_path: Path) -> dict[tuple[str, str], dict[str, Any]]:
+    global _LIGHT_METADATA_CACHE
+    path = index_path.parent / LIGHTWEIGHT_METADATA_FILENAME
+    if not path.is_file():
+        return {}
+    signature = _path_signature(path)
+    if _LIGHT_METADATA_CACHE is not None and _LIGHT_METADATA_CACHE[0] == path and _LIGHT_METADATA_CACHE[1] == signature:
+        return _LIGHT_METADATA_CACHE[2]
+
+    metadata: dict[tuple[str, str], dict[str, Any]] = {}
+    with path.open("r", encoding="utf-8-sig") as stream:
+        for line in stream:
+            if not line.strip():
+                continue
+            try:
+                item = json.loads(line)
+            except Exception:
+                continue
+            key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+            metadata[key] = item
+    _LIGHT_METADATA_CACHE = (path, signature, metadata)
+    return metadata
+
+
+def _enrich_results_with_lightweight_metadata(
+    results: list[dict[str, Any]],
+    index_path: Path,
+) -> list[dict[str, Any]]:
+    if not results:
+        return results
+    metadata = _load_lightweight_metadata(index_path)
+    for result in results:
+        key = (str(result.get("doc_id") or ""), str(result.get("clause") or ""))
+        item = metadata.get(key)
+        if item:
+            for field in ("title", "citation", "domain", "domain_alt"):
+                if not result.get(field) and item.get(field):
+                    result[field] = item.get(field)
+            result["citation_eligible"] = bool(item.get("is_citable"))
+        else:
+            result.setdefault("citation_eligible", bool(result.get("doc_id") and result.get("clause")))
+    return results
+
+def _bm25_retrieve_sharded(
+    question: str,
+    top_k: int,
+    shard_paths: list[Path],
+    domains: list[str],
+    debug: bool,
+) -> list[dict[str, Any]]:
+    query_tokens = plant_bm25_v2_query_tokens(question)
+    if not query_tokens:
+        return []
+    allowed = set(domains)
+    candidates: list[tuple[float, str, str, dict[str, Any]]] = []
+    total_documents = 0
+    queried_shards: list[str] = []
+
+    for shard_path in shard_paths:
+        documents, bm25 = _load_shard(shard_path)
+        if not documents or bm25 is None:
+            continue
+        queried_shards.append(shard_path.name)
+        total_documents += len(documents)
+        tokens = query_tokens if isinstance(bm25, PlantBM25V2Index) else _tokenize(question)
+        scores = bm25.get_scores(tokens)
+        ranked_indices = sorted(
+            range(len(documents)),
+            key=lambda index: (-float(scores[index]), index),
+        )
+        shard_candidates = 0
+        for index in ranked_indices:
+            score = float(scores[index])
+            if score <= 0.0:
+                continue
+            document = documents[index]
+            domain = str(document.get("domain") or "")
+            if allowed and not _domain_matches(document, allowed):
+                continue
+            candidates.append((
+                score,
+                domain,
+                str(document.get("_source_id") or ""),
+                {
+                    "doc_id": document.get("doc_id"),
+                    "clause": document.get("clause"),
+                    "title": document.get("title") or "",
+                    "text": document.get("text") or "",
+                    "page": document.get("page"),
+                    "score": score,
+                    "domain": document.get("domain"),
+                    "domain_alt": document.get("domain_alt"),
+                },
+            ))
+            shard_candidates += 1
+            if shard_candidates >= top_k:
+                break
+
+    candidates.sort(key=lambda item: (-item[0], item[1], item[2]))
+    results: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for _, _, _, item in candidates:
+        key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append(item)
+        if len(results) >= top_k:
+            break
+
+    if debug:
+        print(
+            f"[BM25分片] domains={domains} shards={queried_shards} "
+            f"records={total_documents} 返回{len(results)}条",
+            flush=True,
+        )
+    return _enrich_results_with_lightweight_metadata(results, shard_paths[0])
+
 def bm25_retrieve(
     question: str,
     top_k: int = 10,
@@ -460,6 +699,17 @@ def bm25_retrieve(
         return []
 
     resolved_index_path = Path(index_path).resolve() if index_path is not None else INDEX_DEFAULT.resolve()
+    normalized_domains = _dedupe_domains(domains)
+    shard_paths = _resolve_shard_paths(resolved_index_path, normalized_domains)
+    if shard_paths:
+        return _bm25_retrieve_sharded(
+            question,
+            requested,
+            shard_paths,
+            normalized_domains,
+            debug,
+        )
+
     if index_path is not None and not resolved_index_path.is_file():
         raise FileNotFoundError(f"BM25 index not found: {resolved_index_path}")
 
@@ -481,16 +731,15 @@ def bm25_retrieve(
     scores = bm25.get_scores(query_tokens)
     candidate_indices = list(range(len(documents)))
     before_filter = len(candidate_indices)
-    if domains:
-        allowed = {str(domain) for domain in domains}
+    if normalized_domains:
+        allowed = set(normalized_domains)
         candidate_indices = [
             index for index in candidate_indices
-            if not documents[index].get("domain")
-            or str(documents[index].get("domain")) in allowed
+            if _domain_matches(documents[index], allowed)
         ]
     if debug:
         print(
-            f"[BM25检索] domains={domains or []} "
+            f"[BM25检索] domains={normalized_domains or []} "
             f"过滤前{before_filter}条 过滤后{len(candidate_indices)}条",
             flush=True,
         )
@@ -513,10 +762,10 @@ def bm25_retrieve(
             "page": document.get("page"),
             "score": score,
             "domain": document.get("domain"),
+            "domain_alt": document.get("domain_alt"),
         })
         if len(results) >= requested:
             break
-    return results
-
+    return _enrich_results_with_lightweight_metadata(results, resolved_index_path)
 
 __all__ = ["bm25_retrieve", "PlantBM25V2Index", "load_plant_bm25_v2", "plant_bm25_v2_query_tokens", "PLANT_BM25_V2_VERSION"]

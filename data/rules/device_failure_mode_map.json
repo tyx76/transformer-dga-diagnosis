@@ -1,0 +1,241 @@
+{
+  "version": "device-failure-mode-map-v1",
+  "updated_at": "2026-10-03",
+  "mappings": [
+    {
+      "device_patterns": [
+        "减温水调节门",
+        "二级减温水调节门"
+      ],
+      "component": "valve",
+      "fault_modes": [
+        "mechanical_jamming",
+        "valve_wear",
+        "dcs_drift",
+        "zero_drift"
+      ],
+      "query_terms": [
+        "减温水",
+        "调节门",
+        "内漏",
+        "卡涩",
+        "手动增减减温水",
+        "阀芯",
+        "DCS",
+        "开度反馈"
+      ],
+      "target_scope": "device_specific"
+    },
+    {
+      "device_patterns": [
+        "疏水调节阀",
+        "高加疏水阀"
+      ],
+      "component": "valve",
+      "fault_modes": [
+        "mechanical_jamming",
+        "valve_wear",
+        "actuator_fault"
+      ],
+      "query_terms": [
+        "疏水",
+        "调节阀",
+        "卡涩",
+        "拒动",
+        "阀芯磨损",
+        "关闭不严",
+        "执行机构"
+      ],
+      "target_scope": "component_generic"
+    },
+    {
+      "device_patterns": [
+        "旁路阀",
+        "调节阀",
+        "伺服阀"
+      ],
+      "component": "valve",
+      "fault_modes": [
+        "mechanical_jamming",
+        "valve_wear",
+        "actuator_fault"
+      ],
+      "query_terms": [
+        "阀门卡涩",
+        "阀芯磨损",
+        "密封面损伤",
+        "执行机构故障",
+        "开度异常"
+      ],
+      "target_scope": "component_generic"
+    },
+    {
+      "device_patterns": [
+        "DCS",
+        "DCS系统"
+      ],
+      "component": "dcs",
+      "fault_modes": [
+        "dcs_drift",
+        "zero_drift"
+      ],
+      "query_terms": [
+        "DCS",
+        "信号漂移",
+        "测量偏差",
+        "零点漂移",
+        "在线校验",
+        "自诊断"
+      ],
+      "target_scope": "instrument_generic"
+    },
+    {
+      "device_patterns": [
+        "变送器",
+        "压力变送器",
+        "温度变送器"
+      ],
+      "component": "transmitter",
+      "fault_modes": [
+        "dcs_drift",
+        "zero_drift"
+      ],
+      "query_terms": [
+        "变送器异常",
+        "信号漂移",
+        "零点漂移",
+        "测量偏差",
+        "接线检查"
+      ],
+      "target_scope": "instrument_generic"
+    },
+    {
+      "device_patterns": [
+        "传感器",
+        "测点",
+        "测温元件"
+      ],
+      "component": "sensor",
+      "fault_modes": [
+        "zero_drift"
+      ],
+      "query_terms": [
+        "传感器漂移",
+        "零点漂移",
+        "校验",
+        "自诊断",
+        "测点异常"
+      ],
+      "target_scope": "instrument_generic"
+    },
+    {
+      "device_patterns": [
+        "阀门开度反馈",
+        "开度反馈"
+      ],
+      "component": "valve_feedback",
+      "fault_modes": [
+        "dcs_drift",
+        "zero_drift"
+      ],
+      "query_terms": [
+        "开度反馈",
+        "零点漂移",
+        "信号漂移",
+        "执行器反馈"
+      ],
+      "target_scope": "instrument_generic"
+    },
+    {
+      "device_patterns": [
+        "高加",
+        "高压加热器"
+      ],
+      "component": "heater",
+      "fault_modes": [
+        "leakage",
+        "mechanical_jamming",
+        "valve_wear"
+      ],
+      "query_terms": [
+        "高加泄漏",
+        "高加疏水",
+        "水位异常",
+        "抽汽逆止门",
+        "隔离",
+        "停机"
+      ],
+      "target_scope": "component_generic"
+    },
+    {
+      "device_patterns": [
+        "磨煤机",
+        "A磨煤机",
+        "B磨煤机",
+        "C磨煤机",
+        "D磨煤机",
+        "E磨煤机",
+        "F磨煤机"
+      ],
+      "component": "coal_mill",
+      "fault_modes": [
+        "blockage",
+        "mechanical_jamming"
+      ],
+      "query_terms": [
+        "堵粉",
+        "堵磨",
+        "堵管",
+        "积粉",
+        "一次风管",
+        "吹扫",
+        "减少给煤量",
+        "增加风量"
+      ],
+      "target_scope": "device_specific"
+    },
+    {
+      "device_patterns": [
+        "一次风管",
+        "一次风"
+      ],
+      "component": "air_pipe",
+      "fault_modes": [
+        "blockage"
+      ],
+      "query_terms": [
+        "堵管",
+        "堵粉",
+        "风量不足",
+        "吹扫",
+        "风粉",
+        "通风"
+      ],
+      "target_scope": "component_generic"
+    },
+    {
+      "device_patterns": [
+        "轴承",
+        "轴瓦",
+        "支持轴承",
+        "推力轴承"
+      ],
+      "component": "bearing",
+      "fault_modes": [
+        "vibration",
+        "overheat",
+        "lubrication_fault"
+      ],
+      "query_terms": [
+        "轴承温度高",
+        "进油温度",
+        "回油温度",
+        "润滑油",
+        "轴振",
+        "盖振",
+        "轴瓦磨损"
+      ],
+      "target_scope": "component_generic"
+    }
+  ]
+}

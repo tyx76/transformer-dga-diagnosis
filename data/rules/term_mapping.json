@@ -1,0 +1,474 @@
+{
+  "version": "term-mapping-v1",
+  "terms": [
+    {
+      "term": "减温水",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "调节门",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "内漏",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "卡涩",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "手动增减减温水",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "阀芯",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "DCS",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "开度反馈",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "疏水",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "调节阀",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "卡涩",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "拒动",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "阀芯磨损",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "关闭不严",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "执行机构",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "阀门卡涩",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "阀芯磨损",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "密封面损伤",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "执行机构故障",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "开度异常",
+      "term_type": "query_alias",
+      "target_component": "valve",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "DCS",
+      "term_type": "query_alias",
+      "target_component": "dcs",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "信号漂移",
+      "term_type": "query_alias",
+      "target_component": "dcs",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "测量偏差",
+      "term_type": "query_alias",
+      "target_component": "dcs",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "零点漂移",
+      "term_type": "query_alias",
+      "target_component": "dcs",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "在线校验",
+      "term_type": "query_alias",
+      "target_component": "dcs",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "自诊断",
+      "term_type": "query_alias",
+      "target_component": "dcs",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "变送器异常",
+      "term_type": "query_alias",
+      "target_component": "transmitter",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "信号漂移",
+      "term_type": "query_alias",
+      "target_component": "transmitter",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "零点漂移",
+      "term_type": "query_alias",
+      "target_component": "transmitter",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "测量偏差",
+      "term_type": "query_alias",
+      "target_component": "transmitter",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "接线检查",
+      "term_type": "query_alias",
+      "target_component": "transmitter",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "传感器漂移",
+      "term_type": "query_alias",
+      "target_component": "sensor",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "零点漂移",
+      "term_type": "query_alias",
+      "target_component": "sensor",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "校验",
+      "term_type": "query_alias",
+      "target_component": "sensor",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "自诊断",
+      "term_type": "query_alias",
+      "target_component": "sensor",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "测点异常",
+      "term_type": "query_alias",
+      "target_component": "sensor",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "开度反馈",
+      "term_type": "query_alias",
+      "target_component": "valve_feedback",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "零点漂移",
+      "term_type": "query_alias",
+      "target_component": "valve_feedback",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "信号漂移",
+      "term_type": "query_alias",
+      "target_component": "valve_feedback",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "执行器反馈",
+      "term_type": "query_alias",
+      "target_component": "valve_feedback",
+      "target_scope": "instrument_generic",
+      "verified": false
+    },
+    {
+      "term": "高加泄漏",
+      "term_type": "query_alias",
+      "target_component": "heater",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "高加疏水",
+      "term_type": "query_alias",
+      "target_component": "heater",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "水位异常",
+      "term_type": "query_alias",
+      "target_component": "heater",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "抽汽逆止门",
+      "term_type": "query_alias",
+      "target_component": "heater",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "隔离",
+      "term_type": "query_alias",
+      "target_component": "heater",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "停机",
+      "term_type": "query_alias",
+      "target_component": "heater",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "堵粉",
+      "term_type": "query_alias",
+      "target_component": "coal_mill",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "堵磨",
+      "term_type": "query_alias",
+      "target_component": "coal_mill",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "堵管",
+      "term_type": "query_alias",
+      "target_component": "coal_mill",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "积粉",
+      "term_type": "query_alias",
+      "target_component": "coal_mill",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "一次风管",
+      "term_type": "query_alias",
+      "target_component": "coal_mill",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "吹扫",
+      "term_type": "query_alias",
+      "target_component": "coal_mill",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "减少给煤量",
+      "term_type": "query_alias",
+      "target_component": "coal_mill",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "增加风量",
+      "term_type": "query_alias",
+      "target_component": "coal_mill",
+      "target_scope": "device_specific",
+      "verified": false
+    },
+    {
+      "term": "堵管",
+      "term_type": "query_alias",
+      "target_component": "air_pipe",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "堵粉",
+      "term_type": "query_alias",
+      "target_component": "air_pipe",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "风量不足",
+      "term_type": "query_alias",
+      "target_component": "air_pipe",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "吹扫",
+      "term_type": "query_alias",
+      "target_component": "air_pipe",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "风粉",
+      "term_type": "query_alias",
+      "target_component": "air_pipe",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "通风",
+      "term_type": "query_alias",
+      "target_component": "air_pipe",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "轴承温度高",
+      "term_type": "query_alias",
+      "target_component": "bearing",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "进油温度",
+      "term_type": "query_alias",
+      "target_component": "bearing",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "回油温度",
+      "term_type": "query_alias",
+      "target_component": "bearing",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "润滑油",
+      "term_type": "query_alias",
+      "target_component": "bearing",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "轴振",
+      "term_type": "query_alias",
+      "target_component": "bearing",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "盖振",
+      "term_type": "query_alias",
+      "target_component": "bearing",
+      "target_scope": "component_generic",
+      "verified": false
+    },
+    {
+      "term": "轴瓦磨损",
+      "term_type": "query_alias",
+      "target_component": "bearing",
+      "target_scope": "component_generic",
+      "verified": false
+    }
+  ]
+}

@@ -12,7 +12,7 @@
 - 本文后续如出现“DGA 主链路”“变压器主对象”等措辞，按历史技术资产阅读，以本节口径为准。
 
 
-> 文档状态：现行单点真相｜更新：2026-10-03。
+> 文档状态：现行单点真相｜更新：2026-10-04。
 
 > 维护：全队每次功能或数据变更后同步
 > 完整文档导航：[`docs/README.md`](README.md)
@@ -35,8 +35,9 @@
   → 规则优先 + LLM 兜底意图分类 classify_intent
   → 意图到 domains / filters / mode 路由 route_intent
   → USE_ROUTER 开关
-      ├─ true：hybrid + plant_kb + RRF
+      ├─ true：hybrid_retrieve（查询扩展 + 向量 + BM25 + RRF + 正文优先）
       └─ false：纯 hybrid_retrieve
+  → 最终 Top-5 证据
   → generate DeepSeek
   → verify_citations
   → 最多重写 2 次
@@ -44,118 +45,142 @@
   → 最终输出
 ```
 
+当前主链路不再执行第二次 `hybrid + plant_kb` 融合。知识库后端、向量库、BM25 语料和索引均由 `KB_BACKEND` 选择。
+
 入口：
 
 ```powershell
-python main.py "变压器油温过高怎么处理"
-python main.py --debug "变压器油温过高怎么处理"
-python main.py
+$env:KB_BACKEND="plant_kb"
+$env:USE_ROUTER="true"
+.\venv\Scripts\python.exe main.py "汽轮机振动" --debug
 ```
 
 关键参数：
 
+- `KB_BACKEND`：默认 `plant_kb`，可回退为 `pure_kb`
+- `USE_ROUTER`：默认 `true`
 - 向量默认阈值：`min_score=0.45`
-- hybrid 与 plant_kb 候选池：各 20 条
+- hybrid 候选池：`candidate_k=300`
 - 最终上下文：Top-5
 - RRF 平滑常数：`k=60`
-- 当前融合权重：hybrid 1.0 / plant_kb 1.0
-- 知识库范围：`plant_kb` 默认只启用已核验记录；OCR 未复核数据需显式设置 `KB_INCLUDE_UNREVIEWED=true`
-- 过渡兜底：`plant_kb` 无可用结果时，默认允许旧 `pure_kb` 作为空结果兜底（`KB_BACKUP_FALLBACK=true`）
-- 引用重写：初次生成 + 最多 2 次重写
-- DeepSeek：`deepseek-chat`，temperature=0.1，max_tokens=800
+- 查询扩展：向量使用原始 query，BM25 使用扩展 query
+- 多域结果：保留每个目标域最高排名结果
+- 引用重写：最多 2 次
+- 生成模型：`deepseek-chat`
 
 ## 3. 资产与模块
 
 | 类别 | 位置 | 状态 |
 |---|---|---|
-| 统一语料 | `data/corpus/clauses.jsonl`，123 条（722 判据 5 + 572 条款 118） | 本地生成，不提交 |
-| 统一脚本 | `scripts/build_unified_corpus.py` | 可用 |
-| 向量库 | `vector_kb/knowledge.db`，123 块，bge-m3 1024 维 | 本地资产，不提交 |
-| 主知识库 | `plant_kb/`，3800 条、六领域、显式 domains/filters API | 已接入检索路由 |
-| 旧知识库备份 | `backups/pure_kb_20260928/` | 本地备份；仅在新库无结果时兜底，不是首选 |
-| 向量检索 | `vector_kb/retrieval.py` | 可用 |
-| BM25 | `vector_kb/bm25_retriever.py` + `bm25_index.pkl` | v2，源文件变化后自动重建 |
-| RRF | `vector_kb/rrf_fusion.py` | 可用 |
-| 混合检索 | `vector_kb/hybrid_retriever.py` | 领域过滤 + 向量 + BM25 + RRF |
+| 主知识库 | `knowledge/plant_kb/`，15,188 条、七领域 | 当前主数据源 |
+| 主向量库 | `knowledge/plant_kb/index/knowledge.db` | 本地资产，不提交 |
+| 主 BM25 | `knowledge/plant_kb/index/bm25_index.pkl`，`plant-bm25-v2` | 本地资产，不提交 |
+| 旧知识库 | `knowledge/pure_kb/` | 显式回退后端 |
+| 检索入口 | `vector_kb/retrieval_router.py` | 意图识别 + hybrid 调度 |
+| 向量检索 | `vector_kb/retrieval.py` | SQLite schema 探测、domain 过滤、余弦检索 |
+| BM25 | `vector_kb/bm25_retriever.py` | v2 索引加载、domain 过滤 |
+| RRF | `vector_kb/rrf_fusion.py` | 向量和 BM25 排名融合 |
+| 混合检索 | `vector_kb/hybrid_retriever.py` | 查询扩展 + 向量 + BM25 + RRF |
+| 正文重排 | `vector_kb/chunk_filter.py` | 正文优先、查询重叠、Top-5 |
 | 意图分类 | `vector_kb/intent_classifier.py` + `data/rules/intent_rules.json` | 规则优先、LLM 兜底、多意图 |
 | 意图路由 | `vector_kb/intent_router.py` | intent → domains/filters/mode |
-| KB 适配 | `vector_kb/knowledge_base_adapter.py` | 默认 plant_kb，字段归一化、dp 过滤、去重、RRF |
-| 检索调度 | `vector_kb/retrieval_router.py` | 意图 + hybrid + plant_kb |
-| 领域过滤 | `vector_kb/domain_guard.py` | 规则版 |
-| 生成 | `vector_kb/generation.py` | DeepSeek 生成 |
-| 引用校验 | `vector_kb/citation_verifier.py` | 校验、重写提示、无依据句删除 |
-| 调试 CLI | `vector_kb/cli.py`：`ingest/info/query/ask` | 纯向量链路，仅用于调试对比 |
-| 主入口 | `main.py`：路由检索 + 生成 + 引用校验 + `--debug` | 可用 |
-| 规则基线 | `scripts/dga_ratio.py`，样本归并准确率 61.8% | 可用，但尚未接入 main |
-| DGA 样本 | `data/samples/dga_samples_uL_per_L.csv`，3466 条 | 可用于规则评测 |
-| 验收用例 | `data/evaluation/acceptance_cases.jsonl`，50 条 | 已建立 |
-| 文档 | `docs/README.md` + `docs/00–10` + notes/exam_proof | 2026-09-27 已整理 |
-| 调研归档 | `survey/`，初次与第二轮分开 | 2026-09-27 已整理 |
+| 查询扩展 | `vector_kb/query_expander.py` + `data/rules/synonym_rules.json` | 仅作用于 BM25 |
+| KB 适配 | `vector_kb/knowledge_base_adapter.py` | 旧 KB 接口，主链路未调用，已标记 deprecated |
+| 生成 | `vector_kb/generation.py` | DeepSeek 生成和引用格式约束 |
+| 引用校验 | `vector_kb/citation_verifier.py` | 层级条号、重写提示、无效句删除 |
+| 回归测试 | `scripts/run_regression.py` | legacy/current 双环境 |
+| 评测用例 | `data/evaluation/acceptance_cases.jsonl` 等 | 历史 50 条和通用设备题库 |
+| 文档 | `README.md` + `docs/00–14` | 2026-10-03 完成当前口径合并 |
 
 ## 4. 已验证结果
 
 | 项目 | 结果 | 日期/口径 |
 |---|---:|---|
-| 规则三比值基线 | 61.8% | 220kV，归并标签口径 |
-| 自动回归 | 23 通过 / 0 失败 / 1 已知项 | 2026-09-18，共 24 项 |
-| 50 条离线检索评测 | Top-5 76.92%（30/39） | 2026-09-22，规则意图和非生成代理指标 |
-| RRF 权重实验 | 四组持平 | A=1.0/1.0 暂定 |
-| 真实 DeepSeek A/B | A 50.00% → B 83.33% | 7 条关键用例，样本小 |
-| 引用正确率 | 100% | 2026-09-22 离线代理口径 |
-| 无关问题拒答率 | 100% | 2026-09-22 离线代理口径 |
+| current 回归 | 7 通过 / 0 失败 | 2026-10-03，plant_kb + router |
+| legacy 回归 | 23 通过 / 0 失败 / 1 已知 | 2026-10-03，pure_kb + 旧链路 |
+| 50 条离线检索评测 | Top-5 76.92%（30/39） | 2026-09-22，历史 DGA 专项 |
+| 真实 DeepSeek A/B | A 50.00% → B 83.33% | 7 条历史关键用例，样本小 |
+| 138 题通用设备 API 快照 | 来源命中 @5 26.72%，关键词覆盖 21.79%，平均 2,537.40 ms | 2026-09-28，清洗前/旧路由 |
+| 引用校验结构代理 | 100% | 历史离线口径 |
+| 无关问题拒答率 | 100% | 历史离线代理口径 |
 
-代表性检索结果：
+代表性结果：
 
 | 查询 | 结果 |
 |---|---|
-| `变压器油温过高怎么处理` | 混合 Top-3：`7.1.5 / 7.1.8 / 7.1.6` |
-| `乙炔超标怎么处理` | BM25、混合检索 Top-1 均为 `9.3.1-表3` |
-| `C₂H₂注意值` | Top-1 为 `9.3.1-表3` |
-| `今天晚上吃什么` | 领域过滤直接拒绝，不调用生成 |
+| `汽轮机振动` | 规则意图 `turbine`，domain 过滤为 `turbine` |
+| `锅炉过热器A侧二级减温水调节门内漏` | 查询扩展匹配“调节门”，BM25 使用扩展 query |
+| `乙炔超标怎么处理` | 规则意图 `transformer`，当前可走 `transformer_dga` 领域 |
+| `16.3.2` 引用且条文为 `16.3` | 层级匹配通过 |
+| 无关问题 | 意图判定 `irrelevant`，不检索、不生成 |
 
+### 4.1 2026-10-04 最新验证
+
+| 项目 | 结果 | 口径 |
+|---|---:|---|
+| 138 题 Top-5 来源命中 | 56/116（48.28%） | 当前 plant_kb、当前路由 |
+| 138 题 Top-5 条号命中 | 36/73 | 有数字条号的题目 |
+| 引用校验通过 | 136/138（98.55%） | 端到端生成后校验 |
+| 拒答率 | 0.00% | 138 题 |
+| 参考答案覆盖率 | 56.97% | 关键词覆盖代理 |
+| 平均耗时 | 9731.24 ms | 端到端单题平均 |
+| smoke 回归 | 8/8 通过 | 2026-10-04 分层回归 |
+| core 回归 | 24/24 通过 | 2026-10-04 分层回归 |
+| full 回归 | 136/138 通过 | 138 题；失败为 FULL-088、FULL-089 |
+
+最新报告：
+
+- [`评测报告_138题_20261004.md`](评测报告_138题_20261004.md)
+- [`回归测试分层汇总_20261004.md`](回归测试分层汇总_20261004.md)
+- [`domain_guard误匹配修复_20261004.md`](domain_guard误匹配修复_20261004.md)
+- [`引用校验失败诊断_FULL-088_FULL-089.md`](引用校验失败诊断_FULL-088_FULL-089.md)
+- [`质量诊断索引.md`](质量诊断索引.md)
 ## 5. 当前问题与待办
 
 | 优先级 | 事项 | 状态 | 下一步 |
 |---|---|---|---|
-| P0 | 通用设备意图与领域迁移 | 规则层已完成 | 七类规则和域映射已切换；LLM 兜底类别、生成提示词和评测口径待同步 |
-| P0 | 排序层瓶颈 | 已定位 | 目标条文常已召回但被挤出 Top-5；评估 Reranker 与查询改写 |
-| P1 | 722 `9.3.3 / 10.2.4 / 10.3` 正文原则条款 | 待补 | 按 `docs/07` 切条、页码校验、重新入库 |
-| P1 | 572 页码映射 | 待补 | 从合法原文补齐 page 字段 |
-| P1 | 真实 DeepSeek 端到端评测 | 部分完成 | 在 50 条集上扩大真实生成样本 |
-| P1 | 检索质量闸门 | 设计完成 | 参考 Self-RAG/CRAG，增加相关性、支持度和拒答判断 |
-| P2 | C6 FaultSeer 式 Agentic 路由 | 暂缓 | 先稳定规则、检索和评测底座 |
-| P2 | embedding 参数化 | 暂缓 | 支持切换模型与测试维度 |
-| P2 | 572 表格、GB 26860、中文故障案例 | 阶段二 | 取得合法材料后补充 |
+| P0 | v3 `failure_mode_rules.json` 中文内容损坏 | 待成员重新导出 | 验证 UTF-8 和关键词完整性 |
+| P0 | 接入 `scope / evidence_kind / applies_to` | 待开发 | 修复规则后接入检索和排序 |
+| P0 | 当前 138 题端到端复测 | 已完成 | 2026-10-04 已跑，来源命中 56/116；继续处理未命中题 |
+| P1 | 排序层瓶颈 | 已定位并部分修复 | 4 题排序问题已修复；剩余问题评估 Reranker 和查询规划 |
+| P1 | FULL-088/FULL-089 引用校验 | 已定位 | 自由文本条号含多个“第”时校验器二次截断；不是编造条号 |
+| P1 | 138 题来源未命中 | 60 题 | 重点处理汽轮机来源命中率低和 OCR 切块问题 |
+| P1 | `candidate_k=300` 临时扩池 | 待优化 | 用查询规划和精排替代无边界候选池 |
+| P1 | OCR 切块质量 | 待数据侧处理 | 保留条号、页码和原始行号后重切 |
+| P2 | 扩充 current 回归 | 进行中 | 增加锅炉、汽轮机、发电机、辅机和安全用例 |
+| P2 | 受控 Agent 工作流 | 后置 | 当前保持受控单轮 RAG |
 
 已关闭：
 
 - KNOWN-002 由桩响应推断，真实 API 未复现，已撤销。
-- RRF 权重并非未验证：四组方案结果持平，当前保留 1.0/1.0。
-- 意图路由、domain 过滤和 plant_kb 融合已接入，不再列为待开发项。
+- RRF 权重实验已完成，四组方案指标持平。
+- 意图路由、domain 过滤、查询扩展、正文优先和引用层级校验已接入。
+- 主链路重复的 `hybrid + KB` 融合已移除。
 
 ## 6. 当前限制
 
-1. 当前代码意图类别仍偏变压器 DGA，尚未迁移到通用电厂设备领域。
-2. 通用设备主知识库存在多个候选版本，正式路径和同源 BM25 索引尚未统一。
-3. 生成提示词和报告结构仍需要从“变压器专家”迁移为“电厂设备诊断专家”。
-4. `vector_kb/cli.py query/ask` 不包含完整路由、精排和引用相关性校验。
-5. 旧 50 条评测与 138 条通用设备题库的口径需要分开维护。
+1. 当前系统是受控单轮 RAG，不是完整多步 Agent。
+2. 引用校验只验证条号和文档号是否来自检索结果，不证明语义正确。
+3. 部分 OCR 文本、页码和空条号仍影响来源命中率。
+4. 138 题复测已完成，但 Top-5 来源命中率约 48.28%，来源未命中仍有 60 题。
+5. 完整知识库依赖本地合法材料和成员交付包，干净 clone 不保证重建全量数据。
+6. DGA、DL/T 722/572、`pure_kb` 和三比值规则仅作为可选专项或回退能力。
 
 ## 7. 下一步顺序
 
-1. 将意图和领域路由迁移到 boiler、turbine、generator_electrical、auxiliary 等通用设备领域。
-2. 统一 plant_kb 正式数据源、向量库和 BM25 索引。
-3. 基于 138 条通用设备题库实现端到端自动评测。
-4. 评估查询改写和 Cross-Encoder/Reranker，解决排序层瓶颈。
-5. 更新生成提示词、报告结构和引用相关性校验。
-6. DGA 规则、722/572 资产和旧 50 条评测保留为专项能力，后续可选接入。
+1. 修复 `FULL-088`、`FULL-089` 的自由文本条号解析问题。
+2. 针对 138 题中 60 道来源未命中题做检索和排序优化。
+3. 评估 Reranker 和查询规划，降低 `candidate_k`。
+4. 优化 full 端到端回归耗时，当前约 22.5 分钟。
+5. 冻结代码和文档，完成提交前安全检查。
 
 ## 8. 远程与工作区状态
 
-- `origin/main` 当前基线：`847077a docs: record retrieval ranking diagnosis`。
-- 2026-09-27 正在整理 `survey/` 目录迁移和全部 Markdown 文档。
+- 当前 `HEAD`：`37b08e8 test: split legacy and current regression groups`。
+- `origin/main` 本地引用：`5538bd0`；本地 `main` 领先 16 个提交。
+- 2026-10-04 已补充最新 138 题评测、分层回归、质量诊断索引和证据索引。
 - 工作区存在未提交改动时，以 `git status` 为准。
-- 不提交：标准/论文 PDF、第三方原始数据、`knowledge.db`、`bm25_index.pkl`、统一语料、572 条款文件和 `.env`。
+- 不提交：标准/论文 PDF、第三方原始数据、知识库 DB、BM25 索引、统一语料和 `.env`。
 
 ## 9. 文档地图
 
@@ -166,10 +191,12 @@ python main.py
 | 02 | 概念与学习路线 | 基础概念、技术学习路线和读论文方法 |
 | 03 | 技术路线调研 | 知识增强路线分类、优劣与选型依据 |
 | 04 | 任务二方案与评测 | 文本处理、知识组织、规则基线与评测 |
-| 05 | 开发日志与日程 | 日志、日程、卡点、团队规范 |
+| 05 | 开发日志与日程 | 9/8–10/4 日志、现行日程、里程碑、卡点和团队规范 |
 | 06 | 文献速览与笔记索引 | 核心论文摘要与笔记导航 |
 | 07 | 切条与元数据规范 | 字段、条号、切分粒度和入库校验 |
-| 08 | 验收记录 | 检索、生成、RRF、引用、路由和实跑结果 |
-| 09 | 实现方案 | 当前架构、数据边界、路线图和验收标准 |
+| 08 | 验收与评测记录 | 历史验收、current/legacy 回归、指标和已知问题 |
+| 09 | 实现方案与架构 | 主链路、模块职责、知识库分层、设计依据和路线图 |
 | 10 | 文献通读与路线映射 | 文献总览、技术路线和设计依据索引 |
 | — | `docs/README.md` | 全量导航与文档状态规范 |
+| — | [`质量诊断索引.md`](质量诊断索引.md) | 检索、排序、领域守卫和引用诊断入口 |
+| — | [`exam_proof/README.md`](exam_proof/README.md) | 原始评测证据和附件索引 |

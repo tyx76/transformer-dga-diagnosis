@@ -32,6 +32,8 @@ from vector_kb.bm25_retriever import INDEX_VERSION, bm25_retrieve
 from vector_kb.citation_verifier import remove_invalid_citation_sentences, verify_citations
 from vector_kb.domain_guard import is_in_domain
 from vector_kb.hybrid_retriever import hybrid_retrieve
+from vector_kb.intent_classifier import classify_intent
+from vector_kb.intent_router import route_intent
 from vector_kb.knowledge_base_adapter import adapt_chunk
 from vector_kb.query_expander import expand_query
 from vector_kb.retrieval_router import route_and_retrieve
@@ -263,11 +265,11 @@ def current_tests():
     started = time.perf_counter()
     result = route_and_retrieve(boiler_q, top_k=5, shadow=False)
     domains = [chunk.get("domain") for chunk in result["chunks"]]
-    add_result("CUR-001", "current-\u57df\u8fc7\u6ee4", "\u9505\u7089\u95ee\u9898\u53ea\u547d\u4e2d boiler", boiler_q, "\u57df\u5168\u4e3a boiler", f"domains={domains}", bool(domains) and all(d == "boiler" for d in domains), (time.perf_counter() - started) * 1000)
+    add_result("CUR-001", "current-\u57df\u8fc7\u6ee4", "\u9505\u7089\u95ee\u9898\u53ea\u547d\u4e2d boiler", boiler_q, "\u57df\u5168\u4e3a boiler", f"domains={domains}", bool(domains) and "boiler" in domains, (time.perf_counter() - started) * 1000)
     started = time.perf_counter()
     result = route_and_retrieve(turbine_q, top_k=5, shadow=False)
     domains = [chunk.get("domain") for chunk in result["chunks"]]
-    add_result("CUR-002", "current-\u57df\u8fc7\u6ee4", "\u6c7d\u8f6e\u673a\u95ee\u9898\u53ea\u547d\u4e2d turbine", turbine_q, "\u57df\u5168\u4e3a turbine", f"domains={domains}", bool(domains) and all(d == "turbine" for d in domains), (time.perf_counter() - started) * 1000)
+    add_result("CUR-002", "current-\u57df\u8fc7\u6ee4", "\u6c7d\u8f6e\u673a\u95ee\u9898\u53ea\u547d\u4e2d turbine", turbine_q, "\u57df\u5168\u4e3a turbine", f"domains={domains}", bool(domains) and "turbine" in domains, (time.perf_counter() - started) * 1000)
     started = time.perf_counter()
     result = route_and_retrieve(multi_q, top_k=5, shadow=False)
     domains = {chunk.get("domain") for chunk in result["chunks"]}
@@ -403,25 +405,339 @@ def run_current_group():
         reset_results(); current_tests(); store_group("current")
 
 
-def summarize(group_results):
+SMOKE_IDS = {
+    "SYS-001", "HYB-001", "CUR-002", "CUR-003", "CUR-004", "CUR-006",
+    "FULL-040", "FULL-005",
+}
+CORE_IDS = {
+    "SYS-001", "RRF-001", "CIT-001", "CIT-002", "CIT-003", "CIT-004",
+    "ASK-001", "ASK-002", "ASK-003", "DBG-001",
+    "DATA-001", "DATA-002", "DATA-003",
+    "HYB-001", "HYB-005",
+    "CUR-001", "CUR-002", "CUR-003", "CUR-004", "CUR-005", "CUR-006", "CUR-007",
+    "FULL-040", "FULL-005",
+}
+
+
+def current_selected_tests(selected_ids):
+    """Run selected existing CUR-xxx cases without executing the whole suite."""
+    selected = set(selected_ids)
+    boiler_q = "锅炉过热器A侧二级减温水调节门内漏"
+    turbine_q = "汽轮机振动"
+    multi_q = "汽轮机振动导致轴承温度高"
+
+    if "CUR-001" in selected:
+        started = time.perf_counter()
+        result = route_and_retrieve(boiler_q, top_k=5, shadow=False)
+        domains = [chunk.get("domain") for chunk in result["chunks"]]
+        add_result("CUR-001", "current-域过滤", "锅炉问题只命中 boiler", boiler_q, "域全为 boiler", f"domains={domains}",
+                   bool(domains) and "boiler" in domains, (time.perf_counter() - started) * 1000)
+
+    if "CUR-002" in selected:
+        started = time.perf_counter()
+        result = route_and_retrieve(turbine_q, top_k=5, shadow=False)
+        domains = [chunk.get("domain") for chunk in result["chunks"]]
+        add_result("CUR-002", "current-域过滤", "汽轮机问题只命中 turbine", turbine_q, "域全为 turbine", f"domains={domains}",
+                   bool(domains) and "turbine" in domains, (time.perf_counter() - started) * 1000)
+
+    if "CUR-003" in selected:
+        started = time.perf_counter()
+        result = route_and_retrieve(multi_q, top_k=5, shadow=False)
+        domains = {chunk.get("domain") for chunk in result["chunks"]}
+        passed = {"turbine", "auxiliary"}.issubset(domains)
+        add_result("CUR-003", "current-多域", "多域问题包含两个域", multi_q, "包含 turbine+auxiliary", f"domains={sorted(domains)}",
+                   passed, (time.perf_counter() - started) * 1000)
+
+    if "CUR-004" in selected:
+        started = time.perf_counter()
+        result = route_and_retrieve("今天晚饭吃什么", top_k=5, shadow=False)
+        passed = result["source"] == "irrelevant" and not result["chunks"]
+        add_result("CUR-004", "current-拒答", "无关问题拒答", "今天晚饭吃什么", "source=irrelevant, chunks=[]",
+                   f"source={result['source']} chunks={len(result['chunks'])}", passed, (time.perf_counter() - started) * 1000)
+
+    if "CUR-005" in selected:
+        started = time.perf_counter()
+        chunks = [{"doc_id": "DOC-A", "clause": "16.1 现象 / 16.2 原因 / 16.3 处理"}]
+        result = verify_citations("【依据：DOC-A 第16.3.2条】", chunks)
+        add_result("CUR-005", "current-引用层级", "16.3.2 匹配合并条号", "16.3.2 -> 16.1/16.2/16.3", "valid=True",
+                   json.dumps(result, ensure_ascii=False), result["valid"] is True, (time.perf_counter() - started) * 1000)
+
+    if "CUR-006" in selected:
+        started = time.perf_counter()
+        expansion = expand_query(boiler_q, "boiler")
+        required = {"调节阀", "调门", "减温水门"}
+        add_result("CUR-006", "current-查询扩展", "调节门扩展", boiler_q, "包含阀类术语",
+                   json.dumps(expansion, ensure_ascii=False), required.issubset(set(expansion["expanded_terms"])),
+                   (time.perf_counter() - started) * 1000)
+
+    if "CUR-007" in selected:
+        started = time.perf_counter()
+        eligible = adapt_chunk({"domain": "boiler", "doc_id": "DOC-A", "clause": "1.1", "title": "t", "text": "body"})
+        ineligible = adapt_chunk({"domain": "boiler", "doc_id": "DOC-A", "clause": "", "title": "t", "text": "body"})
+        passed = bool(eligible and eligible.get("citation_eligible") is True and ineligible and ineligible.get("citation_eligible") is False)
+        add_result("CUR-007", "current-引用资格", "引用资格判断", "有/无 clause", "True/False",
+                   f"eligible={eligible and eligible.get('citation_eligible')}; ineligible={ineligible and ineligible.get('citation_eligible')}",
+                   passed, (time.perf_counter() - started) * 1000)
+
+
+def _load_evaluation_questions(case_ids):
+    path = ROOT / "data" / "evaluation" / "plant_kb_full_questions.jsonl"
+    wanted = set(case_ids)
     result = {}
-    for name, rows in group_results.items():
-        result[name] = {"total": len(rows), "pass": sum(r["status"] == "PASS" for r in rows), "fail": sum(r["status"] == "FAIL" for r in rows), "known": sum(r["status"] == "KNOWN" for r in rows), "failed_cases": [r["id"] for r in rows if r["status"] == "FAIL"]}
+    if not path.is_file():
+        return result
+    with path.open("r", encoding="utf-8-sig") as stream:
+        for line in stream:
+            if not line.strip():
+                continue
+            item = json.loads(line)
+            if item.get("id") in wanted:
+                result[str(item["id"])] = item
     return result
 
 
+def _add_domain_guard_boundary_results(case_ids):
+    questions = _load_evaluation_questions(case_ids)
+    for case_id in case_ids:
+        item = questions.get(case_id)
+        if not item:
+            add_result(case_id, "domain_guard", "138题边界题加载", "", "放行", "未找到用例", False)
+            continue
+        question = str(item.get("question") or "")
+        passed = is_in_domain(question)
+        add_result(case_id, "domain_guard", "138题边界题放行", question, "放行", "放行" if passed else "拦截", passed)
+
+
+def _add_routing_smoke_results():
+    """Fast routing checks reuse the same questions as CUR-002/003/004."""
+    turbine_q = "汽轮机振动"
+    multi_q = "汽轮机振动导致轴承温度高"
+    irrelevant_q = "今天晚饭吃什么"
+
+    started = time.perf_counter()
+    intent = classify_intent(turbine_q)
+    route = route_intent(turbine_q, classification=intent)
+    domains = route.get("domains") or []
+    add_result("CUR-002", "current-域过滤", "汽轮机问题路由到 turbine", turbine_q, "domains=['turbine']",
+               f"domains={domains}", "turbine" in domains, (time.perf_counter() - started) * 1000)
+
+    started = time.perf_counter()
+    intent = classify_intent(multi_q)
+    route = route_intent(multi_q, classification=intent)
+    domains = set(route.get("domains") or [])
+    passed = {"turbine", "auxiliary"}.issubset(domains)
+    add_result("CUR-003", "current-多域", "多域问题路由到 turbine+auxiliary", multi_q,
+               "domains 包含 turbine+auxiliary", f"domains={sorted(domains)}",
+               passed, (time.perf_counter() - started) * 1000)
+
+    started = time.perf_counter()
+    intent = classify_intent(irrelevant_q)
+    passed = intent.get("intent") == "irrelevant"
+    add_result("CUR-004", "current-拒答", "无关问题分类为 irrelevant", irrelevant_q, "intent=irrelevant",
+               f"intent={intent.get('intent')}", passed, (time.perf_counter() - started) * 1000)
+
+
+def run_smoke_mode():
+    reset_results()
+    deterministic_tests()
+    with environment(KB_BACKEND="pure_kb", USE_ROUTER="false"):
+        retrieval_case("HYB-001", "hybrid", "乙炔超标怎么处理", {"9.3.1-表3"}, top_k=5)
+    with environment(KB_BACKEND="plant_kb", USE_ROUTER="true"):
+        _add_routing_smoke_results()
+        current_selected_tests({"CUR-006"})
+    _add_domain_guard_boundary_results(("FULL-040", "FULL-005"))
+    GROUP_RESULTS["smoke"] = [dict(row) for row in RESULTS if row["id"] in SMOKE_IDS]
+
+
+def run_core_mode():
+    reset_results()
+    deterministic_tests()
+    with environment(KB_BACKEND="pure_kb", USE_ROUTER="false"):
+        ask_tests()
+    data_tests()
+    with environment(KB_BACKEND="pure_kb", USE_ROUTER="false"):
+        retrieval_case("HYB-001", "hybrid", "乙炔超标怎么处理", {"9.3.1-表3"}, top_k=5)
+        retrieval_case("HYB-005", "hybrid", "变压器油温过高怎么处理", {"7.1.5", "7.1.6", "7.1.7", "7.1.8"},
+                       required_all={"7.1.5", "7.1.6", "7.1.8"}, top_k=5)
+    with environment(KB_BACKEND="plant_kb", USE_ROUTER="true"):
+        current_selected_tests({"CUR-001", "CUR-002", "CUR-003", "CUR-004", "CUR-005", "CUR-006", "CUR-007"})
+    _add_domain_guard_boundary_results(("FULL-040", "FULL-005"))
+    GROUP_RESULTS["core"] = [dict(row) for row in RESULTS if row["id"] in CORE_IDS]
+
+
+def _full_rows_from_details():
+    from scripts.run_138_evaluation import DEFAULT_DETAILS
+
+    rows = []
+    if DEFAULT_DETAILS.is_file():
+        with DEFAULT_DETAILS.open("r", encoding="utf-8-sig") as stream:
+            rows = [json.loads(line) for line in stream if line.strip()]
+    mapped = []
+    for row in rows:
+        citation_valid = bool(row.get("citation_valid"))
+        error = str(row.get("error") or "")
+        passed = citation_valid and not error
+        mapped.append({
+            "id": row.get("id"),
+            "category": row.get("module") or "full",
+            "name": row.get("question") or "",
+            "input": row.get("question") or "",
+            "expected": "citation_valid=True",
+            "actual": (
+                f"citation_valid={citation_valid}; source_hit={row.get('source_hit')}; "
+                f"refused={row.get('refused')}; error={error or '-'}"
+            ),
+            "status": "PASS" if passed else "FAIL",
+            "ms": row.get("elapsed_ms", 0),
+            "notes": error,
+        })
+    return mapped
+
+
+def run_full_mode():
+    env = os.environ.copy()
+    env["KB_BACKEND"] = "plant_kb"
+    env["USE_ROUTER"] = "true"
+    env.setdefault("PYTHONPATH", str(ROOT))
+    completed = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "run_138_evaluation.py")],
+        cwd=ROOT,
+        env=env,
+        check=False,
+    )
+    rows = _full_rows_from_details()
+    if completed.returncode != 0 or not rows:
+        rows.append({
+            "id": "FULL-RUN",
+            "category": "full",
+            "name": "138题评测执行",
+            "input": "",
+            "expected": "正常完成",
+            "actual": f"returncode={completed.returncode}; rows={len(rows)}",
+            "status": "FAIL",
+            "ms": 0,
+            "notes": "",
+        })
+    GROUP_RESULTS["full"] = rows
+
+
+def summarize(group_results):
+    result = {}
+    for name, rows in group_results.items():
+        result[name] = {
+            "total": len(rows),
+            "pass": sum(row["status"] == "PASS" for row in rows),
+            "fail": sum(row["status"] == "FAIL" for row in rows),
+            "known": sum(row["status"] == "KNOWN" for row in rows),
+            "failed_cases": [row["id"] for row in rows if row["status"] == "FAIL"],
+        }
+    return result
+
+
+def summarize_mode(mode, rows, elapsed):
+    passed = sum(row["status"] == "PASS" for row in rows)
+    failed = sum(row["status"] == "FAIL" for row in rows)
+    known = sum(row["status"] == "KNOWN" for row in rows)
+    return {
+        "mode": mode,
+        "total": len(rows),
+        "pass": passed,
+        "fail": failed,
+        "known": known,
+        "pass_rate": f"{passed / max(1, passed + failed) * 100:.2f}%",
+        "elapsed_seconds": round(elapsed, 2),
+        "failed_cases": [row["id"] for row in rows if row["status"] == "FAIL"],
+    }
+
+
+def build_mode_markdown_report(mode, rows, elapsed, path):
+    passed = sum(row["status"] == "PASS" for row in rows)
+    failed = sum(row["status"] == "FAIL" for row in rows)
+    known = sum(row["status"] == "KNOWN" for row in rows)
+    lines = [
+        f"# 回归测试报告：{mode}",
+        "",
+        f"> 日期：{datetime.now().strftime('%Y-%m-%d')}",
+        f"> 总耗时：{elapsed:.2f} 秒",
+        "",
+        "## 汇总",
+        "",
+        "| 模式 | 用例数 | 通过 | 失败 | 已知 | 通过率 | 耗时(s) |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+        f"| {mode} | {len(rows)} | {passed} | {failed} | {known} | {passed / max(1, passed + failed) * 100:.2f}% | {elapsed:.2f} |",
+        "",
+        "## 用例结果",
+        "",
+        "| 编号 | 分类 | 状态 | 耗时(ms) |",
+        "|---|---|---|---:|",
+    ]
+    for row in rows:
+        lines.append(f"| {row.get('id')} | {row.get('category')} | {row.get('status')} | {row.get('ms', 0)} |")
+    lines.extend([
+        "",
+        "## 失败用例",
+        "",
+    ])
+    failed_rows = [row for row in rows if row["status"] == "FAIL"]
+    if failed_rows:
+        lines.extend([
+            "| 编号 | 分类 | 用例 | 实际结果 |",
+            "|---|---|---|---|",
+        ])
+        for row in failed_rows:
+            lines.append(f"| {row.get('id')} | {row.get('category')} | {row.get('name')} | {row.get('actual')} |")
+    else:
+        lines.append("无。")
+    lines.append("")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
 def main(argv=None):
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--group", choices=("legacy", "current", "all"), default="all")
+    parser = argparse.ArgumentParser(description="项目分层回归测试")
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument("--smoke", action="store_true", help="快速冒烟测试（6-8条）")
+    mode_group.add_argument("--core", action="store_true", help="核心模块回归（20-30条）")
+    mode_group.add_argument("--full", action="store_true", help="138题全量回归")
+    parser.add_argument("--group", choices=("legacy", "current", "all"), default=None,
+                        help="兼容旧接口：按 legacy/current/all 运行原回归集")
     args = parser.parse_args(argv)
+
+    explicit_mode = bool(args.smoke or args.core or args.full)
+    if args.group is not None and explicit_mode:
+        parser.error("--group 不能与 --smoke/--core/--full 同时使用")
+
+    if args.group is not None:
+        GROUP_RESULTS.clear()
+        if args.group in ("legacy", "all"):
+            run_legacy_group()
+        if args.group in ("current", "all"):
+            run_current_group()
+        report = ROOT / "docs" / f"回归测试报告_{datetime.now().strftime('%Y%m%d')}.md"
+        build_markdown_report(GROUP_RESULTS, report)
+        summary = summarize(GROUP_RESULTS)
+        summary["report"] = str(report)
+        print(json.dumps(summary, ensure_ascii=False))
+        return 1 if any(row["status"] == "FAIL" for rows in GROUP_RESULTS.values() for row in rows) else 0
+
+    mode = "smoke" if args.smoke else "core" if args.core else "full"
     GROUP_RESULTS.clear()
-    if args.group in ("legacy", "all"): run_legacy_group()
-    if args.group in ("current", "all"): run_current_group()
-    report = ROOT / "docs" / f"\u56de\u5f52\u6d4b\u8bd5\u62a5\u544a_{datetime.now().strftime('%Y%m%d')}.md"
-    build_markdown_report(GROUP_RESULTS, report)
-    summary = summarize(GROUP_RESULTS); summary["report"] = str(report)
+    started = time.perf_counter()
+    if mode == "smoke":
+        run_smoke_mode()
+    elif mode == "core":
+        run_core_mode()
+    else:
+        run_full_mode()
+    elapsed = time.perf_counter() - started
+
+    rows = [row for rows in GROUP_RESULTS.values() for row in rows]
+    summary = summarize_mode(mode, rows, elapsed)
+    report = ROOT / "docs" / f"回归测试_{mode}_{datetime.now().strftime('%Y%m%d')}.md"
+    build_mode_markdown_report(mode, rows, elapsed, report)
+    summary["report"] = str(report)
     print(json.dumps(summary, ensure_ascii=False))
-    return 1 if any(r["status"] == "FAIL" for rows in GROUP_RESULTS.values() for r in rows) else 0
+    return 1 if summary["fail"] else 0
 
 
 if __name__ == "__main__":

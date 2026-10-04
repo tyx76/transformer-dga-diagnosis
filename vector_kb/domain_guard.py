@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import re
+import sys
 import unicodedata
 
 PURE_DOMAIN_TERMS = (
@@ -91,29 +92,35 @@ GENERAL_DOMAIN_TERMS = PURE_DOMAIN_TERMS + (
     "轴承温度",
 )
 
-OFF_TOPIC_TERMS = (
-    "吃什么",
-    "吃",
-    "喝",
-    "炒菜",
-    "做菜",
-    "做饭",
-    "菜谱",
-    "早餐",
-    "午餐",
-    "晚餐",
-    "外卖",
-    "天气",
-    "电影",
-    "股票",
-    "旅游",
-    "唱歌",
-    "游戏",
-    "笑话",
-    "恋爱",
-    "篮球",
-    "足球",
-)
+# Use longer phrases rather than short characters.  This keeps ordinary
+# technical compounds such as "历史数据", "吃水", and "可编程控制器" out of
+# the irrelevant bucket while still blocking typical off-topic questions.
+IRRELEVANT_KEYWORDS = {
+    # Food / drink
+    "吃什么", "晚饭吃什么", "中午吃什么", "点外卖", "叫外卖", "外卖推荐", "外卖平台",
+    "吃啥", "想吃什么", "喝什么", "想喝", "喝奶茶", "喝饮料", "喝酒",
+    "炒菜", "做菜", "做饭", "菜谱", "早餐吃什么", "早餐推荐", "午餐吃什么",
+    "午餐推荐", "晚餐吃什么", "晚餐推荐",
+    # Entertainment / media
+    "打游戏", "玩游戏", "游戏推荐", "游戏攻略", "游戏怎么玩", "电子游戏",
+    "网络游戏", "游戏机", "看电影", "推荐电影", "电影推荐", "电影票", "电影院",
+    "唱歌", "写诗", "写一首诗", "古诗", "诗歌", "吟诗", "讲笑话", "说个笑话",
+    "笑话推荐", "娱乐新闻", "娱乐八卦", "娱乐活动", "娱乐圈",
+    # Daily-life / general knowledge
+    "天气怎么样", "天气预报", "今天天气", "明天天气", "天气查询",
+    "周末去哪", "周末做什么", "周末怎么过", "周末计划", "周末出去玩",
+    "去旅游", "旅游攻略", "旅游推荐", "旅游景点",
+    "去购物", "购物推荐", "购物网站", "网上购物",
+    "买股票", "股票推荐", "股票行情", "股票怎么买",
+    "学编程", "学习编程", "编程题", "编程语言",
+    "数学题", "学英语", "英语题", "英语翻译", "英语怎么说",
+    "聊历史", "讲历史", "历史上的今天", "历史故事", "历史题", "聊政治",
+    "政治题", "政治新闻", "讨论政治", "谈恋爱", "恋爱问题", "恋爱建议",
+    "打篮球", "看篮球", "篮球比赛", "踢足球", "看足球", "足球比赛",
+}
+
+# Backward-compatible alias.
+OFF_TOPIC_TERMS = IRRELEVANT_KEYWORDS
 
 _SUBSCRIPT_DIGITS = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
 
@@ -133,15 +140,48 @@ def _contains_term(text: str, term: str) -> bool:
     return term in text
 
 
+def _debug_enabled() -> bool:
+    return "--debug" in sys.argv[1:]
+
+
+def _emit(decision: str, reason: str) -> None:
+    if _debug_enabled():
+        print(f"[领域守卫] {decision}，原因：{reason}", flush=True)
+
+
 def is_in_domain(question: str, backend: str | None = None) -> bool:
-    """判断问题是否值得进入当前后端的检索与生成流程。"""
+    """只拦截明显无关问题；未知问题默认放行。"""
     normalized = _normalize(question)
     if not normalized:
+        _emit("拦截", "空问题")
         return False
-    if any(_contains_term(normalized, term) for term in OFF_TOPIC_TERMS):
+
+    device_terms = PURE_DOMAIN_TERMS if backend == "pure_kb" else GENERAL_DOMAIN_TERMS
+
+    # 明确无关词优先，避免“变压器怎么炒菜”这类问题因设备词而误放行。
+    matched_irrelevant = next(
+        (term for term in IRRELEVANT_KEYWORDS if _contains_term(normalized, term)),
+        None,
+    )
+    if matched_irrelevant:
+        _emit("拦截", f"命中无关词：{matched_irrelevant}")
         return False
-    terms = PURE_DOMAIN_TERMS if backend == "pure_kb" else GENERAL_DOMAIN_TERMS
-    return any(_contains_term(normalized, term) for term in terms)
+
+    matched_device = next(
+        (term for term in device_terms if _contains_term(normalized, term)),
+        None,
+    )
+    if matched_device:
+        _emit("放行", f"命中设备词：{matched_device}")
+        return True
+
+    _emit("放行", "默认放行")
+    return True
 
 
-__all__ = ["is_in_domain"]
+def domain_guard(question: str) -> bool:
+    """Backward-compatible public entry point."""
+    return is_in_domain(question)
+
+
+__all__ = ["is_in_domain", "domain_guard", "IRRELEVANT_KEYWORDS"]
