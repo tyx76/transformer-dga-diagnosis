@@ -3,7 +3,7 @@
 """性能基准测试：测量启动、检索、生成、内存和各知识库加载阶段。
 
 该脚本不修改检索、生成或校验逻辑，只通过计时包装器调用现有函数，
-并把结果写入 docs/性能基准测试.md。
+并把结果写入 docs/03_检索与排序/性能基准测试.md。
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-OUTPUT_DEFAULT = PROJECT_ROOT / "docs" / "性能基准测试.md"
+OUTPUT_DEFAULT = PROJECT_ROOT / "docs" / "03_检索与排序" / "性能基准测试.md"
 QUESTIONS = (
     "汽轮机振动",
     "锅炉过热器A侧二级减温水调节门内漏",

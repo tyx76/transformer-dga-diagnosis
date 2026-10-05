@@ -26,11 +26,11 @@ from vector_kb.retrieval import retrieve
 from vector_kb.rrf_fusion import rrf_fusion
 
 DEFAULT_QUESTIONS = ROOT / "data" / "evaluation" / "plant_kb_full_questions.jsonl"
-DEFAULT_DETAILS = ROOT / "docs" / "exam_proof" / "138题评测明细_20261004.jsonl"
+DEFAULT_DETAILS = ROOT / "docs" / "04_评测与回归" / "exam_proof" / "138题评测明细_20261004.jsonl"
 DEFAULT_EVIDENCE = ROOT / "data" / "samples" / "测试集" / "测试集" / "evaluation_dataset_final.json"
 DEFAULT_KB = ROOT / "knowledge" / "plant_kb" / "data" / "knowledge.jsonl"
-DEFAULT_REPORT = ROOT / "docs" / "未命中题系统诊断.md"
-DEFAULT_OUTPUT = ROOT / "docs" / "exam_proof" / "未命中题系统诊断_20261004.jsonl"
+DEFAULT_REPORT = ROOT / "docs" / "03_检索与排序" / "未命中题系统诊断.md"
+DEFAULT_OUTPUT = ROOT / "docs" / "04_评测与回归" / "exam_proof" / "未命中题系统诊断_20261004.jsonl"
 CANDIDATE_K = 300
 FUZZY_THRESHOLD = 0.72
 PARTIAL_THRESHOLD = 0.35
@@ -908,7 +908,7 @@ def _write_report(traces: list[dict[str, Any]], report_path: Path) -> None:
         "## 0. 口径与复核说明",
         "",
         "- 本报告只诊断当前评测明细中 `source_file` 非空且 `source_hit=false` 的 60 题，不把无来源标注题混入命中率。",
-        "- 之前诊断的 FULL-005/033/082/129 在当前明细中已为 `source_hit=true`，因此与本次 60 题未命中集合不重叠；它们的旧诊断记录仍保留在 `docs/Top5排序诊断_4题.md`。",
+        "- 之前诊断的 FULL-005/033/082/129 在当前明细中已为 `source_hit=true`，因此与本次 60 题未命中集合不重叠；它们的旧诊断记录仍保留在 `docs/03_检索与排序/Top5排序诊断_4题.md`。",
         "- 对每题按原始 `evidence_text` 在 15,188 条知识库记录中做精确包含、来源+条号、章节/页码/行号和字符 n-gram 模糊匹配；目标排名分别取向量、BM25、RRF 和正文重排。最终是否命中使用保存评测的 Top-5。",
         "- 每题只给一个主因，按以下优先级判定：A → B → C → G → F → E → D。原因是先判断是否入库，再判断是否被域/正文/引用条件影响，最后才判断查询和排序问题。",
         "",

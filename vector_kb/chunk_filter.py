@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from typing import Any
 
@@ -114,12 +115,15 @@ def _score_value(item: dict) -> float:
     return 0.0
 
 
-def _result_key(item: dict) -> tuple[str, str]:
+def _result_key(item: dict) -> tuple[str, ...]:
+    chunk_id = str(item.get("chunk_id") or item.get("id") or "").strip()
+    if chunk_id:
+        return ("chunk", chunk_id)
     doc_id = str(item.get("doc_id") or "")
     clause = str(item.get("clause") or "")
     if doc_id or clause:
-        return doc_id, clause
-    return "CASE", str(item.get("citation") or item.get("title") or "")
+        return ("doc", doc_id, clause)
+    return ("case", str(item.get("citation") or item.get("title") or ""))
 
 
 def _fill_missing_metadata(target: dict, source: dict) -> None:
@@ -131,8 +135,8 @@ def _fill_missing_metadata(target: dict, source: dict) -> None:
 
 def _dedupe(results: list[dict]) -> list[dict]:
     """Deduplicate while preserving input order and the highest-scored copy."""
-    best: dict[tuple[str, str], dict] = {}
-    order: dict[tuple[str, str], int] = {}
+    best: dict[tuple[str, ...], dict] = {}
+    order: dict[tuple[str, ...], int] = {}
     for index, item in enumerate(results or []):
         if not isinstance(item, dict):
             continue
@@ -151,6 +155,48 @@ def _dedupe(results: list[dict]) -> list[dict]:
             order.setdefault(key, index)
 
     return [best[key] for key in sorted(best, key=lambda item: order[item])]
+
+
+def _top_keys_with_doc_limit(
+    ranked_keys: list[tuple[str, ...]],
+    document_by_key: dict[tuple[str, ...], dict],
+    base_scores: dict[tuple[str, ...], float],
+    first_seen: dict[tuple[str, ...], int],
+    limit: int,
+) -> list[tuple[str, ...]]:
+    """Select final keys while capping each non-empty doc_id at two entries.
+
+    Legacy pure_kb keeps its historical behavior; the diversity limit targets
+    the adapted plant_kb retrieval path where one source can occupy Top-5.
+    """
+    backend = os.getenv("KB_BACKEND", "plant_kb").strip().lower()
+    if backend == "pure_kb":
+        return ranked_keys[:limit]
+
+    keys_by_doc_id: dict[str, list[tuple[str, ...]]] = {}
+    for key in ranked_keys:
+        doc_id = str(document_by_key[key].get("doc_id") or "").strip()
+        if doc_id:
+            keys_by_doc_id.setdefault(doc_id, []).append(key)
+
+    allowed_keys: set[tuple[str, ...]] = set()
+    for keys in keys_by_doc_id.values():
+        best_keys = sorted(
+            keys,
+            key=lambda key: (-base_scores[key], first_seen[key]),
+        )[:2]
+        allowed_keys.update(best_keys)
+
+    selected_keys: list[tuple[str, ...]] = []
+    for key in ranked_keys:
+        doc_id = str(document_by_key[key].get("doc_id") or "").strip()
+        if doc_id and key not in allowed_keys:
+            continue
+        selected_keys.append(key)
+        if len(selected_keys) >= limit:
+            break
+
+    return selected_keys
 
 
 def prioritize_results(
@@ -172,10 +218,10 @@ def prioritize_results(
         return []
 
     question_text = str(question or "")
-    base_scores: dict[tuple[str, str], float] = {}
-    overlap_scores: dict[tuple[str, str], int] = {}
-    document_by_key: dict[tuple[str, str], dict] = {}
-    first_seen: dict[tuple[str, str], int] = {}
+    base_scores: dict[tuple[str, ...], float] = {}
+    overlap_scores: dict[tuple[str, ...], int] = {}
+    document_by_key: dict[tuple[str, ...], dict] = {}
+    first_seen: dict[tuple[str, ...], int] = {}
 
     for index, item in enumerate(documents):
         key = _result_key(item)
@@ -190,7 +236,7 @@ def prioritize_results(
         overlap_scores[key] = query_overlap(document_by_key[key], question_text)
 
     max_overlap = max(overlap_scores.values(), default=0)
-    final_scores: dict[tuple[str, str], float] = {}
+    final_scores: dict[tuple[str, ...], float] = {}
     for key, item in document_by_key.items():
         body_weight = 1.0 if is_body_text(item) else 0.5
         normalized_overlap = (
@@ -228,7 +274,13 @@ def prioritize_results(
             ranked_keys[index - 1], ranked_keys[index] = current, previous
 
     output: list[dict] = []
-    for key in ranked_keys[: int(top_k)]:
+    for key in _top_keys_with_doc_limit(
+        ranked_keys,
+        document_by_key,
+        base_scores,
+        first_seen,
+        int(top_k),
+    ):
         item = dict(document_by_key[key])
         item["rrf_score"] = round(base_scores[key], 12)
         item["score"] = round(final_scores[key], 6)

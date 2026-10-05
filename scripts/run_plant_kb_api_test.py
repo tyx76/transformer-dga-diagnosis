@@ -27,8 +27,8 @@ from vector_kb.generation import generate
 from vector_kb.retrieval_router import route_and_retrieve
 
 DEFAULT_CASES = ROOT / "data" / "evaluation" / "plant_kb_test_questions.jsonl"
-DEFAULT_XLSX = ROOT / "docs" / "exam_proof" / "plant_kb_api_test_results_20260928.xlsx"
-DEFAULT_JSONL = ROOT / "docs" / "exam_proof" / "plant_kb_api_test_results_20260928.jsonl"
+DEFAULT_XLSX = ROOT / "docs" / "04_评测与回归" / "exam_proof" / "plant_kb_api_test_results_20260928.xlsx"
+DEFAULT_JSONL = ROOT / "docs" / "04_评测与回归" / "exam_proof" / "plant_kb_api_test_results_20260928.jsonl"
 
 
 def load_cases(path: Path, limit: int = 0) -> list[dict]:

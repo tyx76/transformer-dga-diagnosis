@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# [阶段交接] 过程产物：一次性样本整理脚本，阶段二重构入 tools/，不保留原形态。详见 docs/05。
+# [阶段交接] 过程产物：一次性样本整理脚本，阶段二重构入 tools/，不保留原形态。详见 docs/00_项目管理/05_dev_log_and_schedule.md。
 """把 data/samples/ 下的多个公开 DGA 数据集统一成一份 dga_samples.csv。
 
 统一字段：source, h2, ch4, c2h6, c2h4, c2h2, co, co2, scale, label_raw, label_std

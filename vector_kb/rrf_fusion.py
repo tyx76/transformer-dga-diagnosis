@@ -21,10 +21,13 @@ def _clause_key(item: dict[str, Any]) -> str:
 
 
 def _result_key(item: dict[str, Any]) -> tuple[str, ...] | None:
-    """返回融合去重键，优先使用 ``(doc_id, clause)``。"""
+    """返回融合去重键，优先使用全局唯一的 chunk_id。"""
+    chunk_id = str(item.get("chunk_id") or item.get("id") or "").strip()
+    if chunk_id:
+        return ("chunk", chunk_id)
+
     doc_id = str(item.get("doc_id") or "").strip()
     clause = str(item.get("clause") or "").strip()
-
     if doc_id:
         return ("doc", doc_id, clause)
     if clause:
@@ -36,18 +39,10 @@ def _result_key(item: dict[str, Any]) -> tuple[str, ...] | None:
         ).strip()
         return ("source", source, clause) if source else ("clause", clause)
 
-    chunk_id = str(
-        item.get("chunk_id")
-        or item.get("id")
-        or item.get("citation")
-        or item.get("title")
-        or item.get("text")
-        or ""
-    ).strip()
-    if chunk_id:
-        return ("chunk", chunk_id)
+    fallback = str(item.get("citation") or item.get("title") or item.get("text") or "").strip()
+    if fallback:
+        return ("content", fallback)
     return None
-
 
 def rrf_fusion(
     vector_results: list[dict] | None,
@@ -125,6 +120,7 @@ def rrf_fusion(
     for key in ranked_keys[:requested]:
         source = documents[key]
         results.append({
+            "chunk_id": source.get("chunk_id") or source.get("id"),
             "doc_id": source.get("doc_id"),
             "clause": source.get("clause"),
             "title": source.get("title") or "",
@@ -132,6 +128,7 @@ def rrf_fusion(
             "page": source.get("page"),
             "citation": source.get("citation") or "",
             "domain": source.get("domain"),
+            "domain_alt": source.get("domain_alt"),
             "citation_eligible": source.get("citation_eligible"),
             "is_body": source.get("is_body"),
             "rrf_score": scores[key],

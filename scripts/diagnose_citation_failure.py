@@ -27,7 +27,7 @@ from vector_kb.citation_verifier import (
     verify_citations,
 )
 
-DETAILS = ROOT / "docs" / "exam_proof" / "138题评测明细_20261004.jsonl"
+DETAILS = ROOT / "docs" / "04_评测与回归" / "exam_proof" / "138题评测明细_20261004.jsonl"
 REPORT = ROOT / "docs" / "引用校验失败诊断_FULL-088_FULL-089.md"
 CASE_IDS = ("FULL-088", "FULL-089")
 
@@ -211,7 +211,7 @@ def write_report(cases: list[dict], path: Path) -> None:
     lines = [
         "# 引用校验失败诊断：FULL-088、FULL-089",
         "",
-        "> 数据来源：`docs/exam_proof/138题评测明细_20261004.jsonl` 的最终回答、Top-5 和引用校验字段。",
+        "> 数据来源：`docs/04_评测与回归/exam_proof/138题评测明细_20261004.jsonl` 的最终回答、Top-5 和引用校验字段。",
         "> 说明：现有评测明细未保存每次重写前的中间回答；本报告只依据已保存的实际数据，不猜测中间文本。",
         "",
         "## 结论摘要",

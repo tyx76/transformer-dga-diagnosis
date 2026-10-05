@@ -31,8 +31,8 @@ from vector_kb.generation import generate
 from vector_kb.retrieval_router import route_and_retrieve
 
 DEFAULT_CASES = ROOT / "data" / "evaluation" / "plant_kb_full_questions.jsonl"
-DEFAULT_REPORT = ROOT / "docs" / "评测报告_138题_20261004.md"
-DEFAULT_DETAILS = ROOT / "docs" / "exam_proof" / "138题评测明细_20261004.jsonl"
+DEFAULT_REPORT = ROOT / "docs" / "04_评测与回归" / "评测报告_138题_20261004.md"
+DEFAULT_DETAILS = ROOT / "docs" / "04_评测与回归" / "exam_proof" / "138题评测明细_20261004.jsonl"
 STOPWORDS = {
     "应该", "可以", "需要", "进行", "检查", "处理", "可能", "如果", "以及",
     "相关", "问题", "措施", "情况", "是否", "说明", "方法", "要求", "确认",

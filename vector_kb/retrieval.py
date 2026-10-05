@@ -113,14 +113,29 @@ def _db_signature(path: Path) -> tuple[int, int]:
         return (0, 0)
 
 
+def _domain_alt_values(value: Any) -> set[str]:
+    if not value:
+        return set()
+    if isinstance(value, (list, tuple, set)):
+        raw_values = value
+    else:
+        text = str(value).strip().strip(",")
+        try:
+            decoded = json.loads(text)
+        except Exception:
+            decoded = None
+        raw_values = decoded if isinstance(decoded, list) else text.split(",")
+    return {str(item).strip().lower() for item in raw_values if str(item).strip()}
+
+
 def _domain_matches(record: dict, allowed_domains: set[str] | list[str] | tuple[str, ...]) -> bool:
     """Match primary or alternate domains; empty domain metadata remains permissive."""
     allowed = {str(domain).strip().lower() for domain in allowed_domains}
     domain = str(record.get("domain") or "").strip().lower()
-    domain_alt = str(record.get("domain_alt") or "").strip().lower()
+    domain_alt = _domain_alt_values(record.get("domain_alt"))
     if not domain and not domain_alt:
         return True
-    return bool((domain and domain in allowed) or (domain_alt and domain_alt in allowed))
+    return bool((domain and domain in allowed) or (domain_alt & allowed))
 
 
 def _normalize_domains(domains: list[str] | tuple[str, ...] | None) -> list[str]:
@@ -190,6 +205,7 @@ def _load_chunks(con: sqlite3.Connection) -> list[dict]:
         if citation_eligible is None:
             citation_eligible = bool((meta.get("doc_id") or row[1]) and meta.get("clause"))
         out.append({
+            "chunk_id": meta.get("chunk_id") or row[0],
             "doc_id": meta.get("doc_id") or row[1],
             "clause": meta.get("clause"),
             "title": meta.get("title") or "",
@@ -222,11 +238,15 @@ def _load_knowledge(con: sqlite3.Connection, domains: list[str] | None = None) -
     if normalized_domains:
         placeholders = ",".join("?" for _ in normalized_domains)
         if "domain_alt" in columns:
-            query = (
-                f"SELECT * FROM knowledge WHERE domain IN ({placeholders}) "
-                f"OR domain_alt IN ({placeholders})"
-            )
-            params: tuple[Any, ...] = tuple(normalized_domains) * 2
+            clauses: list[str] = []
+            raw_params: list[str] = []
+            for domain in normalized_domains:
+                clauses.append("domain = ?")
+                raw_params.append(domain)
+                clauses.append("domain_alt LIKE ?")
+                raw_params.append(f"%,{domain},%")
+            query = "SELECT * FROM knowledge WHERE " + " OR ".join(clauses)
+            params: tuple[Any, ...] = tuple(raw_params)
         else:
             query = f"SELECT * FROM knowledge WHERE domain IN ({placeholders})"
             params = tuple(normalized_domains)
@@ -257,6 +277,7 @@ def _load_knowledge(con: sqlite3.Connection, domains: list[str] | None = None) -
             citation_eligible = bool(doc_id and clause)
 
         out.append({
+            "chunk_id": record.get("id") or metadata.get("chunk_id"),
             "doc_id": doc_id,
             "clause": clause,
             "title": title,
@@ -415,6 +436,7 @@ def retrieve(
         if score < min_score:
             continue
         hits.append({
+            "chunk_id": chunk.get("chunk_id") or chunk.get("id"),
             "doc_id": chunk.get("doc_id"),
             "clause": chunk.get("clause"),
             "title": chunk.get("title") or "",

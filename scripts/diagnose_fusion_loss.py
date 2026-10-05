@@ -28,7 +28,7 @@ from vector_kb.rrf_fusion import rrf_fusion
 
 DEFAULT_CASES = ROOT / "data" / "evaluation" / "plant_kb_full_questions.jsonl"
 DEFAULT_REPORT = ROOT / "docs" / "融合丢失诊断_FULL-005_FULL-129.md"
-DEFAULT_DETAILS = ROOT / "docs" / "exam_proof" / "融合丢失诊断_FULL-005_FULL-129.jsonl"
+DEFAULT_DETAILS = ROOT / "docs" / "04_评测与回归" / "exam_proof" / "融合丢失诊断_FULL-005_FULL-129.jsonl"
 CASE_IDS = ("FULL-005", "FULL-129")
 PATH_CONFIG = _resolve_config(_backend_name())
 

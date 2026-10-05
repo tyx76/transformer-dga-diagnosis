@@ -39,7 +39,7 @@ from vector_kb.knowledge_base_adapter import merge_with_hybrid, search_knowledge
 
 DEFAULT_CASES = ROOT / "test_cases" / "evaluation_set.jsonl"
 FALLBACK_CASES = ROOT / "data" / "evaluation" / "acceptance_cases.jsonl"
-DEFAULT_OUTPUT = ROOT / "docs" / "exam_proof" / "RRF权重搜索结果_20260922.xlsx"
+DEFAULT_OUTPUT = ROOT / "docs" / "04_评测与回归" / "exam_proof" / "RRF权重搜索结果_20260922.xlsx"
 WEIGHT_SCHEMES = (
     ("A", 1.0, 1.0),
     ("B", 1.0, 1.2),

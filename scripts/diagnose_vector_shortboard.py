@@ -26,7 +26,7 @@ from vector_kb.retrieval import retrieve
 
 DEFAULT_CASES = ROOT / "data" / "evaluation" / "plant_kb_full_questions.jsonl"
 DEFAULT_REPORT = ROOT / "docs" / "向量检索短板诊断.md"
-DEFAULT_DETAILS = ROOT / "docs" / "exam_proof" / "向量检索诊断明细_20261004.jsonl"
+DEFAULT_DETAILS = ROOT / "docs" / "04_评测与回归" / "exam_proof" / "向量检索诊断明细_20261004.jsonl"
 CANDIDATE_K = 300
 PATH_CONFIG = _resolve_config(_backend_name())
 

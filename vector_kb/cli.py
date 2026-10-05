@@ -77,7 +77,7 @@ def ingest(args):
     doc_meta = {
         "block_type": args.collection,
         "doc_id": doc_id,
-        "spec_source": "docs/07_chunking_and_metadata_spec.md",
+        "spec_source": "docs/02_知识库与数据/07_chunking_and_metadata_spec.md",
     }
     cur.execute(
         """INSERT INTO documents

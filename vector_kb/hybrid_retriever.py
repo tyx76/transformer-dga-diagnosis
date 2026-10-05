@@ -109,7 +109,7 @@ def _domain_lookup(vector_results: list[dict], bm25_results: list[dict]) -> dict
     for item in [*(vector_results or []), *(bm25_results or [])]:
         if not isinstance(item, dict) or not item.get("domain"):
             continue
-        key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+        key = _dual_result_key(item)
         lookup[key] = str(item["domain"])
     return lookup
 
@@ -132,7 +132,7 @@ def _ensure_domain_coverage(
     # Reserve the highest-ranked result from each requested domain first.
     for domain in dict.fromkeys(allowed):
         for item in fused:
-            key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+            key = _dual_result_key(item)
             item_domain = item.get("domain") or lookup.get(key)
             if item_domain != domain or key in selected_keys:
                 continue
@@ -143,7 +143,7 @@ def _ensure_domain_coverage(
             break
 
     for item in fused:
-        key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+        key = _dual_result_key(item)
         if key in selected_keys:
             continue
         copy = dict(item)
@@ -158,12 +158,15 @@ def _ensure_domain_coverage(
     return selected[:top_k]
 
 
-def _dual_result_key(item: dict) -> tuple[str, str]:
+def _dual_result_key(item: dict) -> tuple[str, ...]:
+    chunk_id = str(item.get("chunk_id") or item.get("id") or "").strip()
+    if chunk_id:
+        return ("chunk", chunk_id)
     doc_id = str(item.get("doc_id") or "")
     clause = str(item.get("clause") or "")
     if doc_id or clause:
-        return (doc_id, clause)
-    return ("CASE", str(item.get("citation") or item.get("title") or item.get("text") or ""))
+        return ("doc", doc_id, clause)
+    return ("case", str(item.get("citation") or item.get("title") or item.get("text") or ""))
 
 
 def _dedupe_path_results(results: list[dict]) -> list[dict]:
@@ -283,7 +286,7 @@ def _load_scope_metadata(config: dict) -> dict[tuple[str, str], dict]:
                     item = json.loads(line)
                 except Exception:
                     continue
-                key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+                key = _dual_result_key(item)
                 metadata[key] = item
     except Exception:
         LOGGER.warning("Failed to load scope metadata: %s", path, exc_info=True)

@@ -45,7 +45,7 @@
 python scripts\run_regression.py
 ```
 
-输出 `docs/exam_proof/回归测试结果_20260918_修订版.xlsx`，覆盖数据一致性、检索、RRF、引用校验和主链路桩测试。
+输出 `docs/04_评测与回归/exam_proof/回归测试结果_20260918_修订版.xlsx`，覆盖数据一致性、检索、RRF、引用校验和主链路桩测试。
 
 ### 3.2 RRF 权重和离线批量评测
 
@@ -57,7 +57,7 @@ python scripts\tune_rrf_weights.py
 - 可评测 39 条有目标条号的用例；
 - 2026-09-22 结果的 Top-5 命中率为 76.92%（30/39）；
 - 四组 RRF 权重指标持平，当前保留 1.0/1.0；
-- 结果文件为 `docs/exam_proof/RRF权重搜索结果_20260922.xlsx`。
+- 结果文件为 `docs/04_评测与回归/exam_proof/RRF权重搜索结果_20260922.xlsx`。
 
 ### 3.3 真实 A/B
 
@@ -65,7 +65,7 @@ python scripts\tune_rrf_weights.py
 python scripts\shadow_ab_test.py
 ```
 
-当前内置 7 条关键用例，真实 DeepSeek 结果记录在 `docs/影子对比报告.md`。样本较小，只能作为方向性验证。
+当前内置 7 条关键用例，真实 DeepSeek 结果记录在 `docs/03_检索与排序/影子对比报告.md`。样本较小，只能作为方向性验证。
 
 ## 4. 指标口径
 

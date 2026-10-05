@@ -33,4 +33,4 @@
 
 - 本目录是历史快照，不保证所有附件仍位于本机原路径。
 - 行业效果数字不能直接作为项目收益承诺。
-- 项目实现状态以 [`docs/00_project_status.md`](../../../docs/00_project_status.md) 为准。
+- 项目实现状态以 [`docs/00_项目管理/00_project_status.md`](../../../docs/00_项目管理/00_project_status.md) 为准。

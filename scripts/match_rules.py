@@ -1,5 +1,5 @@
 ﻿# -*- coding: utf-8 -*-
-# [阶段交接] 接口保留：match()/CLI 为对外接口，阶段二迁入 tools/（后续换 jieba+BM25）时保持签名兼容。详见 docs/05。
+# [阶段交接] 接口保留：match()/CLI 为对外接口，阶段二迁入 tools/（后续换 jieba+BM25）时保持签名兼容。详见 docs/00_项目管理/05_dev_log_and_schedule.md。
 """规则匹配原型（任务二·排因骨架版，先用关键词，不依赖向量/LLM）。
 
 读取 data/rules/rules_DLT572_ch7.json（字段：rule_id/source/trigger/content/actions/decision），

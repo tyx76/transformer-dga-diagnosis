@@ -1,6 +1,6 @@
 # 通用电厂设备故障根因分析与处置决策智能体
 
-> 当前版本：2026-10-03
+> 当前版本：2026-10-05
 > 适用场景：锅炉、汽轮机、发电机及主要辅机的故障诊断与处置决策
 > 主知识库：`knowledge/plant_kb/`，15,188 条记录
 
@@ -199,6 +199,14 @@ $env:USE_ROUTER="true"
 │  ├─ profile_performance.py
 │  └─ run_plant_kb_api_test.py
 ├─ docs/
+│  ├─ README.md
+│  ├─ 00_项目管理/
+│  ├─ 01_调研与方案/
+│  ├─ 02_知识库与数据/
+│  ├─ 03_检索与排序/
+│  ├─ 04_评测与回归/
+│  ├─ 05_架构与交付/
+│  └─ 06_论文与笔记/
 └─ backups/
 ```
 
@@ -235,22 +243,23 @@ $env:USE_ROUTER="true"
 当前回归脚本支持：
 
 ```powershell
-python scripts\run_regression.py --group=legacy
-python scripts\run_regression.py --group=current
-python scripts\run_regression.py --group=all
+python scripts\run_regression.py --smoke
+python scripts\run_regression.py --core
+python scripts\run_regression.py --full
 ```
 
-结果：
+当前结果：
 
-| 组别 | 通过 | 失败 | 已知 |
-|---|---:|---:|---:|
-| `legacy` | 23/24 | 0 | 1 |
-| `current` | 7/7 | 0 | 0 |
+| 模式 | 通过 | 失败 | 说明 |
+|---|---:|---:|---|
+| smoke | 8/8 | 0 | 快速冒烟 |
+| core | 24/24 | 0 | 核心模块回归 |
+| full | 138/138 | 0 | 端到端评测；来源 83/116，条号 46/73 |
 
-回归报告生成于：
+回归报告目录：
 
 ```text
-docs/回归测试报告_20261003.md
+docs/04_评测与回归/
 ```
 
 历史评测还包括：
@@ -264,27 +273,27 @@ docs/回归测试报告_20261003.md
 ## 11. 已知问题
 
 1. `plant_kb` 仍存在 OCR 文本噪声、页码缺失和部分空条号问题。
-2. 最新 v3 分层映射包中的 `failure_mode_rules.json` 中文内容损坏，暂不能接入规则层。
-3. `candidate_k=300` 是临时召回补丁，长期应通过查询规划、Reranker 和小候选池替代。
-4. 多域检索目前能保留目标域结果，但排序质量仍受 BM25 和向量排名波动影响。
-5. 通用设备的答案覆盖率和来源命中率仍低于正式交付目标。
+2. `candidate_k=300` 是当前召回保障配置，后续可通过查询规划、Reranker 和更小候选池优化。
+3. v3 分层映射已通过 domain_mapping 适配层兼容，后续仍可做专项规范化。
+4. 多域检索已能在主域检索阶段纳入相邻域，残余来源/条号未命中主要来自 OCR 和排序质量。
+5. Reranker、OCR 重切块和更细粒度精排仍是后续优化项，不阻塞当前提交。
 6. C6 FaultSeer 式多步 Agentic 路由尚未实现，当前为受控单轮 RAG 流程。
 
 ## 12. 文档入口
 
-- [实现方案与架构](docs/09_implementation_plan.md)
-- [验收与评测记录](docs/08_acceptance_record.md)
-- [开发日志与日程](docs/05_dev_log_and_schedule.md)
-- [项目状态](docs/00_project_status.md)
+- [实现方案与架构](docs/00_项目管理/09_implementation_plan.md)
+- [验收与评测记录](docs/00_项目管理/08_acceptance_record.md)
+- [开发日志与日程](docs/00_项目管理/05_dev_log_and_schedule.md)
+- [项目状态](docs/00_项目管理/00_project_status.md)
 - [文档导航](docs/README.md)
-- [回归测试报告](docs/回归测试报告_20261003.md)
-- [性能基准测试](docs/性能基准测试.md)
-- [BM25 分片优化报告](docs/BM25分片优化报告.md)
-- [向量检索优化报告](docs/向量检索优化报告.md)
-- [138题端到端评测报告](docs/评测报告_138题_20261004.md)
-- [向量检索短板诊断](docs/向量检索短板诊断.md)
-- [代码清理记录](docs/代码清理记录.md)
-- [文献与标准](docs/01_literature_and_standards.md)
+- [回归测试报告](docs/04_评测与回归/回归测试报告_20261003.md)
+- [性能基准测试](docs/03_检索与排序/性能基准测试.md)
+- [BM25 分片优化报告](docs/02_知识库与数据/BM25分片优化报告.md)
+- [向量检索优化报告](docs/02_知识库与数据/向量检索优化报告.md)
+- [138题端到端评测报告](docs/04_评测与回归/评测报告_138题_20261004.md)
+- [向量检索短板诊断](docs/03_检索与排序/向量检索短板诊断.md)
+- [代码清理记录](docs/00_项目管理/代码清理记录.md)
+- [文献与标准](docs/01_调研与方案/01_literature_and_standards.md)
 
 ## 13. 版权与安全边界
 

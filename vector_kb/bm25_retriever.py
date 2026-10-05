@@ -242,9 +242,32 @@ def _load_v2_corpus_metadata(corpus_paths: tuple[Path, ...]) -> dict[str, dict[s
     return metadata
 
 
+def _load_legacy_corpus_metadata(corpus_paths: tuple[Path, ...]) -> dict[tuple[str, str], dict[str, Any]]:
+    metadata: dict[tuple[str, str], dict[str, Any]] = {}
+    for corpus_path in corpus_paths:
+        if not corpus_path.is_file():
+            continue
+        with corpus_path.open("r", encoding="utf-8-sig") as stream:
+            for line in stream:
+                if not line.strip():
+                    continue
+                try:
+                    item = json.loads(line)
+                except Exception:
+                    continue
+                key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+                metadata[key] = {
+                    "chunk_id": item.get("chunk_id") or item.get("id"),
+                    "citation": item.get("citation") or "",
+                    "citation_eligible": item.get("citation_eligible", item.get("is_citable")),
+                }
+    return metadata
+
+
 def _adapt_v2_document(document: dict[str, Any], metadata: dict[str, Any] | None = None) -> dict[str, Any]:
     extra = metadata or {}
     return {
+        "chunk_id": document.get("chunk_id") or document.get("id") or extra.get("chunk_id"),
         "doc_id": document.get("doc_id") or extra.get("doc_id") or document.get("source") or document.get("module") or document.get("domain"),
         "clause": document.get("clause") if document.get("clause") is not None else extra.get("clause"),
         "title": document.get("title") or extra.get("title") or "",
@@ -367,6 +390,7 @@ def _load_corpus(corpus_paths: tuple[Path, ...]) -> list[dict[str, Any]]:
                     continue
                 seen.add(key)
                 documents.append({
+                    "chunk_id": item.get("chunk_id") or item.get("id"),
                     "doc_id": item.get("doc_id"),
                     "clause": item.get("clause"),
                     "title": item.get("title") or "",
@@ -452,6 +476,20 @@ def _load_or_build_index(
         documents, bm25 = _build_index(corpus_paths, index_path)
         version = INDEX_VERSION
 
+    if version != PLANT_BM25_V2_VERSION:
+        legacy_metadata = _load_legacy_corpus_metadata(corpus_paths)
+        for document in documents:
+            key = (str(document.get("doc_id") or ""), str(document.get("clause") or ""))
+            extra = legacy_metadata.get(key)
+            if not extra:
+                continue
+            if not document.get("chunk_id"):
+                document["chunk_id"] = extra.get("chunk_id")
+            if not document.get("citation"):
+                document["citation"] = extra.get("citation") or ""
+            if document.get("citation_eligible") is None:
+                document["citation_eligible"] = extra.get("citation_eligible")
+
     LOGGER.debug(
         "BM25 index loaded: version=%s documents=%d path=%s",
         version,
@@ -474,14 +512,36 @@ def _path_signature(path: Path) -> tuple[int, int]:
         return (0, 0)
 
 
+def _domain_alt_values(value: Any) -> set[str]:
+    if not value:
+        return set()
+    if isinstance(value, (list, tuple, set)):
+        raw_values = value
+    else:
+        text = str(value).strip().strip(",")
+        try:
+            decoded = json.loads(text)
+        except Exception:
+            decoded = None
+        raw_values = decoded if isinstance(decoded, list) else text.split(",")
+    return {str(item).strip().lower() for item in raw_values if str(item).strip()}
+
+
 def _domain_matches(record: dict, allowed_domains: set[str] | list[str] | tuple[str, ...]) -> bool:
     """Match primary or alternate domains; empty domain metadata remains permissive."""
     allowed = {str(domain).strip().lower() for domain in allowed_domains}
     domain = str(record.get("domain") or "").strip().lower()
-    domain_alt = str(record.get("domain_alt") or "").strip().lower()
+    domain_alt = _domain_alt_values(record.get("domain_alt"))
     if not domain and not domain_alt:
         return True
-    return bool((domain and domain in allowed) or (domain_alt and domain_alt in allowed))
+    return bool((domain and domain in allowed) or (domain_alt & allowed))
+
+
+def _bm25_result_key(item: dict[str, Any]) -> tuple[str, ...]:
+    chunk_id = str(item.get("chunk_id") or item.get("_source_id") or item.get("id") or "").strip()
+    if chunk_id:
+        return ("chunk", chunk_id)
+    return ("doc", str(item.get("doc_id") or ""), str(item.get("clause") or ""))
 
 
 def _dedupe_domains(domains: list[str] | tuple[str, ...] | None) -> list[str]:
@@ -580,7 +640,7 @@ def _load_lightweight_metadata(index_path: Path) -> dict[tuple[str, str], dict[s
                 item = json.loads(line)
             except Exception:
                 continue
-            key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+            key = _bm25_result_key(item)
             metadata[key] = item
     _LIGHT_METADATA_CACHE = (path, signature, metadata)
     return metadata
@@ -594,7 +654,7 @@ def _enrich_results_with_lightweight_metadata(
         return results
     metadata = _load_lightweight_metadata(index_path)
     for result in results:
-        key = (str(result.get("doc_id") or ""), str(result.get("clause") or ""))
+        key = _bm25_result_key(result)
         item = metadata.get(key)
         if item:
             for field in ("title", "citation", "domain", "domain_alt"):
@@ -646,6 +706,7 @@ def _bm25_retrieve_sharded(
                 domain,
                 str(document.get("_source_id") or ""),
                 {
+                    "chunk_id": document.get("chunk_id") or document.get("_source_id") or document.get("id"),
                     "doc_id": document.get("doc_id"),
                     "clause": document.get("clause"),
                     "title": document.get("title") or "",
@@ -664,7 +725,7 @@ def _bm25_retrieve_sharded(
     results: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
     for _, _, _, item in candidates:
-        key = (str(item.get("doc_id") or ""), str(item.get("clause") or ""))
+        key = _bm25_result_key(item)
         if key in seen:
             continue
         seen.add(key)
@@ -755,6 +816,7 @@ def bm25_retrieve(
             continue
         document = documents[index]
         results.append({
+            "chunk_id": document.get("chunk_id") or document.get("_source_id") or document.get("id"),
             "doc_id": document.get("doc_id"),
             "clause": document.get("clause"),
             "title": document.get("title") or "",

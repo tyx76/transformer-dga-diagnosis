@@ -56,4 +56,4 @@
 2. 更新对应来源、状态和版本说明；
 3. 运行 `python scripts\dga_ratio.py --eval --voltage 220`；
 4. 运行 `python scripts\run_regression.py`；
-5. 同步 `docs/04`、`docs/08` 和项目状态中的评测数字。
+5. 同步 `docs/01_调研与方案/04_task2_plan_and_evaluation.md`、`docs/00_项目管理/08_acceptance_record.md` 和项目状态中的评测数字。

@@ -5,7 +5,7 @@
 
 > 文档状态：现行｜更新：2026-09-27｜维护：成员2
 > 命名规范：`<标准号>_<名称>_<类型>`；标准正文和派生统一语料本地保留，不进入公开仓库。
-> 详细切块字段见 [`docs/07_chunking_and_metadata_spec.md`](../../docs/07_chunking_and_metadata_spec.md)。
+> 详细切块字段见 [`docs/02_知识库与数据/07_chunking_and_metadata_spec.md`](../../docs/02_知识库与数据/07_chunking_and_metadata_spec.md)。
 
 ## 1. 文件清单
 
@@ -36,7 +36,7 @@
 4. 运行 `python scripts\build_unified_corpus.py`；
 5. 运行 `python vector_kb\cli.py info` 核对 123 块；
 6. 运行 `python scripts\run_regression.py` 和数据一致性检查；
-7. 同步更新 `docs/00`、`docs/08`、README 和本清单。
+7. 同步更新 `docs/00_项目管理/00_project_status.md`、`docs/00_项目管理/08_acceptance_record.md`、README 和本清单。
 
 ## 4. 阶段二待补
 

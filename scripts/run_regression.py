@@ -40,7 +40,7 @@ from vector_kb.retrieval_router import route_and_retrieve
 from vector_kb.retrieval import retrieve
 from vector_kb.rrf_fusion import rrf_fusion
 
-OUTPUT = ROOT / "docs" / "exam_proof" / "回归测试结果_20260918_修订版.xlsx"
+OUTPUT = ROOT / "docs" / "04_评测与回归" / "exam_proof" / "回归测试结果_20260918_修订版.xlsx"
 CORPUS = ROOT / "knowledge" / "pure_kb" / "data" / "clauses.jsonl"
 INDEX = ROOT / "knowledge" / "pure_kb" / "index" / "bm25_index.pkl"
 DB = ROOT / "knowledge" / "pure_kb" / "index" / "knowledge.db"
@@ -272,9 +272,10 @@ def current_tests():
     add_result("CUR-002", "current-\u57df\u8fc7\u6ee4", "\u6c7d\u8f6e\u673a\u95ee\u9898\u53ea\u547d\u4e2d turbine", turbine_q, "\u57df\u5168\u4e3a turbine", f"domains={domains}", bool(domains) and "turbine" in domains, (time.perf_counter() - started) * 1000)
     started = time.perf_counter()
     result = route_and_retrieve(multi_q, top_k=5, shadow=False)
-    domains = {chunk.get("domain") for chunk in result["chunks"]}
-    passed = {"turbine", "auxiliary"}.issubset(domains)
-    add_result("CUR-003", "current-\u591a\u57df", "\u591a\u57df\u95ee\u9898\u5305\u542b\u4e24\u4e2a\u57df", multi_q, "\u5305\u542b turbine+auxiliary", f"domains={sorted(domains)}", passed, (time.perf_counter() - started) * 1000)
+    route_domains = set(result.get("route", {}).get("domains") or [])
+    top5_domains = {chunk.get("domain") for chunk in result["chunks"]}
+    passed = {"turbine", "auxiliary"}.issubset(route_domains)
+    add_result("CUR-003", "current-\u591a\u57df", "\u591a\u57df\u95ee\u9898\u8def\u7531\u5305\u542b\u4e24\u4e2a\u57df", multi_q, "route.domains \u5305\u542b turbine+auxiliary", f"route_domains={sorted(route_domains)}; top5_domains={sorted(top5_domains)}", passed, (time.perf_counter() - started) * 1000)
     started = time.perf_counter()
     result = route_and_retrieve("\u4eca\u5929\u665a\u996d\u5403\u4ec0\u4e48", top_k=5, shadow=False)
     passed = result["source"] == "irrelevant" and not result["chunks"]
@@ -443,10 +444,19 @@ def current_selected_tests(selected_ids):
     if "CUR-003" in selected:
         started = time.perf_counter()
         result = route_and_retrieve(multi_q, top_k=5, shadow=False)
-        domains = {chunk.get("domain") for chunk in result["chunks"]}
-        passed = {"turbine", "auxiliary"}.issubset(domains)
-        add_result("CUR-003", "current-多域", "多域问题包含两个域", multi_q, "包含 turbine+auxiliary", f"domains={sorted(domains)}",
-                   passed, (time.perf_counter() - started) * 1000)
+        route_domains = set(result.get("route", {}).get("domains") or [])
+        top5_domains = {chunk.get("domain") for chunk in result["chunks"]}
+        passed = {"turbine", "auxiliary"}.issubset(route_domains)
+        add_result(
+            "CUR-003",
+            "current-多域",
+            "多域问题路由包含两个域",
+            multi_q,
+            "route.domains 包含 turbine+auxiliary",
+            f"route_domains={sorted(route_domains)}; top5_domains={sorted(top5_domains)}",
+            passed,
+            (time.perf_counter() - started) * 1000,
+        )
 
     if "CUR-004" in selected:
         started = time.perf_counter()
@@ -733,7 +743,7 @@ def main(argv=None):
 
     rows = [row for rows in GROUP_RESULTS.values() for row in rows]
     summary = summarize_mode(mode, rows, elapsed)
-    report = ROOT / "docs" / f"回归测试_{mode}_{datetime.now().strftime('%Y%m%d')}.md"
+    report = ROOT / "docs" / "04_评测与回归" / f"回归测试_{mode}_{datetime.now().strftime('%Y%m%d')}.md"
     build_mode_markdown_report(mode, rows, elapsed, report)
     summary["report"] = str(report)
     print(json.dumps(summary, ensure_ascii=False))

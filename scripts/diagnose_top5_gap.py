@@ -33,8 +33,8 @@ from vector_kb.retrieval import retrieve
 from vector_kb.rrf_fusion import rrf_fusion
 
 DEFAULT_CASES = ROOT / "data" / "evaluation" / "plant_kb_full_questions.jsonl"
-DEFAULT_REPORT = ROOT / "docs" / "Top5排序诊断_4题.md"
-DEFAULT_DETAILS = ROOT / "docs" / "exam_proof" / "Top5排序诊断_4题_20261004.jsonl"
+DEFAULT_REPORT = ROOT / "docs" / "03_检索与排序" / "Top5排序诊断_4题.md"
+DEFAULT_DETAILS = ROOT / "docs" / "04_评测与回归" / "exam_proof" / "Top5排序诊断_4题_20261004.jsonl"
 CASE_IDS = ("FULL-005", "FULL-033", "FULL-082", "FULL-129")
 CANDIDATE_K = 300
 
